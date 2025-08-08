@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { supabase } from '../utils/supabase.js';
 
 const LoginScreen = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -8,7 +9,7 @@ const LoginScreen = () => {
   
   // Login form state
   const [loginData, setLoginData] = useState({
-    customerNumber: '',
+    email: '',
     password: ''
   });
   
@@ -22,20 +23,71 @@ const LoginScreen = () => {
     confirmPassword: ''
   });
 
-  const handleLoginSubmit = (e) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login data:', loginData);
-    // Add login logic here
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginData.email,
+        password: loginData.password
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        console.log('Login successful:', data);
+        // You can redirect or update app state here
+        window.location.reload(); // Simple reload for now
+      }
+    } catch (error) {
+      setError('An unexpected error occurred');
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSignupSubmit = (e) => {
+  const handleSignupSubmit = async (e) => {
     e.preventDefault();
     if (signupData.password !== signupData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
       return;
     }
-    console.log('Signup data:', signupData);
-    // Add signup logic here
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: signupData.email,
+        password: signupData.password,
+        options: {
+          data: {
+            customer_number: signupData.customerNumber,
+            business_address: signupData.businessAddress,
+            location: signupData.location
+          }
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        console.log('Signup successful:', data);
+        alert('Account created successfully! Please check your email for verification.');
+        setIsSignUp(false); // Switch back to login
+      }
+    } catch (error) {
+      setError('An unexpected error occurred');
+      console.error('Signup error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const togglePasswordVisibility = (field) => {
@@ -62,24 +114,31 @@ const LoginScreen = () => {
           </p>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-800 text-sm">{error}</p>
+          </div>
+        )}
+
         {/* Form Container */}
         <div className="bg-white rounded-xl shadow-xl p-8">
           {!isSignUp ? (
             /* Login Form */
             <form className="space-y-6" onSubmit={handleLoginSubmit}>
               <div>
-                <label htmlFor="customerNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                  Customer Number
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
                 </label>
                 <input
-                  id="customerNumber"
-                  name="customerNumber"
-                  type="text"
+                  id="email"
+                  name="email"
+                  type="email"
                   required
-                  value={loginData.customerNumber}
-                  onChange={(e) => setLoginData({...loginData, customerNumber: e.target.value})}
+                  value={loginData.email}
+                  onChange={(e) => setLoginData({...loginData, email: e.target.value})}
                   className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-linde-500 focus:border-linde-500 focus:z-10 sm:text-sm"
-                  placeholder="Enter your customer number"
+                  placeholder="Enter your email address"
                 />
               </div>
 
@@ -115,9 +174,10 @@ const LoginScreen = () => {
               <div>
                 <button
                   type="submit"
-                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-linde-600 hover:bg-linde-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-linde-500 transition duration-150 ease-in-out"
+                  disabled={loading}
+                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-linde-600 hover:bg-linde-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-linde-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Sign In
+                  {loading ? 'Signing In...' : 'Sign In'}
                 </button>
               </div>
 
@@ -259,9 +319,10 @@ const LoginScreen = () => {
               <div>
                 <button
                   type="submit"
-                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-linde-600 hover:bg-linde-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-linde-500 transition duration-150 ease-in-out"
+                  disabled={loading}
+                  className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-linde-600 hover:bg-linde-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-linde-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Create Account
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </div>
 
