@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import LoginScreen from './components/LoginScreen';
-import SupabaseTest from './components/SupabaseTest';
-import Page from './App.jsx';
+import MyOrdersScreen from './components/MyOrdersScreen';
 import { supabase } from './utils/supabase.js';
 
 function App() {
@@ -33,22 +32,10 @@ function App() {
 
   return (
     <div className="App">
-      <SupabaseTest />
       {!isAuthenticated ? (
         <LoginScreen />
       ) : (
-        <div>
-          <div className="bg-linde-600 text-white p-4 flex justify-between items-center">
-            <h1 className="text-xl font-bold">Welcome, {user?.email}</h1>
-            <button
-              onClick={handleSignOut}
-              className="bg-linde-700 hover:bg-linde-800 px-4 py-2 rounded-lg text-sm"
-            >
-              Sign Out
-            </button>
-          </div>
-          <Page />
-        </div>
+        <MyOrdersScreen user={user} onSignOut={handleSignOut} />
       )}
     </div>
   );
