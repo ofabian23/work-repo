@@ -1,0 +1,89 @@
+{
+  "id": "operating-room",
+  "slug": "operating-room",
+  "title": {
+    "es": "Sala de operaciones",
+    "en": "Operating room"
+  },
+  "description": {
+    "es": "Un entorno donde la infraestructura debe funcionar sin interrupciones.",
+    "en": "An environment where infrastructure must work without interruption."
+  },
+  "background": {
+    "src": "/scenes/placeholder/operating-room-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una sala de operaciones con salidas de gases en el techo.",
+      "en": "Isometric illustration of an operating room with ceiling-mounted gas outlets."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "or-gas-outlets",
+      "type": "information",
+      "x": 50,
+      "y": 26,
+      "label": {
+        "es": "Salidas de gases",
+        "en": "Gas outlets"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre salidas y sistemas de distribución de gases en la sala de operaciones",
+        "en": "Information about gas outlets and distribution systems in the operating room"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["modernize-infrastructure", "patient-safety"],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Salidas y distribución",
+          "en": "Outlets and distribution"
+        },
+        "body": {
+          "es": "Las salidas de gases medicinales y su red de distribución forman parte de la infraestructura que el equipo quirúrgico necesita en cada procedimiento.",
+          "en": "Medical gas outlets and their distribution network are part of the infrastructure the surgical team needs in every procedure."
+        },
+        "bullets": [
+          {
+            "es": "Inspección y mantenimiento",
+            "en": "Inspection and maintenance"
+          },
+          {
+            "es": "Documentación",
+            "en": "Documentation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "or-pipeline",
+      "type": "solution",
+      "x": 30,
+      "y": 66,
+      "label": {
+        "es": "Infraestructura de tuberías",
+        "en": "Pipeline infrastructure"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de infraestructura de tuberías de gases medicinales",
+        "en": "View medical gas pipeline infrastructure solutions"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["modernize-infrastructure", "compliance-readiness"],
+        "solutionIds": ["pipeline-infrastructure", "compliance-documentation"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["pipeline-infrastructure", "compliance-documentation"]
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "operating-room"],
+  "validationStatus": "assumed",
+  "sortOrder": 30
+}

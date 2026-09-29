@@ -1,0 +1,166 @@
+[
+  {
+    "id": "executive",
+    "label": { "es": "Alta gerencia", "en": "Executive leadership" },
+    "description": {
+      "es": "Estrategia, crecimiento, sostenibilidad y reducción de riesgos para la organización.",
+      "en": "Strategy, growth, sustainability and risk reduction for the organization."
+    },
+    "icon": "executive",
+    "sortOrder": 10,
+    "suggestedChallengeIds": [
+      "supply-continuity",
+      "emergency-preparedness",
+      "lifecycle-costs",
+      "facility-expansion"
+    ],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "operations-facilities",
+    "label": { "es": "Operaciones e instalaciones", "en": "Operations and facilities" },
+    "description": {
+      "es": "Confiabilidad, infraestructura, planificación de capacidad y mantenimiento.",
+      "en": "Reliability, infrastructure, capacity planning and maintenance."
+    },
+    "icon": "facilities",
+    "sortOrder": 20,
+    "suggestedChallengeIds": [
+      "modernize-infrastructure",
+      "emergency-preparedness",
+      "monitoring-visibility",
+      "facility-expansion"
+    ],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "procurement-supply",
+    "label": { "es": "Compras y cadena de suministro", "en": "Procurement and supply chain" },
+    "description": {
+      "es": "Continuidad, control de inventario, gestión de proveedores y estandarización.",
+      "en": "Continuity, inventory control, vendor management and standardization."
+    },
+    "icon": "supply-chain",
+    "sortOrder": 30,
+    "suggestedChallengeIds": [
+      "supply-continuity",
+      "operational-complexity",
+      "lifecycle-costs",
+      "monitoring-visibility"
+    ],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "clinical-respiratory",
+    "label": { "es": "Clínica y terapia respiratoria", "en": "Clinical and respiratory care" },
+    "description": {
+      "es": "Seguridad del paciente, calidad del cuidado, flujo clínico y disponibilidad de recursos críticos.",
+      "en": "Patient safety, care quality, clinical workflow and availability of critical resources."
+    },
+    "icon": "clinical",
+    "sortOrder": 40,
+    "suggestedChallengeIds": [
+      "patient-safety",
+      "workflow-efficiency",
+      "supply-continuity",
+      "care-outside-hospital"
+    ],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "quality-compliance",
+    "label": {
+      "es": "Calidad, seguridad, riesgo y cumplimiento",
+      "en": "Quality, safety, risk and compliance"
+    },
+    "description": {
+      "es": "Seguridad, acreditación, mitigación de riesgos, estándares y documentación.",
+      "en": "Safety, accreditation, risk mitigation, standards and documentation."
+    },
+    "icon": "compliance",
+    "sortOrder": 50,
+    "suggestedChallengeIds": [
+      "compliance-readiness",
+      "patient-safety",
+      "staff-safety",
+      "emergency-preparedness"
+    ],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "finance",
+    "label": { "es": "Finanzas y reembolsos", "en": "Finance and reimbursement" },
+    "description": {
+      "es": "Manejo de costos, eficiencia operacional y sostenibilidad financiera.",
+      "en": "Cost management, operational efficiency and financial sustainability."
+    },
+    "icon": "finance",
+    "sortOrder": 60,
+    "suggestedChallengeIds": ["lifecycle-costs", "operational-complexity", "workflow-efficiency"],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "technology-biomed",
+    "label": {
+      "es": "Tecnología, biomédica y transformación digital",
+      "en": "Technology, biomedical and digital transformation"
+    },
+    "description": {
+      "es": "Monitoreo, automatización, visibilidad, analítica y modernización digital.",
+      "en": "Monitoring, automation, visibility, analytics and digital modernization."
+    },
+    "icon": "technology",
+    "sortOrder": 70,
+    "suggestedChallengeIds": ["monitoring-visibility", "modernize-infrastructure", "workflow-efficiency"],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "ambulatory-homecare",
+    "label": { "es": "Cuidado ambulatorio y en el hogar", "en": "Ambulatory care and homecare" },
+    "description": {
+      "es": "Continuidad del cuidado fuera del hospital, logística y apoyo a pacientes.",
+      "en": "Continuity of care outside the hospital, logistics and patient support."
+    },
+    "icon": "homecare",
+    "sortOrder": 80,
+    "suggestedChallengeIds": ["care-outside-hospital", "supply-continuity", "operational-complexity"],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "academia-research",
+    "label": { "es": "Academia e investigación", "en": "Academia and research" },
+    "description": {
+      "es": "Operaciones de laboratorio, infraestructura de investigación y educación.",
+      "en": "Laboratory operations, research infrastructure and education."
+    },
+    "icon": "research",
+    "sortOrder": 90,
+    "suggestedChallengeIds": [
+      "supply-continuity",
+      "staff-safety",
+      "facility-expansion",
+      "workflow-efficiency"
+    ],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "government-system",
+    "label": {
+      "es": "Gobierno o sistema de salud",
+      "en": "Government or healthcare-system stakeholder"
+    },
+    "description": {
+      "es": "Preparación de salud pública, estandarización a nivel de sistema y resiliencia.",
+      "en": "Public health preparedness, system-wide standardization and resilience."
+    },
+    "icon": "government",
+    "sortOrder": 100,
+    "suggestedChallengeIds": [
+      "emergency-preparedness",
+      "supply-continuity",
+      "compliance-readiness",
+      "facility-expansion"
+    ],
+    "validationStatus": "assumed"
+  }
+]

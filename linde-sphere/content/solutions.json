@@ -1,0 +1,353 @@
+[
+  {
+    "id": "medical-gas-supply-continuity",
+    "slug": "medical-gas-supply-continuity",
+    "title": {
+      "es": "Continuidad del suministro de gases medicinales",
+      "en": "Medical gas supply continuity"
+    },
+    "summary": {
+      "es": "Opciones de suministro a granel y en cilindros pensadas para mantener disponibles los gases medicinales que el hospital necesita.",
+      "en": "Bulk and cylinder supply options intended to keep the medical gases a hospital needs available."
+    },
+    "nextStep": {
+      "es": "Revise con un especialista su perfil de consumo y sus puntos críticos de suministro.",
+      "en": "Review your consumption profile and critical supply points with a specialist."
+    },
+    "relatedChallengeIds": ["supply-continuity", "emergency-preparedness"],
+    "relatedSceneIds": ["gas-plant", "campus"],
+    "digitalAssetIds": ["asset-medical-gas-overview"],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "supply-level-monitoring",
+    "slug": "supply-level-monitoring",
+    "title": {
+      "es": "Monitoreo de niveles de suministro",
+      "en": "Supply level monitoring"
+    },
+    "summary": {
+      "es": "Herramientas para conocer el estado de los tanques y el suministro, y así planificar reabastecimientos a tiempo.",
+      "en": "Tools to understand tank and supply status so replenishment can be planned in time."
+    },
+    "nextStep": {
+      "es": "Identifique con un especialista qué puntos de suministro se beneficiarían de mayor visibilidad.",
+      "en": "Identify with a specialist which supply points would benefit from more visibility."
+    },
+    "relatedChallengeIds": ["monitoring-visibility", "supply-continuity"],
+    "relatedSceneIds": ["gas-plant", "utilities", "icu"],
+    "digitalAssetIds": [],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "cylinder-inventory-management",
+    "slug": "cylinder-inventory-management",
+    "title": {
+      "es": "Manejo de inventario de cilindros",
+      "en": "Cylinder inventory management"
+    },
+    "summary": {
+      "es": "Apoyo para organizar, localizar y reponer cilindros en las áreas de cuidado.",
+      "en": "Support for organizing, locating and replenishing cylinders across care areas."
+    },
+    "nextStep": {
+      "es": "Converse sobre cómo se manejan hoy los cilindros en sus pisos de hospitalización.",
+      "en": "Discuss how cylinders are handled on your inpatient floors today."
+    },
+    "relatedChallengeIds": ["operational-complexity", "workflow-efficiency", "staff-safety"],
+    "relatedSceneIds": ["patient-care", "utilities"],
+    "digitalAssetIds": [],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "pipeline-infrastructure",
+    "slug": "pipeline-infrastructure",
+    "title": {
+      "es": "Infraestructura de tuberías y salidas de gases medicinales",
+      "en": "Medical gas pipeline and outlet infrastructure"
+    },
+    "summary": {
+      "es": "Apoyo para el diseño, la instalación y el mantenimiento de redes de distribución y salidas de gases medicinales.",
+      "en": "Support for the design, installation and maintenance of medical gas distribution networks and outlets."
+    },
+    "nextStep": {
+      "es": "Programe una conversación sobre sus proyectos de renovación o expansión.",
+      "en": "Schedule a conversation about your renovation or expansion projects."
+    },
+    "relatedChallengeIds": ["modernize-infrastructure", "facility-expansion", "patient-safety"],
+    "relatedSceneIds": ["utilities", "operating-room", "icu"],
+    "digitalAssetIds": ["asset-medical-gas-overview"],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "emergency-backup-planning",
+    "slug": "emergency-backup-planning",
+    "title": {
+      "es": "Planificación de suministro de respaldo y emergencias",
+      "en": "Backup and emergency supply planning"
+    },
+    "summary": {
+      "es": "Planificación de fuentes de respaldo y procedimientos para mantener el suministro durante huracanes u otras interrupciones.",
+      "en": "Planning of backup sources and procedures to maintain supply during hurricanes or other disruptions."
+    },
+    "nextStep": {
+      "es": "Revise su plan de contingencia de gases medicinales con un especialista.",
+      "en": "Review your medical gas contingency plan with a specialist."
+    },
+    "relatedChallengeIds": ["emergency-preparedness", "supply-continuity"],
+    "relatedSceneIds": ["gas-plant", "emergency"],
+    "digitalAssetIds": ["asset-emergency-planning-checklist"],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "compliance-documentation",
+    "slug": "compliance-documentation",
+    "title": {
+      "es": "Apoyo en pruebas, inspecciones y documentación",
+      "en": "Testing, inspection and documentation support"
+    },
+    "summary": {
+      "es": "Apoyo para mantener al día las pruebas, inspecciones y registros de los sistemas de gases medicinales.",
+      "en": "Support for keeping medical gas system testing, inspections and records up to date."
+    },
+    "nextStep": {
+      "es": "Converse sobre su próxima auditoría o acreditación.",
+      "en": "Discuss your next audit or accreditation."
+    },
+    "relatedChallengeIds": ["compliance-readiness", "patient-safety"],
+    "relatedSceneIds": ["utilities", "operating-room"],
+    "digitalAssetIds": [],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "clinical-gases-critical-care",
+    "slug": "clinical-gases-critical-care",
+    "title": {
+      "es": "Gases clínicos para áreas críticas y quirúrgicas",
+      "en": "Clinical gases for critical and surgical areas"
+    },
+    "summary": {
+      "es": "Gases medicinales utilizados en emergencias, cuidado intensivo y salas de operaciones.",
+      "en": "Medical gases used in emergency, intensive care and operating rooms."
+    },
+    "nextStep": {
+      "es": "Revise con un especialista las necesidades de sus áreas críticas.",
+      "en": "Review the needs of your critical areas with a specialist."
+    },
+    "relatedChallengeIds": ["patient-safety", "supply-continuity", "workflow-efficiency"],
+    "relatedSceneIds": ["icu", "operating-room", "emergency"],
+    "digitalAssetIds": [],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "laboratory-specialty-gases",
+    "slug": "laboratory-specialty-gases",
+    "title": {
+      "es": "Gases de laboratorio y especialidad",
+      "en": "Laboratory and specialty gases"
+    },
+    "summary": {
+      "es": "Gases para equipos analíticos y aplicaciones de laboratorio clínico o de investigación.",
+      "en": "Gases for analytical instruments and clinical or research laboratory applications."
+    },
+    "nextStep": {
+      "es": "Comparta con un especialista los equipos y aplicaciones de su laboratorio.",
+      "en": "Share your laboratory's instruments and applications with a specialist."
+    },
+    "relatedChallengeIds": ["workflow-efficiency", "supply-continuity"],
+    "relatedSceneIds": ["laboratory"],
+    "digitalAssetIds": [],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "cryogenic-storage",
+    "slug": "cryogenic-storage",
+    "title": {
+      "es": "Almacenamiento criogénico y preservación de muestras",
+      "en": "Cryogenic storage and sample preservation"
+    },
+    "summary": {
+      "es": "Apoyo para el almacenamiento a muy baja temperatura de muestras biológicas y materiales de investigación.",
+      "en": "Support for ultra-low-temperature storage of biological samples and research materials."
+    },
+    "nextStep": {
+      "es": "Converse sobre sus necesidades actuales y futuras de almacenamiento.",
+      "en": "Discuss your current and future storage needs."
+    },
+    "relatedChallengeIds": ["supply-continuity", "facility-expansion"],
+    "relatedSceneIds": ["laboratory"],
+    "digitalAssetIds": [],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "homecare-respiratory-services",
+    "slug": "homecare-respiratory-services",
+    "title": {
+      "es": "Servicios respiratorios en el hogar",
+      "en": "Homecare respiratory services"
+    },
+    "summary": {
+      "es": "Servicios para dar continuidad a la terapia respiratoria de los pacientes después del alta.",
+      "en": "Services to continue patients' respiratory therapy after discharge."
+    },
+    "nextStep": {
+      "es": "Explore con un especialista cómo coordinar el alta de pacientes con terapia respiratoria.",
+      "en": "Explore with a specialist how to coordinate discharge for patients on respiratory therapy."
+    },
+    "relatedChallengeIds": ["care-outside-hospital", "workflow-efficiency"],
+    "relatedSceneIds": ["patient-care"],
+    "digitalAssetIds": ["asset-homecare-guide"],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "gas-safety-training",
+    "slug": "gas-safety-training",
+    "title": {
+      "es": "Capacitación en manejo seguro de gases",
+      "en": "Safe gas handling training"
+    },
+    "summary": {
+      "es": "Capacitación para el personal sobre el manejo, almacenamiento y transporte seguro de gases.",
+      "en": "Training for staff on safe handling, storage and transport of gases."
+    },
+    "nextStep": {
+      "es": "Identifique los equipos de trabajo que se beneficiarían de capacitación.",
+      "en": "Identify the teams that would benefit from training."
+    },
+    "relatedChallengeIds": ["staff-safety", "compliance-readiness"],
+    "relatedSceneIds": ["utilities", "patient-care"],
+    "digitalAssetIds": [],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "lifecycle-cost-review",
+    "slug": "lifecycle-cost-review",
+    "title": {
+      "es": "Revisión del ciclo de vida del suministro y la infraestructura",
+      "en": "Supply and infrastructure lifecycle review"
+    },
+    "summary": {
+      "es": "Una revisión conjunta del suministro y la infraestructura para entender necesidades y prioridades a lo largo del tiempo.",
+      "en": "A joint review of supply and infrastructure to understand needs and priorities over time."
+    },
+    "nextStep": {
+      "es": "Solicite una conversación para revisar sus prioridades de inversión.",
+      "en": "Request a conversation to review your investment priorities."
+    },
+    "relatedChallengeIds": ["lifecycle-costs", "operational-complexity", "modernize-infrastructure"],
+    "relatedSceneIds": ["campus", "utilities"],
+    "digitalAssetIds": [],
+    "isFallback": false,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  },
+  {
+    "id": "talk-to-specialist",
+    "slug": "talk-to-specialist",
+    "title": {
+      "es": "Converse con un especialista",
+      "en": "Talk with a specialist"
+    },
+    "summary": {
+      "es": "Cada organización es diferente. Un especialista puede ayudarle a identificar oportunidades relevantes para sus prioridades.",
+      "en": "Every organization is different. A specialist can help you identify opportunities relevant to your priorities."
+    },
+    "nextStep": {
+      "es": "Converse con un especialista para evaluar su situación.",
+      "en": "Talk with a specialist to assess your situation."
+    },
+    "relatedChallengeIds": [],
+    "relatedSceneIds": [],
+    "digitalAssetIds": [],
+    "isFallback": true,
+    "validationStatus": "assumed",
+    "market": "global-reference",
+    "internalNotes": "DEMONSTRATIVE ASSUMPTION - not a confirmed Puerto Rico offering. Requires Puerto Rico sales validation of scope, naming and local availability before production use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
+    "requiresSalesValidation": true
+  }
+]

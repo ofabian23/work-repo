@@ -1,0 +1,103 @@
+{
+  "id": "gas-plant",
+  "slug": "gas-plant",
+  "title": {
+    "es": "Planta de gases medicinales",
+    "en": "Medical-gas plant"
+  },
+  "description": {
+    "es": "El origen del suministro de gases medicinales de todo el hospital.",
+    "en": "The source of medical gas supply for the entire hospital."
+  },
+  "background": {
+    "src": "/scenes/placeholder/gas-plant-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una planta de gases medicinales con tanque de almacenamiento.",
+      "en": "Isometric illustration of a medical-gas plant with a storage tank."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [
+    {
+      "src": "/scenes/placeholder/gas-plant-foreground.svg",
+      "alt": {
+        "es": "Cerca y señalización en primer plano.",
+        "en": "Fence and signage in the foreground."
+      },
+      "depth": 0.35,
+      "assetStatus": "placeholder"
+    }
+  ],
+  "hotspots": [
+    {
+      "id": "gas-plant-bulk-tank",
+      "type": "solution",
+      "x": 40,
+      "y": 36,
+      "width": 24,
+      "height": 18,
+      "label": {
+        "es": "Tanque de almacenamiento",
+        "en": "Storage tank"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de continuidad y monitoreo del suministro a granel",
+        "en": "View bulk supply continuity and monitoring solutions"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["supply-continuity", "monitoring-visibility"],
+        "solutionIds": ["medical-gas-supply-continuity", "supply-level-monitoring"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["medical-gas-supply-continuity", "supply-level-monitoring"]
+    },
+    {
+      "id": "gas-plant-backup",
+      "type": "solution",
+      "x": 72,
+      "y": 64,
+      "label": {
+        "es": "Suministro de respaldo",
+        "en": "Backup supply"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de planificación de suministro de respaldo y emergencias",
+        "en": "View backup and emergency supply planning solutions"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["emergency-preparedness"],
+        "solutionIds": ["emergency-backup-planning"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["emergency-backup-planning"]
+    },
+    {
+      "id": "gas-plant-to-utilities",
+      "type": "navigation",
+      "x": 18,
+      "y": 82,
+      "label": {
+        "es": "Área de utilidades e infraestructura",
+        "en": "Utility and infrastructure area"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Área de utilidades e infraestructura",
+        "en": "Go to: Utility and infrastructure area"
+      },
+      "visualImportance": "tertiary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "utilities"
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "gas-plant"],
+  "validationStatus": "assumed",
+  "sortOrder": 60
+}

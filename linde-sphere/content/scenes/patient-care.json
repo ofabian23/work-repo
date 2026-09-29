@@ -1,0 +1,110 @@
+{
+  "id": "patient-care",
+  "slug": "patient-care",
+  "title": {
+    "es": "Área de cuidado al paciente",
+    "en": "Patient-care area"
+  },
+  "description": {
+    "es": "Pisos de hospitalización donde el personal atiende pacientes todo el día.",
+    "en": "Inpatient floors where staff care for patients around the clock."
+  },
+  "background": {
+    "src": "/scenes/placeholder/patient-care-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de un piso de hospitalización con habitaciones y estación de enfermería.",
+      "en": "Isometric illustration of an inpatient floor with rooms and a nursing station."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "patient-care-cylinders",
+      "type": "information",
+      "x": 26,
+      "y": 40,
+      "label": {
+        "es": "Manejo de cilindros",
+        "en": "Cylinder handling"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre el manejo de cilindros en los pisos de hospitalización",
+        "en": "Information about cylinder handling on inpatient floors"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["staff-safety", "operational-complexity"],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Cilindros en los pisos",
+          "en": "Cylinders on the floors"
+        },
+        "body": {
+          "es": "Mover, almacenar y localizar cilindros consume tiempo del personal y requiere prácticas de manejo seguras.",
+          "en": "Moving, storing and locating cylinders takes staff time and requires safe handling practices."
+        },
+        "bullets": [
+          {
+            "es": "Almacenamiento seguro",
+            "en": "Safe storage"
+          },
+          {
+            "es": "Localización de inventario",
+            "en": "Locating inventory"
+          }
+        ]
+      }
+    },
+    {
+      "id": "patient-care-inventory",
+      "type": "solution",
+      "x": 70,
+      "y": 36,
+      "label": {
+        "es": "Inventario de cilindros",
+        "en": "Cylinder inventory"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de manejo de inventario de cilindros",
+        "en": "View cylinder inventory management solutions"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["operational-complexity", "workflow-efficiency"],
+        "solutionIds": ["cylinder-inventory-management"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["cylinder-inventory-management"]
+    },
+    {
+      "id": "patient-care-discharge",
+      "type": "solution",
+      "x": 52,
+      "y": 72,
+      "label": {
+        "es": "Del hospital al hogar",
+        "en": "Hospital to home"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones para la continuidad del cuidado respiratorio en el hogar",
+        "en": "View solutions for continuity of respiratory care at home"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["care-outside-hospital"],
+        "solutionIds": ["homecare-respiratory-services"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["homecare-respiratory-services"]
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "patient-care"],
+  "validationStatus": "assumed",
+  "sortOrder": 40
+}

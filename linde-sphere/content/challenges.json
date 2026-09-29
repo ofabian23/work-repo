@@ -1,0 +1,134 @@
+[
+  {
+    "id": "supply-continuity",
+    "label": { "es": "Mejorar la continuidad del suministro", "en": "Improve supply continuity" },
+    "description": {
+      "es": "Mantener disponibles los recursos críticos cuando y donde se necesitan.",
+      "en": "Keep critical resources available when and where they are needed."
+    },
+    "icon": "continuity",
+    "sortOrder": 10,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "emergency-preparedness",
+    "label": { "es": "Prepararse para emergencias", "en": "Prepare for emergencies" },
+    "description": {
+      "es": "Planificar para huracanes, interrupciones y aumentos repentinos de pacientes.",
+      "en": "Plan for hurricanes, disruptions and sudden patient surges."
+    },
+    "icon": "emergency",
+    "sortOrder": 20,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "modernize-infrastructure",
+    "label": { "es": "Modernizar la infraestructura", "en": "Modernize infrastructure" },
+    "description": {
+      "es": "Actualizar sistemas e instalaciones que sostienen la operación clínica.",
+      "en": "Update the systems and facilities that support clinical operations."
+    },
+    "icon": "infrastructure",
+    "sortOrder": 30,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "monitoring-visibility",
+    "label": { "es": "Mejorar la visibilidad del monitoreo", "en": "Improve monitoring visibility" },
+    "description": {
+      "es": "Saber a tiempo el estado de los recursos y sistemas críticos.",
+      "en": "Know the status of critical resources and systems in time to act."
+    },
+    "icon": "monitoring",
+    "sortOrder": 40,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "facility-expansion",
+    "label": { "es": "Apoyar la expansión de instalaciones", "en": "Support facility expansion" },
+    "description": {
+      "es": "Planificar nuevas áreas, camas o edificios con los servicios que requieren.",
+      "en": "Plan new areas, beds or buildings with the services they require."
+    },
+    "icon": "expansion",
+    "sortOrder": 50,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "operational-complexity",
+    "label": { "es": "Reducir la complejidad operacional", "en": "Reduce operational complexity" },
+    "description": {
+      "es": "Simplificar procesos, proveedores y tareas manuales repetitivas.",
+      "en": "Simplify processes, vendors and repetitive manual tasks."
+    },
+    "icon": "simplify",
+    "sortOrder": 60,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "patient-safety",
+    "label": { "es": "Mejorar la seguridad del paciente", "en": "Improve patient safety" },
+    "description": {
+      "es": "Reducir riesgos en los procesos que afectan directamente al paciente.",
+      "en": "Reduce risk in the processes that directly affect patients."
+    },
+    "icon": "patient-safety",
+    "sortOrder": 70,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "staff-safety",
+    "label": { "es": "Mejorar la seguridad del personal", "en": "Improve staff safety" },
+    "description": {
+      "es": "Proteger al personal en el manejo de equipos y materiales.",
+      "en": "Protect staff when handling equipment and materials."
+    },
+    "icon": "staff-safety",
+    "sortOrder": 80,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "compliance-readiness",
+    "label": { "es": "Fortalecer la preparación regulatoria", "en": "Strengthen compliance readiness" },
+    "description": {
+      "es": "Mantener la documentación y las prácticas listas para inspecciones y acreditaciones.",
+      "en": "Keep documentation and practices ready for inspections and accreditation."
+    },
+    "icon": "compliance",
+    "sortOrder": 90,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "lifecycle-costs",
+    "label": { "es": "Controlar los costos del ciclo de vida", "en": "Control lifecycle costs" },
+    "description": {
+      "es": "Entender el costo total de sistemas y suministros a lo largo del tiempo.",
+      "en": "Understand the total cost of systems and supplies over time."
+    },
+    "icon": "lifecycle",
+    "sortOrder": 100,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "workflow-efficiency",
+    "label": { "es": "Mejorar la eficiencia del flujo de trabajo", "en": "Improve workflow efficiency" },
+    "description": {
+      "es": "Liberar tiempo del personal clínico y operacional para tareas de mayor valor.",
+      "en": "Free clinical and operations staff time for higher-value work."
+    },
+    "icon": "workflow",
+    "sortOrder": 110,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "care-outside-hospital",
+    "label": { "es": "Apoyar el cuidado fuera del hospital", "en": "Support care outside the hospital" },
+    "description": {
+      "es": "Dar continuidad al cuidado del paciente después del alta y en el hogar.",
+      "en": "Continue patient care after discharge and at home."
+    },
+    "icon": "home",
+    "sortOrder": 120,
+    "validationStatus": "assumed"
+  }
+]

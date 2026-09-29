@@ -1,0 +1,110 @@
+{
+  "id": "utilities",
+  "slug": "utilities",
+  "title": {
+    "es": "Área de utilidades e infraestructura",
+    "en": "Utility and infrastructure area"
+  },
+  "description": {
+    "es": "Los sistemas detrás de las paredes que mantienen el hospital funcionando.",
+    "en": "The systems behind the walls that keep the hospital running."
+  },
+  "background": {
+    "src": "/scenes/placeholder/utilities-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de un cuarto de utilidades con tuberías, válvulas y paneles.",
+      "en": "Isometric illustration of a utility room with pipes, valves and panels."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "utilities-manifold-room",
+      "type": "information",
+      "x": 30,
+      "y": 34,
+      "label": {
+        "es": "Cuarto de manifolds",
+        "en": "Manifold room"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre inspecciones y documentación del cuarto de manifolds",
+        "en": "Information about manifold room inspections and documentation"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["compliance-readiness"],
+        "solutionIds": ["compliance-documentation"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Inspecciones y documentación",
+          "en": "Inspections and documentation"
+        },
+        "body": {
+          "es": "Los sistemas de gases medicinales requieren inspecciones periódicas y registros actualizados para las auditorías y acreditaciones.",
+          "en": "Medical gas systems require periodic inspections and up-to-date records for audits and accreditation."
+        },
+        "bullets": [
+          {
+            "es": "Registros de inspección",
+            "en": "Inspection records"
+          },
+          {
+            "es": "Preparación para auditorías",
+            "en": "Audit readiness"
+          }
+        ]
+      }
+    },
+    {
+      "id": "utilities-safety-training",
+      "type": "solution",
+      "x": 68,
+      "y": 46,
+      "label": {
+        "es": "Capacitación en seguridad",
+        "en": "Safety training"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de capacitación en manejo seguro de gases",
+        "en": "View safe gas handling training solutions"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["staff-safety"],
+        "solutionIds": ["gas-safety-training"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["gas-safety-training"]
+    },
+    {
+      "id": "utilities-lifecycle",
+      "type": "solution",
+      "x": 46,
+      "y": 74,
+      "label": {
+        "es": "Ciclo de vida de la infraestructura",
+        "en": "Infrastructure lifecycle"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de revisión del ciclo de vida del suministro y la infraestructura",
+        "en": "View supply and infrastructure lifecycle review solutions"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["lifecycle-costs", "modernize-infrastructure"],
+        "solutionIds": ["lifecycle-cost-review", "pipeline-infrastructure"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["lifecycle-cost-review", "pipeline-infrastructure"]
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "utilities"],
+  "validationStatus": "assumed",
+  "sortOrder": 70
+}

@@ -1,0 +1,89 @@
+{
+  "id": "icu",
+  "slug": "icu",
+  "title": {
+    "es": "Unidad de cuidado intensivo",
+    "en": "Intensive care unit"
+  },
+  "description": {
+    "es": "Donde la disponibilidad continua de recursos críticos es esencial.",
+    "en": "Where continuous availability of critical resources is essential."
+  },
+  "background": {
+    "src": "/scenes/placeholder/icu-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una unidad de cuidado intensivo con camas y equipos de monitoreo.",
+      "en": "Isometric illustration of an intensive care unit with beds and monitoring equipment."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "icu-bedside-supply",
+      "type": "information",
+      "x": 30,
+      "y": 44,
+      "label": {
+        "es": "Suministro junto a la cama",
+        "en": "Bedside supply"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre la disponibilidad de gases medicinales junto a la cama",
+        "en": "Information about bedside availability of medical gases"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["patient-safety", "supply-continuity"],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Disponibilidad junto a la cama",
+          "en": "Availability at the bedside"
+        },
+        "body": {
+          "es": "Los pacientes en cuidado intensivo dependen de un suministro estable de gases medicinales. Conocer el estado del suministro permite actuar antes de que surja un problema.",
+          "en": "Intensive care patients depend on a stable supply of medical gases. Knowing the supply status makes it possible to act before a problem arises."
+        },
+        "bullets": [
+          {
+            "es": "Continuidad del suministro",
+            "en": "Supply continuity"
+          },
+          {
+            "es": "Visibilidad del estado",
+            "en": "Status visibility"
+          }
+        ]
+      }
+    },
+    {
+      "id": "icu-clinical-gases",
+      "type": "solution",
+      "x": 68,
+      "y": 62,
+      "label": {
+        "es": "Gases clínicos y monitoreo",
+        "en": "Clinical gases and monitoring"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de gases clínicos y monitoreo para cuidado intensivo",
+        "en": "View clinical gas and monitoring solutions for intensive care"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["patient-safety", "monitoring-visibility"],
+        "solutionIds": ["clinical-gases-critical-care", "supply-level-monitoring"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["clinical-gases-critical-care", "supply-level-monitoring"]
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "icu"],
+  "validationStatus": "assumed",
+  "sortOrder": 20
+}

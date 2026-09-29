@@ -1,6 +1,6 @@
 # Linde Sphere — Project Brief
 
-> **Product name:** Linde Sphere (internal codename: *Mockup Vision*)
+> **Product name:** Linde Sphere (internal codename: _Mockup Vision_)
 > **Owner:** Orlando Rodríguez Nieto
 > **Document status:** Living document — Foundational scope v1.0
 > **Related documents:** [ARCHITECTURE.md](./ARCHITECTURE.md) · [DECISIONS.md](./DECISIONS.md) · [TASKS.md](./TASKS.md) · [CONTENT_VALIDATION.md](./CONTENT_VALIDATION.md)
@@ -46,17 +46,17 @@ ATTRACT → IDENTIFY THE VISITOR → DISCOVER NEEDS → GUIDE EXPLORATION → GE
        → DEMONSTRATE VALUE → CAPTURE THE LEAD → EMAIL A PERSONALIZED REPORT → RESET
 ```
 
-| Stage | Purpose | Visitor sees | Exit condition |
-|---|---|---|---|
-| Attract | Stop passers-by | Large healthcare visual, motion cue, minimal text, language toggle (ES default / EN) | First touch |
-| Identify | Learn who the visitor is | Three entry paths; role selection | Role chosen (or skipped via explore path) |
-| Discover | Learn priorities | Challenge/objective selection, optional facility type | ≥ 1 challenge or enough exploration signals |
-| Explore | Educate and refine | Hospital campus → environment scenes → hotspots → panels | Visitor chooses to view recommendations |
-| Recommend | Show relevance | Top solution categories, "why this appeared", related environments, next step | Visitor requests the report |
-| Demonstrate value | Motivate conversion | "We found opportunities relevant to your priorities." + what the report contains | Visitor opens the lead form |
-| Capture | Collect minimum business contact data | Short form + two separate consent choices | Valid submission stored |
-| Follow-up | Deliver value, enable sales | Confirmation screen; report emailed (queued with retry) | Auto-reset |
-| Reset | Protect privacy, maximize throughput | Back to Attract | Client state fully cleared |
+| Stage             | Purpose                               | Visitor sees                                                                         | Exit condition                              |
+| ----------------- | ------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------- |
+| Attract           | Stop passers-by                       | Large healthcare visual, motion cue, minimal text, language toggle (ES default / EN) | First touch                                 |
+| Identify          | Learn who the visitor is              | Three entry paths; role selection                                                    | Role chosen (or skipped via explore path)   |
+| Discover          | Learn priorities                      | Challenge/objective selection, optional facility type                                | ≥ 1 challenge or enough exploration signals |
+| Explore           | Educate and refine                    | Hospital campus → environment scenes → hotspots → panels                             | Visitor chooses to view recommendations     |
+| Recommend         | Show relevance                        | Top solution categories, "why this appeared", related environments, next step        | Visitor requests the report                 |
+| Demonstrate value | Motivate conversion                   | "We found opportunities relevant to your priorities." + what the report contains     | Visitor opens the lead form                 |
+| Capture           | Collect minimum business contact data | Short form + two separate consent choices                                            | Valid submission stored                     |
+| Follow-up         | Deliver value, enable sales           | Confirmation screen; report emailed (queued with retry)                              | Auto-reset                                  |
+| Reset             | Protect privacy, maximize throughput  | Back to Attract                                                                      | Client state fully cleared                  |
 
 ---
 
@@ -64,11 +64,11 @@ ATTRACT → IDENTIFY THE VISITOR → DISCOVER NEEDS → GUIDE EXPLORATION → GE
 
 All three paths converge on the same recommendation engine and the same lead flow.
 
-| Path | Label (ES / EN) | Flow |
-|---|---|---|
-| **A — Role** | "Trabajo en…" / "I work in…" | Role → challenges (multi-select, max 3) → optional facility type → **preliminary recommendations** → optional exploration to refine |
-| **B — Challenge** | "Necesito…" / "I need to…" | Challenges → role → optional facility type → **preliminary recommendations** → optional exploration |
-| **C — Explore** | "Explorar el hospital" / "Explore the hospital" | Hospital campus → scenes → hotspots; a light, skippable "help us tailor this" step (role + challenges) is offered before recommendations |
+| Path              | Label (ES / EN)                                 | Flow                                                                                                                                     |
+| ----------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **A — Role**      | "Trabajo en…" / "I work in…"                    | Role → challenges (multi-select, max 3) → optional facility type → **preliminary recommendations** → optional exploration to refine      |
+| **B — Challenge** | "Necesito…" / "I need to…"                      | Challenges → role → optional facility type → **preliminary recommendations** → optional exploration                                      |
+| **C — Explore**   | "Explorar el hospital" / "Explore the hospital" | Hospital campus → scenes → hotspots; a light, skippable "help us tailor this" step (role + challenges) is offered before recommendations |
 
 **Quick path:** Role + challenges → preliminary recommendations → report request. Target ≤ 90 s to first recommendations.
 **Discovery path:** Any path + exploration of one or more environments, which refines recommendations.
@@ -81,18 +81,18 @@ The visitor is **never** required to explore every area.
 
 Selectable in "I work in…" and reused as the lead form's job function.
 
-| ID | Persona (EN) | Persona (ES, draft) | Typical interests |
-|---|---|---|---|
-| `executive` | Executive leadership | Alta gerencia | Sustainability, growth, risk reduction, organizational performance, strategic planning |
-| `operations-facilities` | Operations and facilities | Operaciones e instalaciones | Reliability, infrastructure, capacity planning, emergency preparedness, maintenance |
-| `procurement-supply` | Procurement and supply chain | Compras y cadena de suministro | Continuity, inventory control, vendor management, standardization, cost control |
-| `clinical-respiratory` | Clinical and respiratory care | Clínica y terapia respiratoria | Patient safety, care quality, clinical workflow, availability of critical resources |
-| `quality-compliance` | Quality, safety, risk, and compliance | Calidad, seguridad, riesgo y cumplimiento | Safety, accreditation, risk mitigation, standards, documentation |
-| `finance` | Finance and reimbursement | Finanzas y reembolsos | Cost management, operational efficiency, financial sustainability |
-| `technology-biomed` | Technology, biomedical, and digital transformation | Tecnología, biomédica y transformación digital | Monitoring, automation, visibility, analytics, digital modernization |
-| `ambulatory-homecare` | Ambulatory care and homecare | Cuidado ambulatorio y en el hogar | Care outside the hospital, patient continuity, logistics |
-| `academia-research` | Academia and research | Academia e investigación | Laboratory operations, research infrastructure, education |
-| `government-system` | Government or healthcare-system stakeholder | Gobierno o sistema de salud | Public health preparedness, system-wide standardization, resilience |
+| ID                      | Persona (EN)                                       | Persona (ES, draft)                            | Typical interests                                                                      |
+| ----------------------- | -------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `executive`             | Executive leadership                               | Alta gerencia                                  | Sustainability, growth, risk reduction, organizational performance, strategic planning |
+| `operations-facilities` | Operations and facilities                          | Operaciones e instalaciones                    | Reliability, infrastructure, capacity planning, emergency preparedness, maintenance    |
+| `procurement-supply`    | Procurement and supply chain                       | Compras y cadena de suministro                 | Continuity, inventory control, vendor management, standardization, cost control        |
+| `clinical-respiratory`  | Clinical and respiratory care                      | Clínica y terapia respiratoria                 | Patient safety, care quality, clinical workflow, availability of critical resources    |
+| `quality-compliance`    | Quality, safety, risk, and compliance              | Calidad, seguridad, riesgo y cumplimiento      | Safety, accreditation, risk mitigation, standards, documentation                       |
+| `finance`               | Finance and reimbursement                          | Finanzas y reembolsos                          | Cost management, operational efficiency, financial sustainability                      |
+| `technology-biomed`     | Technology, biomedical, and digital transformation | Tecnología, biomédica y transformación digital | Monitoring, automation, visibility, analytics, digital modernization                   |
+| `ambulatory-homecare`   | Ambulatory care and homecare                       | Cuidado ambulatorio y en el hogar              | Care outside the hospital, patient continuity, logistics                               |
+| `academia-research`     | Academia and research                              | Academia e investigación                       | Laboratory operations, research infrastructure, education                              |
+| `government-system`     | Government or healthcare-system stakeholder        | Gobierno o sistema de salud                    | Public health preparedness, system-wide standardization, resilience                    |
 
 Spanish labels are drafts and must be reviewed (see CONTENT_VALIDATION.md).
 
@@ -126,22 +126,25 @@ organization · Clinical or research laboratory · Government / public health sy
 
 ## 7. Healthcare environments (Hospital Explorer)
 
-| ID | Environment | Role in explorer |
-|---|---|---|
-| `campus` | Hospital campus | **Hub scene** — entry point linking to all others |
-| `emergency` | Emergency department | Environment scene |
-| `icu` | Intensive care unit | Environment scene |
-| `operating-room` | Operating room | Environment scene |
-| `patient-care` | Patient-care area | Environment scene |
-| `laboratory` | Laboratory | Environment scene |
-| `gas-plant` | Medical-gas plant | Environment scene |
-| `utilities` | Utility and infrastructure area | Environment scene |
+| ID               | Environment                     | Role in explorer                                  |
+| ---------------- | ------------------------------- | ------------------------------------------------- |
+| `campus`         | Hospital campus                 | **Hub scene** — entry point linking to all others |
+| `emergency`      | Emergency department            | Environment scene                                 |
+| `icu`            | Intensive care unit             | Environment scene                                 |
+| `operating-room` | Operating room                  | Environment scene                                 |
+| `patient-care`   | Patient-care area               | Environment scene                                 |
+| `laboratory`     | Laboratory                      | Environment scene                                 |
+| `gas-plant`      | Medical-gas plant               | Environment scene                                 |
+| `utilities`      | Utility and infrastructure area | Environment scene                                 |
 
 Each scene contains **hotspots** of three kinds:
 
-- **Navigate** — moves to another scene with a controlled zoom transition.
-- **Inform** — opens a short, readable content panel about a challenge in that environment.
-- **Recommend** — opens a panel of related solution categories with an "Add to my interests" action.
+- **Navigation** — moves to another scene with a controlled zoom transition.
+- **Information** — opens a short, readable content panel about a challenge in that environment.
+- **Solution** — opens a panel of related solution categories with an "Add to my interests" action.
+
+Hotspot positions use coordinates from 0 to 100 (percent of the scene artwork), so artwork can be
+replaced without code changes.
 
 Opening hotspots and visiting scenes are recommendation signals.
 
@@ -153,7 +156,7 @@ Opening hotspots and visiting scenes are recommendation signals.
 2. Exploration **improves and refines** recommendations.
 3. A persistent but unobtrusive **"Ver mis recomendaciones / View my recommendations"** action appears once minimum information is collected (default: role + ≥ 1 challenge, **or** ≥ 3 hotspot interactions on the explore path — configurable).
 4. After meaningful interaction, a contextual prompt appears once per session:
-   *"Encontramos oportunidades relevantes para sus prioridades." / "We found opportunities relevant to your priorities."*
+   _"Encontramos oportunidades relevantes para sus prioridades." / "We found opportunities relevant to your priorities."_
 5. The visitor is never forced to explore every area.
 6. Both a **quick path** and a **discovery path** are supported.
 7. An **inactivity timer** resets the experience safely ("Are you still there?" countdown first).
@@ -170,6 +173,7 @@ Deterministic, explainable, rules-based. **No generative AI** drives recommendat
 dwell/engagement signals (bucketed and capped) · explicit interests.
 
 **Outputs (visitor-facing):**
+
 - Top recommended **solution categories** (default 3, max 5)
 - **Why it appeared** — human-readable reasons derived from the matched rules
 - Related healthcare environments
@@ -185,18 +189,18 @@ and is **never** exposed to the visitor, the kiosk client, or the visitor's repo
 
 Shown **only after** recommendations have been presented.
 
-| Field | Required | Notes |
-|---|---|---|
-| First name | Yes | |
-| Last name | Yes | |
-| Organization | Yes | |
-| Job role / function | Yes | Pre-filled from selected persona; selectable list, no free text |
-| Business email | Yes | Format-validated; free-mail domains accepted but flagged internally |
-| Phone | No | |
-| Preferred language | Yes | Defaults to current UI language (ES / EN) |
-| Selected interests | Yes (auto) | Pre-filled from challenges + explicit interests; editable chips |
-| Consent: send the requested report | Yes, to receive report | Separate checkbox, unchecked by default |
-| Consent: additional sales follow-up | No | Separate checkbox, unchecked by default |
+| Field                               | Required               | Notes                                                               |
+| ----------------------------------- | ---------------------- | ------------------------------------------------------------------- |
+| First name                          | Yes                    |                                                                     |
+| Last name                           | Yes                    |                                                                     |
+| Organization                        | Yes                    |                                                                     |
+| Job role / function                 | Yes                    | Pre-filled from selected persona; selectable list, no free text     |
+| Business email                      | Yes                    | Format-validated; free-mail domains accepted but flagged internally |
+| Phone                               | No                     |                                                                     |
+| Preferred language                  | Yes                    | Defaults to current UI language (ES / EN)                           |
+| Selected interests                  | Yes (auto)             | Pre-filled from challenges + explicit interests; editable chips     |
+| Consent: send the requested report  | Yes, to receive report | Separate checkbox, unchecked by default                             |
+| Consent: additional sales follow-up | No                     | Separate checkbox, unchecked by default                             |
 
 - Consent wording is **configurable** (ES + EN) and versioned; the exact text shown is stored with the lead.
 - **No free-text comment fields** (reduces the risk of patient information being entered).
@@ -209,6 +213,7 @@ Shown **only after** recommendations have been presented.
 A polished, responsive **HTML email** (plain-text alternative included). PDF is an optional future extension.
 
 Contents:
+
 1. Visitor name and organization
 2. Role and selected priorities
 3. Healthcare areas explored
@@ -230,7 +235,7 @@ Every content record carries a status: **`validated` · `assumed` · `placeholde
 
 - **Production mode:** only `validated` content is shown.
 - **Demo mode:** `validated` + `assumed`; assumed offering content shows a discreet
-  *"Contenido pendiente de validación local" / "Content pending local validation"* indicator.
+  _"Contenido pendiente de validación local" / "Content pending local validation"_ indicator.
 - An assumed capability is **never** presented as a confirmed local offering.
 - No invented testimonials, metrics, savings, regulatory claims, or customer outcomes.
 
@@ -240,14 +245,14 @@ Full rules: [CONTENT_VALIDATION.md](./CONTENT_VALIDATION.md).
 
 ## 13. Data classifications and privacy boundaries (summary)
 
-| Class | Data | Where it may live | Who may see it |
-|---|---|---|---|
-| **C0 Public content** | Brand config, scenes, taxonomy, solution categories, UI strings | Repository, client bundle | Anyone |
-| **C1 Anonymous interaction** | Role, challenges, facility type, scenes, hotspots, dwell buckets, language, outcome | Client memory (session only); SQLite `VisitorSession` | Admin / exports |
-| **C2 Business contact PII** | Name, organization, job function, email, phone, consents | Client memory **only while the form is open**; SQLite `Lead`; outgoing report email | Visitor (own report), admin / exports |
-| **C3 Internal commercial** | Lead score, tier, score factors | Server and SQLite only | Admin / exports only — **never** the kiosk client or report |
-| **C4 Secrets** | SMTP credentials, admin credentials | `.env` on the laptop only (never committed, never `NEXT_PUBLIC_`) | Operators |
-| **Prohibited** | Patient information / PHI, payment data, government IDs | Nowhere | — |
+| Class                        | Data                                                                                | Where it may live                                                                   | Who may see it                                              |
+| ---------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **C0 Public content**        | Brand config, scenes, taxonomy, solution categories, UI strings                     | Repository, client bundle                                                           | Anyone                                                      |
+| **C1 Anonymous interaction** | Role, challenges, facility type, scenes, hotspots, dwell buckets, language, outcome | Client memory (session only); SQLite `VisitorSession`                               | Admin / exports                                             |
+| **C2 Business contact PII**  | Name, organization, job function, email, phone, consents                            | Client memory **only while the form is open**; SQLite `Lead`; outgoing report email | Visitor (own report), admin / exports                       |
+| **C3 Internal commercial**   | Lead score, tier, score factors                                                     | Server and SQLite only                                                              | Admin / exports only — **never** the kiosk client or report |
+| **C4 Secrets**               | SMTP credentials, admin credentials                                                 | `.env` on the laptop only (never committed, never `NEXT_PUBLIC_`)                   | Operators                                                   |
+| **Prohibited**               | Patient information / PHI, payment data, government IDs                             | Nowhere                                                                             | —                                                           |
 
 Details and enforcement: [ARCHITECTURE.md §10](./ARCHITECTURE.md#10-privacy-and-security-boundaries).
 
@@ -282,31 +287,31 @@ Details and enforcement: [ARCHITECTURE.md §10](./ARCHITECTURE.md#10-privacy-and
 
 ### In MVP
 
-| # | Capability |
-|---|---|
-| M1 | Attract screen with ES/EN toggle |
-| M2 | Three entry paths (role, challenge, explore) |
-| M3 | Persona selection (10 personas) |
-| M4 | Challenge selection (12 challenges, multi-select) |
-| M5 | Optional facility-type selection |
-| M6 | Hospital Explorer: campus hub + 7 environment scenes with placeholder SVG art |
-| M7 | Hotspots (navigate / inform / recommend), zoom transitions, parallax, fades |
-| M8 | Deterministic, explainable recommendation engine (shared client/server) |
-| M9 | Preliminary recommendations, persistent "View my recommendations", contextual prompt |
-| M10 | Recommendations screen with reasons, environments, next step, resources |
-| M11 | Lead form with separate, configurable, versioned consents |
-| M12 | Internal lead scoring (server-only) |
-| M13 | SQLite persistence via Prisma |
-| M14 | Personalized HTML report (ES/EN) + plain-text alternative |
+| #   | Capability                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------------ |
+| M1  | Attract screen with ES/EN toggle                                                                       |
+| M2  | Three entry paths (role, challenge, explore)                                                           |
+| M3  | Persona selection (10 personas)                                                                        |
+| M4  | Challenge selection (12 challenges, multi-select)                                                      |
+| M5  | Optional facility-type selection                                                                       |
+| M6  | Hospital Explorer: campus hub + 7 environment scenes with placeholder SVG art                          |
+| M7  | Hotspots (navigation / information / solution), zoom transitions, parallax, fades                      |
+| M8  | Deterministic, explainable recommendation engine (shared client/server)                                |
+| M9  | Preliminary recommendations, persistent "View my recommendations", contextual prompt                   |
+| M10 | Recommendations screen with reasons, environments, next step, resources                                |
+| M11 | Lead form with separate, configurable, versioned consents                                              |
+| M12 | Internal lead scoring (server-only)                                                                    |
+| M13 | SQLite persistence via Prisma                                                                          |
+| M14 | Personalized HTML report (ES/EN) + plain-text alternative                                              |
 | M15 | Email delivery via provider abstraction (file/dev provider + SMTP) with transactional outbox and retry |
-| M16 | Inactivity timer and safe session reset; hard client reset after completion |
-| M17 | Content status model with production / demo modes and validation indicator |
-| M18 | Content validation check script (`content:check`) |
-| M19 | CSV export of leads (CLI; optional protected admin page) |
-| M20 | Minimal protected admin: outbox status, resend, export — disabled by default |
-| M21 | Configurable branding (name, colors, optional logo path) |
-| M22 | Windows laptop + Android kiosk deployment runbook |
-| M23 | Unit, integration, and end-to-end tests for critical flows |
+| M16 | Inactivity timer and safe session reset; hard client reset after completion                            |
+| M17 | Content status model with production / demo modes and validation indicator                             |
+| M18 | Content validation check script (`content:check`)                                                      |
+| M19 | CSV export of leads (CLI; optional protected admin page)                                               |
+| M20 | Minimal protected admin: outbox status, resend, export — disabled by default                           |
+| M21 | Configurable branding (name, colors, optional logo path)                                               |
+| M22 | Windows laptop + Android kiosk deployment runbook                                                      |
+| M23 | Unit, integration, and end-to-end tests for critical flows                                             |
 
 ### Not in MVP
 
@@ -380,6 +385,7 @@ Each criterion must be demonstrated by an automated test or a documented manual 
 ## 18. Success criteria (business)
 
 Linde Sphere succeeds when:
+
 1. Visitors start interacting quickly.
 2. Visitors understand potential opportunities.
 3. Visitors discover solutions they did not know existed.
@@ -397,15 +403,15 @@ reset to Attract ≤ 2 s · report queued within 5 s of submission · zero leads
 
 ## 19. Open questions
 
-| # | Question | Owner | Blocking phase |
-|---|---|---|---|
-| Q1 | Approval to use the "Linde Sphere" name and brand colors/fonts at the event | Marketing / owner | Phase 10 (production) |
-| Q2 | SMTP account and sender address for report delivery | Owner / IT | Phase 8 (real sending) |
-| Q3 | Final consent wording (ES/EN) | Legal / compliance | Production mode |
-| Q4 | Sales contact details for the report CTA | Sales | Production mode |
-| Q5 | Validated Puerto Rico solution catalog | PR sales team | Production mode |
-| Q6 | Illustration supplier and delivery format for scene art | Owner / marketing | Replacing placeholders |
-| Q7 | Lead data retention period and post-event handling | Owner / compliance | Phase 9 |
-| Q8 | Number of kiosks per booth (MVP assumes one; SQLite supports a few) | Owner | Phase 10 |
-| Q9 | Will the convention run in production mode or demo mode? | Owner | Phase 10 |
-| Q10 | Exact kiosk model, Android and Chrome versions | Owner | Phase 10 |
+| #   | Question                                                                    | Owner              | Blocking phase         |
+| --- | --------------------------------------------------------------------------- | ------------------ | ---------------------- |
+| Q1  | Approval to use the "Linde Sphere" name and brand colors/fonts at the event | Marketing / owner  | Phase 10 (production)  |
+| Q2  | SMTP account and sender address for report delivery                         | Owner / IT         | Phase 8 (real sending) |
+| Q3  | Final consent wording (ES/EN)                                               | Legal / compliance | Production mode        |
+| Q4  | Sales contact details for the report CTA                                    | Sales              | Production mode        |
+| Q5  | Validated Puerto Rico solution catalog                                      | PR sales team      | Production mode        |
+| Q6  | Illustration supplier and delivery format for scene art                     | Owner / marketing  | Replacing placeholders |
+| Q7  | Lead data retention period and post-event handling                          | Owner / compliance | Phase 9                |
+| Q8  | Number of kiosks per booth (MVP assumes one; SQLite supports a few)         | Owner              | Phase 10               |
+| Q9  | Will the convention run in production mode or demo mode?                    | Owner              | Phase 10               |
+| Q10 | Exact kiosk model, Android and Chrome versions                              | Owner              | Phase 10               |

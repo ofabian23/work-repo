@@ -1,0 +1,517 @@
+[
+  {
+    "id": "rule-medical-gas-supply-continuity",
+    "solutionId": "medical-gas-supply-continuity",
+    "weights": {
+      "personas": {
+        "procurement-supply": 3,
+        "executive": 2,
+        "operations-facilities": 2,
+        "government-system": 2
+      },
+      "challenges": {
+        "supply-continuity": 5,
+        "emergency-preparedness": 3
+      },
+      "facilityTypes": {
+        "acute-hospital": 1,
+        "academic-medical-center": 1,
+        "public-health-system": 1
+      },
+      "scenes": {
+        "gas-plant": 2
+      },
+      "hotspots": {
+        "gas-plant-bulk-tank": 3
+      },
+      "explicitInterests": {
+        "medical-gas-supply-continuity": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["homecare-organization"],
+        "reason": "Bulk hospital supply is not relevant to homecare-only organizations (assumption)."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Porque indicó como prioridad {challenges}, la continuidad del suministro de gases medicinales puede ser relevante para su organización.",
+      "en": "Because you prioritized {challenges}, medical gas supply continuity may be relevant to your organization."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 90,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-supply-level-monitoring",
+    "solutionId": "supply-level-monitoring",
+    "weights": {
+      "personas": {
+        "technology-biomed": 3,
+        "operations-facilities": 2,
+        "procurement-supply": 2
+      },
+      "challenges": {
+        "monitoring-visibility": 5,
+        "supply-continuity": 2
+      },
+      "facilityTypes": {},
+      "scenes": {
+        "gas-plant": 1,
+        "utilities": 1
+      },
+      "hotspots": {
+        "gas-plant-bulk-tank": 2,
+        "icu-clinical-gases": 2
+      },
+      "explicitInterests": {
+        "supply-level-monitoring": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Usted busca {challenges}; conocer a tiempo el estado del suministro puede apoyar esa prioridad.",
+      "en": "You are looking to {challenges}; knowing supply status in time may support that priority."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 70,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-cylinder-inventory-management",
+    "solutionId": "cylinder-inventory-management",
+    "weights": {
+      "personas": {
+        "procurement-supply": 2,
+        "clinical-respiratory": 2,
+        "operations-facilities": 1
+      },
+      "challenges": {
+        "operational-complexity": 4,
+        "workflow-efficiency": 3,
+        "staff-safety": 2
+      },
+      "facilityTypes": {},
+      "scenes": {
+        "patient-care": 2
+      },
+      "hotspots": {
+        "patient-care-inventory": 3,
+        "patient-care-cylinders": 2
+      },
+      "explicitInterests": {
+        "cylinder-inventory-management": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Porque exploró {scenes}, el manejo de inventario de cilindros puede simplificar el trabajo diario.",
+      "en": "Because you explored the {scenes}, cylinder inventory management may simplify daily work."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 50,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-pipeline-infrastructure",
+    "solutionId": "pipeline-infrastructure",
+    "weights": {
+      "personas": {
+        "operations-facilities": 3,
+        "executive": 1,
+        "technology-biomed": 1
+      },
+      "challenges": {
+        "modernize-infrastructure": 5,
+        "facility-expansion": 4,
+        "patient-safety": 1
+      },
+      "facilityTypes": {
+        "acute-hospital": 1,
+        "academic-medical-center": 1
+      },
+      "scenes": {
+        "operating-room": 1,
+        "utilities": 1
+      },
+      "hotspots": {
+        "or-pipeline": 3,
+        "or-gas-outlets": 2,
+        "utilities-lifecycle": 1
+      },
+      "explicitInterests": {
+        "pipeline-infrastructure": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["homecare-organization"],
+        "reason": "No in-building pipeline network in homecare settings (assumption)."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Porque indicó como prioridad {challenges}, la infraestructura de gases medicinales puede formar parte de sus planes.",
+      "en": "Because you prioritized {challenges}, medical gas infrastructure may be part of your plans."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 80,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-emergency-backup-planning",
+    "solutionId": "emergency-backup-planning",
+    "weights": {
+      "personas": {
+        "executive": 2,
+        "operations-facilities": 2,
+        "government-system": 3,
+        "quality-compliance": 1
+      },
+      "challenges": {
+        "emergency-preparedness": 5,
+        "supply-continuity": 2
+      },
+      "facilityTypes": {},
+      "scenes": {
+        "emergency": 1,
+        "gas-plant": 1
+      },
+      "hotspots": {
+        "gas-plant-backup": 3,
+        "emergency-surge-readiness": 2,
+        "emergency-critical-gases": 1
+      },
+      "explicitInterests": {
+        "emergency-backup-planning": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Usted busca {challenges}; un plan de suministro de respaldo puede ayudar a su organización a prepararse.",
+      "en": "You are looking to {challenges}; a backup supply plan may help your organization prepare."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 85,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-compliance-documentation",
+    "solutionId": "compliance-documentation",
+    "weights": {
+      "personas": {
+        "quality-compliance": 4,
+        "operations-facilities": 2
+      },
+      "challenges": {
+        "compliance-readiness": 5,
+        "patient-safety": 2
+      },
+      "facilityTypes": {},
+      "scenes": {
+        "utilities": 1
+      },
+      "hotspots": {
+        "utilities-manifold-room": 3,
+        "or-pipeline": 1
+      },
+      "explicitInterests": {
+        "compliance-documentation": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Porque indicó como prioridad {challenges}, mantener al día las pruebas y la documentación puede ser relevante.",
+      "en": "Because you prioritized {challenges}, keeping testing and documentation up to date may be relevant."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 75,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-clinical-gases-critical-care",
+    "solutionId": "clinical-gases-critical-care",
+    "weights": {
+      "personas": {
+        "clinical-respiratory": 4,
+        "executive": 1
+      },
+      "challenges": {
+        "patient-safety": 4,
+        "supply-continuity": 2,
+        "workflow-efficiency": 1
+      },
+      "facilityTypes": {
+        "acute-hospital": 2,
+        "academic-medical-center": 2
+      },
+      "scenes": {
+        "icu": 2,
+        "operating-room": 1,
+        "emergency": 1
+      },
+      "hotspots": {
+        "icu-clinical-gases": 3,
+        "emergency-critical-gases": 3,
+        "icu-bedside-supply": 1
+      },
+      "explicitInterests": {
+        "clinical-gases-critical-care": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["laboratory"],
+        "reason": "Critical-care gases are not relevant to standalone laboratories (assumption)."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Porque su enfoque incluye {challenges}, los gases clínicos para áreas críticas pueden ser relevantes.",
+      "en": "Because your focus includes {challenges}, clinical gases for critical areas may be relevant."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 80,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-laboratory-specialty-gases",
+    "solutionId": "laboratory-specialty-gases",
+    "weights": {
+      "personas": {
+        "academia-research": 4,
+        "technology-biomed": 1
+      },
+      "challenges": {
+        "workflow-efficiency": 2,
+        "supply-continuity": 2
+      },
+      "facilityTypes": {
+        "laboratory": 4,
+        "academic-medical-center": 2
+      },
+      "scenes": {
+        "laboratory": 3
+      },
+      "hotspots": {
+        "lab-specialty-gases": 3
+      },
+      "explicitInterests": {
+        "laboratory-specialty-gases": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Porque exploró {scenes}, los gases de laboratorio y especialidad pueden ser relevantes para sus operaciones.",
+      "en": "Because you explored the {scenes}, laboratory and specialty gases may be relevant to your operations."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 60,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-cryogenic-storage",
+    "solutionId": "cryogenic-storage",
+    "weights": {
+      "personas": {
+        "academia-research": 4
+      },
+      "challenges": {
+        "facility-expansion": 1,
+        "supply-continuity": 1
+      },
+      "facilityTypes": {
+        "laboratory": 3,
+        "academic-medical-center": 3
+      },
+      "scenes": {
+        "laboratory": 2
+      },
+      "hotspots": {
+        "lab-sample-storage": 4
+      },
+      "explicitInterests": {
+        "cryogenic-storage": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["homecare-organization"],
+        "reason": "Not relevant to homecare organizations (assumption)."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Porque exploró {scenes}, el almacenamiento criogénico puede apoyar la preservación de sus muestras.",
+      "en": "Because you explored the {scenes}, cryogenic storage may support the preservation of your samples."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 55,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-homecare-respiratory-services",
+    "solutionId": "homecare-respiratory-services",
+    "weights": {
+      "personas": {
+        "ambulatory-homecare": 5,
+        "clinical-respiratory": 2
+      },
+      "challenges": {
+        "care-outside-hospital": 5
+      },
+      "facilityTypes": {
+        "homecare-organization": 3,
+        "ambulatory-center": 1
+      },
+      "scenes": {
+        "patient-care": 1
+      },
+      "hotspots": {
+        "patient-care-discharge": 4
+      },
+      "explicitInterests": {
+        "homecare-respiratory-services": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["laboratory"],
+        "reason": "Not relevant to standalone laboratories (assumption)."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Porque indicó como prioridad {challenges}, los servicios respiratorios en el hogar pueden apoyar a sus pacientes después del alta.",
+      "en": "Because you prioritized {challenges}, homecare respiratory services may support your patients after discharge."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 70,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-gas-safety-training",
+    "solutionId": "gas-safety-training",
+    "weights": {
+      "personas": {
+        "quality-compliance": 2,
+        "operations-facilities": 2,
+        "academia-research": 1
+      },
+      "challenges": {
+        "staff-safety": 5,
+        "compliance-readiness": 2
+      },
+      "facilityTypes": {},
+      "scenes": {},
+      "hotspots": {
+        "utilities-safety-training": 3,
+        "patient-care-cylinders": 2
+      },
+      "explicitInterests": {
+        "gas-safety-training": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Porque indicó como prioridad {challenges}, la capacitación en manejo seguro de gases puede ser relevante para su personal.",
+      "en": "Because you prioritized {challenges}, safe gas handling training may be relevant for your staff."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 65,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  },
+  {
+    "id": "rule-lifecycle-cost-review",
+    "solutionId": "lifecycle-cost-review",
+    "weights": {
+      "personas": {
+        "finance": 4,
+        "executive": 3,
+        "procurement-supply": 1
+      },
+      "challenges": {
+        "lifecycle-costs": 5,
+        "operational-complexity": 2,
+        "modernize-infrastructure": 1
+      },
+      "facilityTypes": {},
+      "scenes": {},
+      "hotspots": {
+        "utilities-lifecycle": 3
+      },
+      "explicitInterests": {
+        "lifecycle-cost-review": 6
+      }
+    },
+    "minimumScore": 5,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Porque indicó como prioridad {challenges}, una revisión del ciclo de vida puede ayudarle a ordenar sus prioridades.",
+      "en": "Because you prioritized {challenges}, a lifecycle review may help you organize your priorities."
+    },
+    "fallbackExplanation": {
+      "es": "Relacionado con las prioridades y las áreas que usted exploró.",
+      "en": "Related to the priorities and areas you explored."
+    },
+    "priority": 60,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration; tune after the solution list is validated by Puerto Rico sales."
+  }
+]

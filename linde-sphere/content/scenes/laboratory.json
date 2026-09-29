@@ -1,0 +1,70 @@
+{
+  "id": "laboratory",
+  "slug": "laboratory",
+  "title": {
+    "es": "Laboratorio",
+    "en": "Laboratory"
+  },
+  "description": {
+    "es": "Diagnóstico e investigación que dependen de gases y almacenamiento especializados.",
+    "en": "Diagnostics and research that depend on specialized gases and storage."
+  },
+  "background": {
+    "src": "/scenes/placeholder/laboratory-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de un laboratorio con equipos analíticos y congeladores.",
+      "en": "Isometric illustration of a laboratory with analytical instruments and freezers."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "lab-specialty-gases",
+      "type": "solution",
+      "x": 32,
+      "y": 42,
+      "label": {
+        "es": "Gases de laboratorio",
+        "en": "Laboratory gases"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de gases de laboratorio y especialidad",
+        "en": "View laboratory and specialty gas solutions"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["workflow-efficiency", "supply-continuity"],
+        "solutionIds": ["laboratory-specialty-gases"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["laboratory-specialty-gases"]
+    },
+    {
+      "id": "lab-sample-storage",
+      "type": "solution",
+      "x": 68,
+      "y": 60,
+      "label": {
+        "es": "Preservación de muestras",
+        "en": "Sample preservation"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones de almacenamiento criogénico y preservación de muestras",
+        "en": "View cryogenic storage and sample preservation solutions"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["supply-continuity", "facility-expansion"],
+        "solutionIds": ["cryogenic-storage"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["cryogenic-storage"]
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "laboratory"],
+  "validationStatus": "assumed",
+  "sortOrder": 50
+}

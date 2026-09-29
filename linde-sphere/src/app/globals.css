@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Placeholder tokens; brand-driven tokens arrive with the kiosk shell (Phase 4, ADR-016). */
+:root {
+  --background: #ffffff;
+  --foreground: #14202b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+}

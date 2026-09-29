@@ -1,0 +1,91 @@
+{
+  "id": "emergency",
+  "slug": "emergency",
+  "title": {
+    "es": "Sala de emergencias",
+    "en": "Emergency department"
+  },
+  "description": {
+    "es": "Un área que debe responder a lo inesperado, a cualquier hora.",
+    "en": "An area that must respond to the unexpected, at any hour."
+  },
+  "background": {
+    "src": "/scenes/placeholder/emergency-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una sala de emergencias con camillas y estaciones de trabajo.",
+      "en": "Isometric illustration of an emergency department with stretchers and workstations."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "emergency-surge-readiness",
+      "type": "information",
+      "x": 34,
+      "y": 38,
+      "label": {
+        "es": "Aumentos repentinos",
+        "en": "Patient surges"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre la preparación para aumentos repentinos de pacientes",
+        "en": "Information about readiness for sudden patient surges"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["emergency-preparedness", "supply-continuity"],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Preparación para aumentos repentinos",
+          "en": "Readiness for sudden surges"
+        },
+        "body": {
+          "es": "Durante huracanes, apagones o eventos con múltiples víctimas, la demanda de recursos críticos puede cambiar en minutos. La planificación anticipada ayuda a los equipos a responder.",
+          "en": "During hurricanes, power outages or mass-casualty events, demand for critical resources can change within minutes. Planning ahead helps teams respond."
+        },
+        "bullets": [
+          {
+            "es": "Inventario de recursos críticos",
+            "en": "Critical resource inventory"
+          },
+          {
+            "es": "Planes de contingencia",
+            "en": "Contingency plans"
+          }
+        ]
+      }
+    },
+    {
+      "id": "emergency-critical-gases",
+      "type": "solution",
+      "x": 66,
+      "y": 58,
+      "width": 16,
+      "height": 10,
+      "label": {
+        "es": "Gases para cuidado crítico",
+        "en": "Critical-care gases"
+      },
+      "accessibleLabel": {
+        "es": "Ver soluciones relacionadas con gases para cuidado crítico en emergencias",
+        "en": "View solutions related to critical-care gases in the emergency department"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["patient-safety", "emergency-preparedness"],
+        "solutionIds": ["clinical-gases-critical-care", "emergency-backup-planning"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["clinical-gases-critical-care", "emergency-backup-planning"]
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "emergency"],
+  "validationStatus": "assumed",
+  "sortOrder": 10
+}
