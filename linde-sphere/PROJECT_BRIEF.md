@@ -375,7 +375,7 @@ Each criterion must be demonstrated by an automated test or a documented manual 
 
 ### Operations
 
-- **AC-33** `npm run start:kiosk` serves the app on all interfaces; an Android Chrome device on the same network can complete a full journey.
+- **AC-33** `npm run start:network` serves the app on all interfaces (`npm run start` stays localhost-only); an Android Chrome device on the same network can complete a full journey.
 - **AC-34** CSV export produces one row per lead with consents, interests, recommendations, and internal score, UTF-8 with BOM (Excel-safe Spanish characters).
 - **AC-35** Lint, type check, unit, integration, and E2E suites pass on a clean checkout.
 - **AC-36** A full journey completes with the laptop disconnected from the internet; the queued email sends automatically once connectivity returns.

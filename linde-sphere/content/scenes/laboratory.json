@@ -10,7 +10,7 @@
     "en": "Diagnostics and research that depend on specialized gases and storage."
   },
   "background": {
-    "src": "/scenes/placeholder/laboratory-background.svg",
+    "src": "/assets/scenes/placeholder/laboratory-background.svg",
     "alt": {
       "es": "Ilustración isométrica de un laboratorio con equipos analíticos y congeladores.",
       "en": "Isometric illustration of a laboratory with analytical instruments and freezers."

@@ -10,7 +10,7 @@
     "en": "Explore the hospital's areas and discover where your priorities come to life."
   },
   "background": {
-    "src": "/scenes/placeholder/campus-background.svg",
+    "src": "/assets/scenes/placeholder/campus-background.svg",
     "alt": {
       "es": "Ilustración isométrica de un campus hospitalario con sus edificios principales.",
       "en": "Isometric illustration of a hospital campus and its main buildings."
@@ -20,7 +20,7 @@
   },
   "foregroundLayers": [
     {
-      "src": "/scenes/placeholder/campus-foreground.svg",
+      "src": "/assets/scenes/placeholder/campus-foreground.svg",
       "alt": {
         "es": "Árboles y vehículos en primer plano.",
         "en": "Trees and vehicles in the foreground."

@@ -10,7 +10,7 @@
     "en": "An area that must respond to the unexpected, at any hour."
   },
   "background": {
-    "src": "/scenes/placeholder/emergency-background.svg",
+    "src": "/assets/scenes/placeholder/emergency-background.svg",
     "alt": {
       "es": "Ilustración isométrica de una sala de emergencias con camillas y estaciones de trabajo.",
       "en": "Isometric illustration of an emergency department with stretchers and workstations."

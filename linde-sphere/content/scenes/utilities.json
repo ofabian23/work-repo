@@ -10,7 +10,7 @@
     "en": "The systems behind the walls that keep the hospital running."
   },
   "background": {
-    "src": "/scenes/placeholder/utilities-background.svg",
+    "src": "/assets/scenes/placeholder/utilities-background.svg",
     "alt": {
       "es": "Ilustración isométrica de un cuarto de utilidades con tuberías, válvulas y paneles.",
       "en": "Isometric illustration of a utility room with pipes, valves and panels."

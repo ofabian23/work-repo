@@ -10,7 +10,7 @@
     "en": "An environment where infrastructure must work without interruption."
   },
   "background": {
-    "src": "/scenes/placeholder/operating-room-background.svg",
+    "src": "/assets/scenes/placeholder/operating-room-background.svg",
     "alt": {
       "es": "Ilustración isométrica de una sala de operaciones con salidas de gases en el techo.",
       "en": "Isometric illustration of an operating room with ceiling-mounted gas outlets."

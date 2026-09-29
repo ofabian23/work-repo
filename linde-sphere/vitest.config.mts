@@ -3,10 +3,14 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    alias: { "@": path.resolve(import.meta.dirname, "src") },
+    alias: {
+      "@": path.resolve(import.meta.dirname, "src"),
+      // `server-only` throws outside React Server Components; unit tests run server modules directly.
+      "server-only": path.resolve(import.meta.dirname, "tests/helpers/empty-module.ts"),
+    },
   },
   test: {
     environment: "node",
-    include: ["tests/**/*.test.ts"],
+    include: ["tests/unit/**/*.test.ts"],
   },
 });

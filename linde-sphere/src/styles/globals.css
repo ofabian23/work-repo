@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/*
+ * Theme tokens map to brand CSS variables emitted by the root layout from brand-config.ts (ADR-016).
+ * Change colors in brand-config.ts, not here.
+ */
+@theme inline {
+  --color-canvas: var(--brand-background);
+  --color-surface: var(--brand-surface);
+  --color-surface-muted: var(--brand-surface-muted);
+  --color-ink: var(--brand-text);
+  --color-ink-muted: var(--brand-text-muted);
+  --color-primary: var(--brand-primary);
+  --color-on-primary: var(--brand-on-primary);
+  --color-accent: var(--brand-accent);
+  --color-line: var(--brand-border);
+  --color-focus: var(--brand-focus);
+  --color-notice: var(--brand-notice);
+  --color-notice-surface: var(--brand-notice-surface);
+  --font-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+}
+
+/*
+ * Fluid base size: ~23 px on the 1080 × 1920 kiosk, ~21 px on a laptop, 16 px on phones.
+ * All rem-based sizes (text, touch targets) scale with it.
+ */
+html {
+  font-size: clamp(16px, 0.75rem + 1vmin, 24px);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--brand-background);
+  color: var(--brand-text);
+  font-family: var(--font-sans);
+  /* Kiosk hardening (ARCHITECTURE §5.5) */
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent accidental text selection and image dragging on the shared touchscreen. */
+body :where(:not(input, textarea, [contenteditable="true"])) {
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+img,
+svg {
+  -webkit-user-drag: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

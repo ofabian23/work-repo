@@ -10,7 +10,7 @@
     "en": "Where continuous availability of critical resources is essential."
   },
   "background": {
-    "src": "/scenes/placeholder/icu-background.svg",
+    "src": "/assets/scenes/placeholder/icu-background.svg",
     "alt": {
       "es": "Ilustración isométrica de una unidad de cuidado intensivo con camas y equipos de monitoreo.",
       "en": "Isometric illustration of an intensive care unit with beds and monitoring equipment."

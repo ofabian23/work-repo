@@ -95,7 +95,7 @@ entry here — architecture is never changed silently.
 
 ## ADR-010 — Prisma 7 (latest stable) with SQLite; not the 8.0 release candidate
 
-- **Date:** 2026-09-29 · **Status:** Accepted
+- **Date:** 2026-09-29 · **Status:** Accepted (timing amended by ADR-038: introduced in Phase 7)
 - **Context:** On 2026-09-29, npm's `latest` dist-tag for `prisma` points to `8.0.0-rc.19` (a release
   candidate published the same day), while `@prisma/client` latest and `prisma` `prev` are `7.10.0`.
 - **Decision:** Pin Prisma CLI and client to the **7.10.x** stable line. Use the SQLite driver adapter
@@ -131,7 +131,7 @@ entry here — architecture is never changed silently.
 
 ## ADR-014 — Lightweight typed i18n, Spanish-first
 
-- **Date:** 2026-09-29 · **Status:** Accepted
+- **Date:** 2026-09-29 · **Status:** Accepted (dictionary format amended by ADR-035)
 - **Decision:** `messages/es.json` (source of truth) + `messages/en.json` with a small typed `t()` helper
   and a key-parity test. No i18n framework. Every new session starts in Spanish.
 - **Consequences:** Minimal dependencies; routing is not language-based (single route).
@@ -147,7 +147,7 @@ entry here — architecture is never changed silently.
 
 ## ADR-016 — Tailwind CSS 4 with brand tokens as CSS variables
 
-- **Date:** 2026-09-29 · **Status:** Accepted
+- **Date:** 2026-09-29 · **Status:** Accepted (brand source amended by ADR-036)
 - **Decision:** Tailwind 4 CSS-first configuration (`@theme`). Brand colors from `brand.json` are emitted as
   CSS variables in the root layout.
 - **Consequences:** Rebranding needs no code change. Contrast of token pairs is unit-tested.
@@ -162,7 +162,7 @@ entry here — architecture is never changed silently.
 
 ## ADR-018 — No external network dependencies at runtime
 
-- **Date:** 2026-09-29 · **Status:** Accepted
+- **Date:** 2026-09-29 · **Status:** Accepted (amended: system font stack instead of a self-hosted web font, see ADR-036)
 - **Context:** The kiosk may be on a laptop hotspot without internet.
 - **Decision:** Self-hosted fonts (`next/font/local`), local SVG/WebP assets, no CDNs, analytics, or
   third-party scripts. Only the email worker contacts the internet.
@@ -308,3 +308,87 @@ entry here — architecture is never changed silently.
   `EmailDeliveryEvent` never contains recipients or bodies, and its error text may not contain email
   addresses. `RecommendationResult` and `ReportPayload` reject pending-validation content in production mode.
 - **Consequences:** Privacy and content-governance rules are enforced at every boundary, not only in the UI.
+
+## ADR-034 — Source folder structure
+
+- **Date:** 2026-09-29 · **Status:** Accepted
+- **Context:** The foundation brief asks for a maintainable structure such as `src/app`, `components`,
+  `features`, `lib`, `data`, `types`, `styles` and `public/assets`. Phase 2 had already created `src/domain`
+  and `src/server`.
+- **Decision:** Adopt the suggested folders and keep `src/domain` (pure, isomorphic schemas and logic) and
+  `src/server` (server-only modules). They were working and tested, and their separation protects client
+  bundles. Responsibilities per folder are listed in ARCHITECTURE §3.1. Visitor-facing content stays in
+  `/content` (JSON edited and validated outside the bundle), and `src/data` holds only static app data (UI
+  dictionaries). The planned `src/kiosk/` folder becomes `src/features/*`.
+- **Consequences:** Placeholder scene paths moved to `/assets/scenes/placeholder/...` so all static assets
+  live under `public/assets`.
+
+## ADR-035 — UI dictionaries as typed TypeScript modules
+
+- **Date:** 2026-09-29 · **Status:** Accepted (amends ADR-014)
+- **Decision:** `src/data/i18n/es.ts` (`as const`, source of truth) and `en.ts` typed as `Messages`
+  replace the planned `messages/*.json`. Missing or extra English keys fail `tsc`, and `t()` keys are typed
+  dot-paths. A runtime test also checks key and placeholder parity. `LanguageProvider` keeps the language in
+  React state only (no cookies or storage), so every load and reset starts in Spanish.
+- **Alternatives:** JSON dictionaries (no compile-time key safety); next-intl or i18next (unnecessary weight
+  for two languages on a single route).
+
+## ADR-036 — Brand configuration in TypeScript, validated by Zod; system font stack
+
+- **Date:** 2026-09-29 · **Status:** Accepted (amends ADR-016, ADR-018)
+- **Decision:** `src/lib/config/brand-config.ts` (not `content/brand.json`) holds the product name, tagline,
+  organization (null), logo (null), palette and `approvalStatus: "placeholder"`, parsed by a Zod schema at
+  load. Colors become `--brand-*` CSS variables on `<html>` and Tailwind tokens. Branding changes are rare
+  developer edits that should be type-checked. Typography uses the OS font stack (Segoe UI / Roboto),
+  which needs no download and no licence.
+- **Consequences:** No corporate logo or brand mark ships. A unit test enforces WCAG AA contrast for the
+  palette.
+
+## ADR-037 — Environment validation at boot, values never echoed
+
+- **Date:** 2026-09-29 · **Status:** Accepted
+- **Decision:** `src/server/env.ts` (`server-only`) parses the known variables with Zod. Empty values count
+  as unset. There are safe defaults for development and conditional requirements (SMTP settings when
+  `EMAIL_PROVIDER=smtp`, admin credentials with a ≥ 12-character password when `ADMIN_ENABLED=true`).
+  Placeholder preview is forced off in production. `instrumentation.ts` validates at server start, so
+  misconfiguration fails fast. Errors list variable names and reasons, never values. Port and host are CLI
+  flags, not env variables. No `NEXT_PUBLIC_*` secrets exist; the only public value is the app version,
+  inlined from package.json.
+- **Consequences:** `.env.example` documents every variable. `.env*` is git-ignored except the example.
+
+## ADR-038 — Health route with a dependency-free SQLite probe; Prisma deferred to Phase 7
+
+- **Date:** 2026-09-29 · **Status:** Accepted (amends ADR-010 timing)
+- **Context:** The foundation phase needs a health route reporting database readiness, and should add only
+  the dependencies it needs. No data is stored until lead capture (Phase 7).
+- **Decision:** `GET /api/health` reports app info, configuration validity (variable names only), content
+  validity and database status. The database probe opens the SQLite file **read-only** with Node's built-in
+  `node:sqlite` (loaded through `process.getBuiltinModule`, so there is no bundler resolution and no native
+  dependency) and never creates the file. Statuses are `ready`, `not_initialized` (file missing, expected
+  before Phase 7) and `unavailable`. The overall status is `ok`, `degraded` or `error` (HTTP 503 only for
+  error). Prisma 7.10 and its migrations arrive in Phase 7, where the probe becomes a Prisma `SELECT 1`.
+- **Consequences:** Health shows `degraded` until the database exists, which is documented. `node:sqlite`
+  prints an ExperimentalWarning on Node 22 when a database file exists; this is acceptable for a probe that
+  is replaced in Phase 7.
+
+## ADR-039 — Localhost by default; explicit network scripts
+
+- **Date:** 2026-09-29 · **Status:** Accepted
+- **Context:** Next.js 16's `next dev` and `next start` bind to `0.0.0.0` by default, which would expose
+  the laptop to every network it joins during everyday development.
+- **Decision:** `npm run dev` / `npm run start` pass `-H localhost`. `npm run dev:network` /
+  `npm run start:network` pass `-H 0.0.0.0` for the kiosk. `allowedDevOrigins` allows HMR from private LAN
+  ranges (`192.168.*.*`, `10.*.*.*`, `172.*.*.*`, `*.local`) plus `DEV_ALLOWED_ORIGINS`. It affects the
+  dev server only.
+- **Consequences:** Verified in the dev container: the localhost scripts refuse LAN connections, and the
+  network scripts accept them. The README documents both modes and the Windows firewall prompt.
+
+## ADR-040 — Playwright added in the foundation phase
+
+- **Date:** 2026-09-29 · **Status:** Accepted (amends ADR-017 timing)
+- **Decision:** `@playwright/test` with three projects (kiosk 1080×1920 touch, laptop 1440×900, phone
+  390×844 touch) against a production build on localhost. It verifies the foundation acceptance criteria:
+  home renders, language switch, no persisted language, not-found, ≥ 48 px targets, no horizontal overflow,
+  kiosk fits without scrolling, and health. The config uses a preinstalled Chromium when present
+  (`/opt/pw-browsers/chromium` or `PLAYWRIGHT_CHROMIUM_PATH`); otherwise `npx playwright install chromium`.
+- **Consequences:** `test-results/` is git-ignored. E2E is part of the standard phase checks from now on.

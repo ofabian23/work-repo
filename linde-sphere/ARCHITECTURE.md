@@ -49,24 +49,25 @@ Design pillars:
 Versions observed on npm at documentation time (2026-09-29). Exact versions are pinned in `package.json`
 during Phase 1.
 
-| Concern                  | Choice                                                | Version target                                        | Notes                                                   |
-| ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------- |
-| Runtime                  | Node.js LTS                                           | 22.x (≥ 20.9 required by Next.js 16)                  | Same major on dev and Windows laptop                    |
-| Framework                | Next.js, App Router                                   | 16.3.x (latest stable)                                | `next start -H 0.0.0.0` for LAN                         |
-| UI                       | React                                                 | 19.x                                                  |                                                         |
-| Language                 | TypeScript                                            | 5.x, `strict: true`, `noUncheckedIndexedAccess: true` |                                                         |
-| Styling                  | Tailwind CSS                                          | 4.x (CSS-first `@theme`)                              | Brand tokens via CSS variables                          |
-| Motion                   | Motion (formerly Framer Motion)                       | 13.x — `motion` package                               | Same library, current package name (ADR-015)            |
-| Validation               | Zod                                                   | 4.x                                                   | Content, API payloads, env                              |
-| ORM / DB                 | Prisma + SQLite                                       | **7.10.x stable** (not the 8.0 RC tagged `latest`)    | Driver adapter verified on Windows in Phase 1 (ADR-010) |
-| Email                    | Nodemailer (SMTP)                                     | latest stable                                         | Behind a provider interface                             |
-| Unit / integration tests | Vitest + Testing Library                              | latest stable                                         | `jsdom` for components, `node` for server               |
-| E2E tests                | Playwright                                            | version compatible with installed Chromium            | Portrait viewport + touch emulation                     |
-| Lint / format            | ESLint (flat config, `eslint-config-next`) + Prettier | latest stable                                         | `prettier-plugin-tailwindcss`                           |
+| Concern                  | Choice                                                | Version target                                        | Notes                                                  |
+| ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------ |
+| Runtime                  | Node.js LTS                                           | 22.x (≥ 20.9 required by Next.js 16)                  | Same major on dev and Windows laptop                   |
+| Framework                | Next.js, App Router                                   | 16.3.x (latest stable)                                | `start:network` binds `0.0.0.0` for LAN (ADR-039)      |
+| UI                       | React                                                 | 19.x                                                  |                                                        |
+| Language                 | TypeScript                                            | 5.x, `strict: true`, `noUncheckedIndexedAccess: true` |                                                        |
+| Styling                  | Tailwind CSS                                          | 4.x (CSS-first `@theme`)                              | Brand tokens via CSS variables                         |
+| Motion                   | Motion (formerly Framer Motion)                       | 13.x — `motion` package                               | Same library, current package name (ADR-015)           |
+| Validation               | Zod                                                   | 4.x                                                   | Content, API payloads, env                             |
+| ORM / DB                 | Prisma + SQLite                                       | **7.10.x stable** (not the 8.0 RC tagged `latest`)    | Introduced in Phase 7; verify on Windows (ADR-010/038) |
+| Email                    | Nodemailer (SMTP)                                     | latest stable                                         | Behind a provider interface                            |
+| Unit / integration tests | Vitest + Testing Library                              | latest stable                                         | `jsdom` for components, `node` for server              |
+| E2E tests                | Playwright                                            | version compatible with installed Chromium            | Portrait viewport + touch emulation                    |
+| Lint / format            | ESLint (flat config, `eslint-config-next`) + Prettier | latest stable                                         | `prettier-plugin-tailwindcss`                          |
 
-**Installed so far (Phase 1 partial + Phase 2):** Next.js 16.3.7, React 19.2, TypeScript 5.9, Tailwind 4,
-Zod 4.6, Vitest 5, tsx, ESLint 9 (`eslint-config-next`), Prettier 3. Prisma, Motion, Nodemailer, Testing
-Library and Playwright are added in the phases that first use them (see TASKS.md).
+**Installed so far (Phases 1–2):** Next.js 16.3.7, React 19.2, TypeScript 5.9, Tailwind 4, Zod 4.6,
+`server-only`, Vitest 5, Playwright 1.63, tsx, ESLint 9 (`eslint-config-next`), Prettier 3. Prisma (Phase 7,
+ADR-038), Motion (Phase 4/6), Nodemailer (Phase 8) and Testing Library (first component tests) are added in
+the phases that first need them.
 
 **Explicitly not used:** real-time 3D libraries (three.js, Babylon, etc.), global state libraries
 (Redux, Zustand, MobX), i18n frameworks, CMS, analytics SDKs, external CDNs, paid services.
@@ -78,51 +79,64 @@ Library and Playwright are added in the phases that first use them (see TASKS.md
 The application lives in `linde-sphere/` alongside the unrelated `client-facing/` project (ADR-002).
 Items marked ✅ exist today; the rest are planned and arrive in the phase noted in TASKS.md.
 
+### 3.1 Source folders (ADR-034)
+
+| Folder           | Holds                                                                                        | Rules                                                  |
+| ---------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `src/app`        | Routes only: layouts, pages, `error`/`global-error`/`not-found`/`loading`, route handlers    | Thin; delegates to features                            |
+| `src/components` | Reusable, presentational UI (`ui/` primitives, `shell/` frame and status screens)            | No feature logic, no data fetching                     |
+| `src/features`   | Feature modules (language, home, status; later kiosk flow, explorer, recommendations, lead)  | May use components, lib, domain                        |
+| `src/lib`        | Client-safe utilities and configuration (`config/`, `i18n/`, `cn`)                           | No secrets, no Node-only APIs                          |
+| `src/data`       | Static data bundled with the app (UI translation dictionaries)                               | Visitor-editable content stays in `/content` (ADR-006) |
+| `src/types`      | Cross-cutting TypeScript types not derived from Zod (i18n keys, health report)               | Types only                                             |
+| `src/styles`     | Global CSS and Tailwind theme tokens                                                         |                                                        |
+| `src/domain`     | Pure, isomorphic Zod schemas and logic (content model, runtime payloads; engine in Phase 3)  | No I/O; fully unit-tested                              |
+| `src/server`     | Server-only modules (`import "server-only"`): env, health, database probe, later leads/email | Never imported by client components                    |
+| `public/assets`  | Static files served at `/assets/...` (`brand/`, `scenes/placeholder/`)                       | Original or approved assets only                       |
+
+### 3.2 Tree
+
 ```
 linde-sphere/
-├─ PROJECT_BRIEF.md · ARCHITECTURE.md · DECISIONS.md · TASKS.md · CONTENT_VALIDATION.md   ✅
-├─ README.md                      # quick start + links                                  ✅
-├─ DEPLOYMENT.md                  # Windows laptop + Android kiosk runbook (Phase 10)
-├─ .env.example                   # every variable, no values (Phase 1 remainder)
-├─ package.json · tsconfig.json · next.config.ts · eslint.config.mjs · .prettierrc.json  ✅
-├─ vitest.config.mts                                                                      ✅
-├─ prisma.config.ts · prisma/schema.prisma · prisma/migrations/   (Phase 1 remainder / 7)
-├─ content/                       # C0 content (JSON), validated by Zod                  ✅
-│  ├─ manifest.json               # contentVersion, default language, updatedAt          ✅
-│  ├─ personas.json · challenges.json · facility-types.json                               ✅
-│  ├─ scenes/<scene-id>.json      # one file per scene: layers + hotspots (8 files)       ✅
-│  ├─ solutions.json              # solution categories + governance                      ✅
-│  ├─ digital-assets.json         # resources linked from solutions + governance          ✅
-│  ├─ recommendation-rules.json   # one weighted rule per solution                        ✅
-│  ├─ consent.json                # versioned consent + privacy text (ES/EN)              ✅
-│  ├─ settings.json · brand.json · report.json · sales-contacts.json   (Phases 3–8)
-├─ config/lead-scoring.json       # C3 — imported only by server-only modules (Phase 3)
-├─ messages/es.json · en.json     # UI strings (Phase 4)
-├─ public/scenes/placeholder/     # original placeholder SVG layers (Phase 6)
+├─ PROJECT_BRIEF.md · ARCHITECTURE.md · DECISIONS.md · TASKS.md · CONTENT_VALIDATION.md · README.md  ✅
+├─ .env.example                   # variable names + non-secret defaults                   ✅
+├─ package.json · tsconfig.json · next.config.ts · eslint.config.mjs · .prettierrc.json   ✅
+├─ vitest.config.mts · playwright.config.ts                                                ✅
+├─ content/                       # C0 content (JSON), validated by Zod                    ✅
+│  ├─ manifest.json · personas.json · challenges.json · facility-types.json               ✅
+│  ├─ scenes/<scene-id>.json      # 8 scenes with layers + hotspots                        ✅
+│  ├─ solutions.json · digital-assets.json · recommendation-rules.json · consent.json     ✅
+│  └─ settings.json · report.json · sales-contacts.json   (Phases 3–8)
+├─ config/lead-scoring.json       # C3, server-only (Phase 3)
+├─ prisma/ · prisma.config.ts     (Phase 7)
+├─ public/assets/
+│  ├─ brand/                      # approved brand files only (empty)                       ✅
+│  └─ scenes/placeholder/         # placeholder SVG layers (drawn in Phase 6)               ✅ folder
 ├─ src/
-│  ├─ app/                        # layout.tsx + placeholder page.tsx ✅; kiosk, admin, api (Phases 4–9)
-│  ├─ domain/                     # pure, isomorphic, fully unit-tested                    ✅
-│  │  ├─ content/                 # primitives, taxonomy, scene, offering, recommendation-rule,
-│  │  │                           #   settings, bundle (cross-checks), visibility           ✅
-│  │  ├─ session/visitor-session.ts            # VisitorSession + SessionSignals          ✅
-│  │  ├─ recommendations/recommendation-result.ts  # RecommendationResult (engine: Phase 3) ✅
-│  │  ├─ leads/lead-submission.ts · consent-record.ts                                     ✅
-│  │  ├─ report/report-payload.ts                                                         ✅
-│  │  └─ email/email-delivery-event.ts                                                    ✅
+│  ├─ app/
+│  │  ├─ layout.tsx               # brand CSS vars, viewport, LanguageProvider, AppShell    ✅
+│  │  ├─ page.tsx                 # home (foundation placeholder → Attract in Phase 4)      ✅
+│  │  ├─ error.tsx · global-error.tsx · not-found.tsx · loading.tsx                        ✅
+│  │  └─ api/health/route.ts      # readiness JSON                                           ✅
+│  ├─ components/ui/button.tsx · components/shell/{app-shell,brand-wordmark,status-screen}.tsx ✅
+│  ├─ features/language/{language-provider,language-switcher}.tsx                         ✅
+│  ├─ features/home/home-screen.tsx · features/status/{loading,error,not-found}-screen.tsx ✅
+│  ├─ lib/config/{app-config,brand-config}.ts · lib/i18n/translate.ts · lib/cn.ts          ✅
+│  ├─ data/i18n/{es,en}.ts                                                                  ✅
+│  ├─ types/{i18n,health}.ts                                                                ✅
+│  ├─ styles/globals.css                                                                    ✅
+│  ├─ domain/                     # content/, session/, recommendations/, leads/, report/, email/ ✅
 │  ├─ server/
-│  │  ├─ content/load-content.ts  # fs loader + per-file Zod validation (Node-only, no `server-only`
-│  │  │                           #   marker so CLI scripts can reuse it)                   ✅
-│  │  └─ env.ts · db.ts · lead-scoring.ts · leads.ts · report/ · email/ · outbox/ · log.ts  (Phases 1–9,
-│  │                              #   all with `import "server-only"`)
-│  ├─ kiosk/                      # client state machine, screens, explorer (Phases 4–6)
-│  ├─ proxy.ts · instrumentation.ts   (Phases 8–9)
-├─ scripts/
-│  ├─ content-check.ts            # npm run content:check                                  ✅
-│  └─ leads-export.ts · leads-purge.ts · outbox-retry.ts   (Phase 9)
+│  │  ├─ env.ts · health.ts · database-probe.ts                                             ✅
+│  │  ├─ content/load-content.ts  # fs loader (no `server-only` so CLI scripts can use it)  ✅
+│  │  └─ db.ts · lead-scoring.ts · leads.ts · report/ · email/ · outbox/ · log.ts  (Phases 3–9)
+│  ├─ instrumentation.ts          # validates env at server boot (outbox worker: Phase 8)   ✅
+│  └─ proxy.ts                    # admin guard (Phase 9)
+├─ scripts/content-check.ts       ✅ · leads-export / leads-purge / outbox-retry (Phase 9)
 ├─ tests/
-│  ├─ helpers/                    # fixtures + expectValid/expectInvalid                   ✅
-│  ├─ unit/content · unit/runtime                                                         ✅
-│  └─ integration/ · e2e/         (Phases 7–10)
+│  ├─ helpers/ · unit/content · unit/runtime · unit/app                                     ✅
+│  ├─ e2e/foundation.spec.ts      # Playwright: kiosk 1080×1920, laptop 1440×900, phone 390×844 ✅
+│  └─ integration/                (Phase 7)
 └─ data/                          # SQLite db + dev email output (git-ignored)
 ```
 
@@ -138,11 +152,14 @@ linde-sphere/
 - Kiosk URL: `http://<laptop-IPv4>:3000/`. Plain HTTP on a private network (no secure-context-only
   browser APIs are required by the design).
 - Windows Defender Firewall: inbound rule for TCP 3000 on the **Private** profile only.
+- Serving: `npm run start` / `npm run dev` bind to `localhost` only. `npm run start:network` /
+  `npm run dev:network` bind to `0.0.0.0` (ADR-039). Next.js 16 would otherwise bind all interfaces by
+  default. The dev server accepts HMR requests from private LAN ranges via `allowedDevOrigins`.
 - The laptop's internet connection (Ethernet/second adapter/phone tether) is used only by the email worker.
 
 ### 4.2 Processes
 
-A single Node.js process (`next start`) serves pages, APIs, and runs the outbox worker (started from
+A single Node.js process (`npm run start:network`) serves pages, APIs, and runs the outbox worker (started from
 `instrumentation.ts`). No separate daemon is needed. Operators may also run `npm run outbox:retry`
 manually.
 
@@ -227,9 +244,9 @@ The client never writes to `localStorage`, `sessionStorage`, IndexedDB, or cooki
 | Context                                        | Idle before warning | Countdown             | Configurable in |
 | ---------------------------------------------- | ------------------- | --------------------- | --------------- |
 | Attract                                        | none                | —                     | —               |
-| Entry / selection / explorer / recommendations | 60 s                | 15 s ("¿Sigue ahí?")  | `settings.json` |
-| Lead form                                      | 120 s               | 20 s                  | `settings.json` |
-| Confirmation                                   | —                   | auto-reset after 15 s | `settings.json` |
+| Entry / selection / explorer / recommendations | 60 s                | 15 s ("¿Sigue ahí?")  | `app-config.ts` |
+| Lead form                                      | 120 s               | 20 s                  | `app-config.ts` |
+| Confirmation                                   | —                   | auto-reset after 15 s | `app-config.ts` |
 
 Any `pointerdown`/`keydown` resets the timer. The warning overlay has a large "Continue" button.
 
@@ -293,8 +310,8 @@ only. They make no offering claim, and the project owner approves them.
 | `ConsentTextSet` (`consent.json`)                  | `version`, `reportDelivery`, `salesFollowUp`, `privacyNotice` (localized), `validationStatus`, `internalNotes`                                                                                                                                                                                                                                                                                                                 |
 | `ContentManifest` (`manifest.json`)                | `contentVersion` (semver), `defaultLanguage`, `updatedAt`                                                                                                                                                                                                                                                                                                                                                                      |
 
-Planned content (later phases): `settings.json` (engine limits, idle timings), `brand.json`, `report.json`
-(CTA, disclaimer), `sales-contacts.json`.
+Planned content (later phases): `settings.json` (engine tuning), `report.json`
+(CTA, disclaimer), `sales-contacts.json`. Branding and idle timings live in `src/lib/config/` (ADR-036).
 
 ### 6.3 Runtime schemas (not content)
 
@@ -452,17 +469,45 @@ Numeric scores are **not displayed** to visitors.
 
 ### 9.1 Route handlers
 
-| Method + path                      | Purpose                                      | Request validation             | Response                                |
-| ---------------------------------- | -------------------------------------------- | ------------------------------ | --------------------------------------- |
-| `GET /api/health`                  | Liveness + DB check + outbox counts (no PII) | —                              | `{ ok, db, outbox: {pending, failed} }` |
-| `POST /api/sessions`               | Store anonymous session summary (sendBeacon) | Zod `SessionSummary` (C1 only) | `204`                                   |
-| `POST /api/leads`                  | Create lead, snapshot, report, outbox entry  | Zod `LeadSubmission`           | `201 { leadId, emailQueued: boolean }`  |
-| `GET /api/admin/leads.csv`         | CSV export                                   | Admin auth                     | `text/csv`                              |
-| `GET /api/admin/outbox`            | Outbox status                                | Admin auth                     | JSON                                    |
-| `POST /api/admin/outbox/:id/retry` | Force retry                                  | Admin auth                     | JSON                                    |
+| Method + path                      | Purpose                                      | Request validation             | Response                               |
+| ---------------------------------- | -------------------------------------------- | ------------------------------ | -------------------------------------- |
+| `GET /api/health`                  | Readiness: app, config, content, database    | —                              | `HealthReport` (see §9.1.1) ✅         |
+| `POST /api/sessions`               | Store anonymous session summary (sendBeacon) | Zod `SessionSummary` (C1 only) | `204`                                  |
+| `POST /api/leads`                  | Create lead, snapshot, report, outbox entry  | Zod `LeadSubmission`           | `201 { leadId, emailQueued: boolean }` |
+| `GET /api/admin/leads.csv`         | CSV export                                   | Admin auth                     | `text/csv`                             |
+| `GET /api/admin/outbox`            | Outbox status                                | Admin auth                     | JSON                                   |
+| `POST /api/admin/outbox/:id/retry` | Force retry                                  | Admin auth                     | JSON                                   |
 
 All handlers run on the Node.js runtime. Payload size limits are enforced; unknown fields are rejected
 (`z.strictObject`).
+
+#### 9.1.1 Health report (`src/types/health.ts`)
+
+```jsonc
+{
+  "status": "ok | degraded | error", // HTTP 200 for ok/degraded, 503 for error
+  "ready": false, // true only when config, content and database are all ready
+  "timestamp": "…",
+  "app": {
+    "name": "Linde Sphere",
+    "version": "0.1.0",
+    "environment": "development",
+    "contentMode": "demo",
+    "uptimeSeconds": 4,
+  },
+  "configuration": { "status": "valid | invalid", "invalidVariables": ["SMTP_HOST"] }, // names only
+  "content": { "status": "valid | invalid | unknown", "version": "0.1.0", "errorCount": 0 },
+  "database": {
+    "status": "ready | not_initialized | unavailable",
+    "engine": "sqlite",
+    "reason": "database_file_missing",
+  },
+}
+```
+
+`Cache-Control: no-store`. No values, paths, URLs or personal data. The database probe opens the SQLite
+file read-only with Node's built-in `node:sqlite` and never creates it. Until Phase 7 migrations exist,
+`not_initialized` and overall `degraded` are expected (ADR-038).
 
 ### 9.2 `POST /api/leads` flow
 
@@ -566,23 +611,39 @@ promised. Demo mode marks assumed offering items with the pending-validation not
 ## 11. Internationalization
 
 - Languages: `es` (default, source of truth) and `en`.
-- UI strings: `messages/es.json` / `messages/en.json`, accessed through a small typed `t(key, params)`
-  helper; key parity is enforced by a unit test.
-- Content strings: `Localized` objects (`{ es, en }`), both required by schema.
-- `<html lang>` updates with the active language. Language resets to `es` on every new session.
+- UI strings: typed TypeScript dictionaries `src/data/i18n/es.ts` (`as const`) and `en.ts` (typed as
+  `Messages`, so a missing or extra key is a **compile error**). A unit test also checks key and
+  placeholder parity at runtime (ADR-035).
+- Lookup: `translate(language, key, params)` in `src/lib/i18n/translate.ts`. Keys are typed dot-paths
+  (`"status.retry"`), and `{name}` placeholders are interpolated. Unknown keys fall back to Spanish, then
+  to the key (never throws in the UI).
+- `LanguageProvider` / `useLanguage()` (`src/features/language/`) holds the language **in memory only**
+  and exposes `t()` and `localize()` for content `{ es, en }` fields. It never uses cookies or storage, so
+  every page load and kiosk reset starts in Spanish.
+- `LanguageSwitcher`: two large buttons (`aria-pressed`, own-language labels), with a polite live-region
+  announcement.
+- `<html lang>` updates with the active language.
+- `global-error.tsx` renders outside the provider and shows both languages.
 - The report is rendered in the lead's `preferredLanguage`.
 
 ---
 
 ## 12. Branding and theming
 
-- `content/brand.json` holds the product name ("Linde Sphere"), color tokens, an optional logo path, and
-  footer/contact text. **No corporate logo files are committed**; the default renders a text wordmark.
-- Tokens are emitted as CSS variables in `layout.tsx` and consumed by Tailwind 4 `@theme`, so a rebrand is
-  a JSON change.
-- Default palette: calm clinical blues/teals on light neutrals, AA contrast verified by a unit test on the
-  token pairs.
-- Typography: a self-hosted open-licence sans-serif (e.g., Inter or Source Sans 3) with kiosk base size ≥ 22 px.
+- `src/lib/config/brand-config.ts` holds the product name ("Linde Sphere"), localized tagline,
+  organization name (null), logo (null), the color palette and `approvalStatus: "placeholder"`, all
+  validated by a Zod schema at load (ADR-036). **No corporate logo or brand mark is committed.** The header
+  renders a text wordmark with a generic ring glyph.
+- Colors are emitted as `--brand-*` CSS variables on `<html>` by the root layout and mapped to Tailwind 4
+  theme tokens (`bg-canvas`, `text-ink`, `bg-primary`, …) in `src/styles/globals.css`. Rebranding means
+  editing the config, not components.
+- Default palette: calm clinical teal-blue on light neutrals. A unit test verifies WCAG AA (≥ 4.5:1) for
+  every text/background pair.
+- Typography: the system sans-serif stack (Segoe UI on Windows, Roboto on Android). No web-font download
+  (ADR-018). Fluid base size `clamp(16px, 0.75rem + 1vmin, 24px)` gives about 23 px on the kiosk and 16 px
+  on phones.
+- App-wide settings (default language, kiosk design viewport, touch-target sizes, idle timings,
+  recommendation limits) live in `src/lib/config/app-config.ts`. It is client-safe and holds no secrets.
 
 ---
 
@@ -632,23 +693,26 @@ status, timestamps.
 | `EMAIL_MAX_ATTEMPTS`                                                  | `12`                          | Outbox retry ceiling                         |
 | `ADMIN_ENABLED`                                                       | `false`                       | Enable admin pages/APIs                      |
 | `ADMIN_USER` / `ADMIN_PASSWORD`                                       | —                             | Basic auth credentials (required if enabled) |
-| `PORT` / `HOST`                                                       | `3000` / `0.0.0.0`            | Kiosk serving                                |
+| `DEV_ALLOWED_ORIGINS`                                                 | —                             | Extra dev-server HMR hostnames (comma list)  |
 
-All are parsed by a Zod schema at startup; the server refuses to start on invalid configuration (e.g.,
-`EMAIL_PROVIDER=smtp` without `SMTP_HOST`).
+All are parsed by `src/server/env.ts` (Zod) in `instrumentation.ts` at server boot. The server refuses
+to start on invalid configuration (e.g., `EMAIL_PROVIDER=smtp` without `SMTP_HOST`), and errors name
+variables but never echo values. Empty values count as unset. `CONTENT_PREVIEW_PLACEHOLDERS` is forced
+off in production. The port and host are CLI flags (`-p`, `-H`) set by the npm scripts, not env
+variables (ADR-037). `.env.example` lists every variable without secrets.
 
 ---
 
 ## 16. Testing strategy
 
-| Layer       | Tooling                                                                       | Scope                                                                                                                                                                          |
-| ----------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Static      | `tsc --noEmit`, ESLint, Prettier check                                        | Whole project                                                                                                                                                                  |
-| Content     | `content:check` (Zod + cross-reference + translation + prohibited-claim scan) | `content/`, `messages/`                                                                                                                                                        |
-| Unit        | Vitest (node)                                                                 | Engine (determinism, reasons, caps, tie-breaks, fallback), visibility filter, lead scoring, signal normalization, i18n parity, outbox backoff, CSV formatting, contrast tokens |
-| Component   | Vitest + Testing Library (jsdom)                                              | Reducer transitions, idle timer, minimum-info gating, lead form validation                                                                                                     |
-| Integration | Vitest + temporary SQLite DB                                                  | `/api/leads` transaction, email failure keeps lead + retries, response excludes score, production mode filtering in report                                                     |
-| E2E         | Playwright, 1080×1920, `hasTouch`                                             | Quick path, discovery path, explore path, idle reset clears everything, production mode hides assumed content, no external requests                                            |
+| Layer       | Tooling                                                                              | Scope                                                                                                                                                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Static      | `tsc --noEmit`, ESLint, Prettier check                                               | Whole project                                                                                                                                                                                                                                                                |
+| Content     | `content:check` (Zod + cross-reference + translation + prohibited-claim scan)        | `content/`                                                                                                                                                                                                                                                                   |
+| Unit        | Vitest (node)                                                                        | Engine (determinism, reasons, caps, tie-breaks, fallback), visibility filter, lead scoring, signal normalization, i18n parity, outbox backoff, CSV formatting, contrast tokens                                                                                               |
+| Component   | Vitest + Testing Library (jsdom)                                                     | Reducer transitions, idle timer, minimum-info gating, lead form validation                                                                                                                                                                                                   |
+| Integration | Vitest + temporary SQLite DB                                                         | `/api/leads` transaction, email failure keeps lead + retries, response excludes score, production mode filtering in report                                                                                                                                                   |
+| E2E         | Playwright projects: kiosk 1080×1920 (touch), laptop 1440×900, phone 390×844 (touch) | Now: home, language switch, no persisted language, not-found, touch-target sizes, no overflow, kiosk fits without scroll, health. Later: quick path, discovery path, explore path, idle reset clears everything, production mode hides assumed content, no external requests |
 
 Scripts: `lint`, `typecheck`, `format:check`, `test`, `test:e2e`, `content:check`, `check` (all fast checks).
 

@@ -10,7 +10,7 @@
     "en": "The source of medical gas supply for the entire hospital."
   },
   "background": {
-    "src": "/scenes/placeholder/gas-plant-background.svg",
+    "src": "/assets/scenes/placeholder/gas-plant-background.svg",
     "alt": {
       "es": "Ilustración isométrica de una planta de gases medicinales con tanque de almacenamiento.",
       "en": "Isometric illustration of a medical-gas plant with a storage tank."
@@ -20,7 +20,7 @@
   },
   "foregroundLayers": [
     {
-      "src": "/scenes/placeholder/gas-plant-foreground.svg",
+      "src": "/assets/scenes/placeholder/gas-plant-foreground.svg",
       "alt": {
         "es": "Cerca y señalización en primer plano.",
         "en": "Fence and signage in the foreground."

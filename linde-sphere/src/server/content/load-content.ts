@@ -17,6 +17,10 @@ import { ChallengeSchema, FacilityTypeSchema, PersonaSchema } from "../../domain
 /**
  * Reads every content file from disk, validates each with its Zod schema, then runs cross-record
  * checks. Node-only (uses fs); deliberately free of `server-only` so CLI scripts can use it too.
+ *
+ * Content is read at runtime from the project's `content/` folder (the app runs with `next start` from the
+ * project root, not as a standalone/serverless bundle), so the paths are marked `turbopackIgnore` to stop
+ * the bundler from tracing the whole project.
  */
 
 export type LoadIssue = {
@@ -101,7 +105,7 @@ export function loadContentFromDirectory(
   };
 
   for (const { collection, file, schema } of SINGLE_FILES) {
-    const abs = path.join(contentDir, file);
+    const abs = path.join(/*turbopackIgnore: true*/ contentDir, file);
     const json = readJson(abs);
     if (!json.ok) continue;
     const result = schema.safeParse(json.value);
@@ -110,7 +114,7 @@ export function loadContentFromDirectory(
   }
 
   // Scenes: one file per scene, so errors point at the exact file.
-  const scenesDir = path.join(contentDir, SCENES_DIR);
+  const scenesDir = path.join(/*turbopackIgnore: true*/ contentDir, SCENES_DIR);
   const sceneFileById = new Map<string, string>();
   const scenes: unknown[] = [];
   let scenesOk = true;
@@ -126,7 +130,7 @@ export function loadContentFromDirectory(
       scenesOk = false;
     }
     for (const f of sceneFiles) {
-      const abs = path.join(scenesDir, f);
+      const abs = path.join(/*turbopackIgnore: true*/ scenesDir, f);
       const json = readJson(abs);
       if (!json.ok) {
         scenesOk = false;
@@ -169,7 +173,7 @@ export function loadContentFromDirectory(
       return (issue.recordId && sceneFileById.get(issue.recordId)) ?? rel(scenesDir);
     }
     const single = SINGLE_FILES.find((s) => s.collection === issue.collection);
-    return single ? rel(path.join(contentDir, single.file)) : rel(contentDir);
+    return single ? rel(path.join(/*turbopackIgnore: true*/ contentDir, single.file)) : rel(contentDir);
   };
   for (const issue of checkContentBundle(bundle)) {
     const prefix = issue.recordId && issue.collection !== "scenes" ? `${issue.recordId}: ` : "";
@@ -187,7 +191,7 @@ export function loadContentFromDirectory(
         bundle,
         publicDir,
         sceneFileById,
-        rel(path.join(contentDir, "digital-assets.json")),
+        rel(path.join(/*turbopackIgnore: true*/ contentDir, "digital-assets.json")),
       ),
     );
 
@@ -203,7 +207,7 @@ function checkLocalAssetFiles(
 ): LoadIssue[] {
   const issues: LoadIssue[] = [];
   const exists = (publicPath: string) =>
-    existsSync(path.join(publicDir, ...publicPath.split("/").filter(Boolean)));
+    existsSync(path.join(/*turbopackIgnore: true*/ publicDir, ...publicPath.split("/").filter(Boolean)));
   for (const scene of bundle.scenes) {
     const layers = [
       { layer: scene.background, at: "background.src" },

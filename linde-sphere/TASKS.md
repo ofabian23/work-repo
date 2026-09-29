@@ -15,24 +15,26 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] Check the toolchain (Node 22.22, npm 10.9, Next.js 16.3.7 stable, Prisma 7.10 stable, Playwright Chromium present)
 - [x] PROJECT_BRIEF.md — scope, journey, personas, environments, MVP/non-MVP, acceptance criteria
 - [x] ARCHITECTURE.md — stack, layout, state machine, content model, engine, data model, outbox, privacy
-- [x] DECISIONS.md — ADR-001 … ADR-026
+- [x] DECISIONS.md — ADR-001 … ADR-026 (later phases add more)
 - [x] TASKS.md — this plan
 - [x] CONTENT_VALIDATION.md — statuses, visibility matrix, workflow, registers
 
-## Phase 1 — Project foundation (partially done — ADR-030)
+## Phase 1 — Project foundation ✅
 
-- [x] Scaffold Next.js 16.3.7 (App Router, TS strict + `noUncheckedIndexedAccess`, Tailwind 4, ESLint) in `linde-sphere/`
-- [x] Prettier + `prettier-plugin-tailwindcss`; `format`/`format:check` scripts
-- [x] Vitest (node) with path alias; `check` script (content, lint with zero warnings, typecheck, format, tests)
-- [ ] Vitest jsdom project + Testing Library (with the first component tests, Phase 4)
-- [ ] Playwright config (1080×1920, `hasTouch`, Chromium executable fallback); a smoke test
-- [ ] Prisma 7.10 + SQLite adapter; `prisma.config.ts`; initial schema (all models in ARCHITECTURE §9.3); first migration
-- [ ] `src/server/env.ts` (Zod env schema) + `.env.example`; `.gitignore` for `.env`, `data/`
-- [ ] `src/server/log.ts` PII-safe logger; `/api/health`
-- [ ] Self-hosted font; base `globals.css` with kiosk hardening CSS
-- [x] `README.md` quick start
-- [x] Remove scaffold Google-font import and demo assets (ADR-018)
-- **Done when:** clean install, lint, typecheck, unit + e2e smoke tests, migration, and build all pass.
+- [x] Scaffold Next.js 16.3.7 (App Router, TS strict + `noUncheckedIndexedAccess`, Tailwind 4, ESLint, `src/`, `@/*` alias); adapted, not recreated
+- [x] Folder structure: `src/app`, `components`, `features`, `lib`, `data`, `types`, `styles`, plus existing `domain` and `server`; `public/assets` (ADR-034)
+- [x] Centralized app config (`src/lib/config/app-config.ts`) and Zod-validated brand config with placeholder values and no logo (`brand-config.ts`)
+- [x] ES/EN typed dictionaries (`src/data/i18n`), `translate()`, `LanguageProvider` + `useLanguage()`, large `LanguageSwitcher` (ADR-035)
+- [x] Portrait kiosk `AppShell` (wordmark, language switch, demo-mode footer), home screen, brand CSS variables → Tailwind tokens, kiosk hardening CSS
+- [x] Global `error.tsx` (Next 16 `retry`), `global-error.tsx` (bilingual), `not-found.tsx`, `loading.tsx`
+- [x] `src/server/env.ts` Zod env validation at boot via `instrumentation.ts`; `.env.example` (names only) (ADR-037)
+- [x] `GET /api/health`: app, configuration, content and SQLite readiness, no secrets, `no-store` (ADR-038)
+- [x] Scripts: `dev`/`start` (localhost), `dev:network`/`start:network` (0.0.0.0), `build`, `lint`, `typecheck`, `test`, `test:e2e`, `check`; `allowedDevOrigins` for LAN (ADR-039)
+- [x] Prettier; Vitest with `server-only` alias; Playwright (kiosk/laptop/phone projects, preinstalled Chromium fallback) (ADR-040)
+- [x] README: exact run commands, localhost versus local-network access, kiosk connection steps, health check
+- [x] Security headers; removed scaffold Google-font import and demo assets (ADR-018)
+- **Deferred (with rationale):** Prisma + migrations → Phase 7, the first phase that stores data (ADR-038). PII-safe logger → Phase 7. Testing Library/jsdom → first component tests (Phase 4). Self-hosted font → replaced by the system font stack (ADR-018 amendment).
+- **Verified:** dev server starts; home renders; ES/EN switch; layout at 1080×1920, 1440×900 and 390×844; lint, typecheck, unit and E2E tests pass; build clean.
 
 ## Phase 2 — Content model and seed content ✅
 
@@ -44,7 +46,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] Seed content: 10 personas, 12 challenges, 7 facility types, 8 scenes with 24 hotspots, 13 solutions (all `assumed`, requiring PR sales validation), 12 rules, 3 placeholder assets, draft consent, manifest
 - [x] Loader with per-file errors (`src/server/content/load-content.ts`) + `npm run content:check` (demo/production/strict, exit codes)
 - [x] 171 unit tests covering schema success/failure, cross-checks, loader errors, visibility, seed content
-- **Moved to later phases:** `settings.json`, `brand.json`, `report.json`, `sales-contacts.json` (Phases 3–8); `messages/*.json` + `t()` (Phase 4); cached server loader that refuses to boot on invalid content (Phase 4, first page that reads content); placeholder SVG files (Phase 6)
+- **Moved to later phases:** `settings.json`, `report.json`, `sales-contacts.json` (Phases 3–8); brand config and ES/EN dictionaries with `t()` were delivered in Phase 1; cached server loader that refuses to boot on invalid content (Phase 4, first page that reads content); placeholder SVG files (Phase 6)
 
 ## Phase 3 — Recommendation engine and lead scoring (pure logic)
 
@@ -93,6 +95,10 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 
 ## Phase 7 — Lead capture and persistence
 
+- [ ] Prisma 7.10 + SQLite driver adapter; `prisma.config.ts`; schema for all models (ARCHITECTURE §9.3); first migration; verify install on Windows (ADR-010)
+- [ ] Replace the `node:sqlite` health probe with a Prisma `SELECT 1` (ADR-038)
+- [ ] `src/server/log.ts` PII-safe logger
+
 - [ ] Lead form (fields per PROJECT_BRIEF §10), localized validation, autofill suppression
 - [ ] Configurable, versioned consent checkboxes (separate, unchecked by default)
 - [ ] `POST /api/leads`: strict Zod schema, server recomputation, lead scoring, single transaction, idempotency key, rate limit
@@ -124,7 +130,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] Accessibility pass: target sizes, contrast test, focus order, screen-reader labels, reduced motion
 - [ ] Performance pass: bundle budget, asset sizes, throttled-device run
 - [ ] `DEPLOYMENT.md`: Windows setup (Node LTS, install, `.env`, migration, firewall, hotspot, startup script, power settings, BitLocker), Android kiosk setup (Chrome, screen pinning, autofill off, portrait lock), event-day checklist, recovery procedures
-- [ ] `npm run start:kiosk` (`next start -H 0.0.0.0 -p 3000`)
+- [x] `npm run start:network` (`next start -H 0.0.0.0`), done in Phase 1
 - [ ] Rehearsal script: 20 consecutive visitor sessions with resets; offline email test
 - **Done when:** all acceptance criteria are verified (automated or documented manual check).
 

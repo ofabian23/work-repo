@@ -10,7 +10,7 @@
     "en": "Inpatient floors where staff care for patients around the clock."
   },
   "background": {
-    "src": "/scenes/placeholder/patient-care-background.svg",
+    "src": "/assets/scenes/placeholder/patient-care-background.svg",
     "alt": {
       "es": "Ilustración isométrica de un piso de hospitalización con habitaciones y estación de enfermería.",
       "en": "Isometric illustration of an inpatient floor with rooms and a nursing station."
