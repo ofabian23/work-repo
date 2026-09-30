@@ -2,7 +2,8 @@ import type { ContentBundle } from "./bundle";
 import type { EngineSettings } from "./engine-settings";
 import type { DigitalAsset, Solution } from "./offering";
 import type { ContentMode, ValidationStatus } from "./primitives";
-import { SIGNAL_TYPES, type RecommendationRule, type SignalWeights } from "./recommendation-rule";
+import { SIGNAL_TYPES } from "./constants";
+import type { RecommendationRule, SignalWeights } from "./recommendation-rule";
 import type { Hotspot, Scene } from "./scene";
 import type { ConsentTextSet, ReportCopy } from "./settings";
 

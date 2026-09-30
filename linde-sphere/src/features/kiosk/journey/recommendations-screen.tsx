@@ -9,11 +9,10 @@ import { StatusBanner } from "@/components/feedback/status-banner";
 import { ArrowRightIcon, HospitalIcon } from "@/components/icons";
 import type { LocalizedText } from "@/domain/content/primitives";
 import type { PublicContentBundle } from "@/domain/content/visibility";
-import {
-  primaryItems,
-  secondaryItems,
-  type RecommendationItem,
-  type RecommendationResult,
+import { primaryItems, secondaryItems } from "@/domain/recommendations/recommendation-items";
+import type {
+  RecommendationItem,
+  RecommendationResult,
 } from "@/domain/recommendations/recommendation-result";
 import type { RecommendationChanges } from "@/domain/recommendations/recommendation-stability";
 import { useLanguage } from "@/lib/i18n/language-provider";

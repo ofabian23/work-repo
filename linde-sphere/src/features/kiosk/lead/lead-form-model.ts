@@ -8,7 +8,8 @@ import {
   PhoneSchema,
   type LeadSubmissionInput,
 } from "@/domain/leads/lead-submission";
-import { primaryItems, type RecommendationResult } from "@/domain/recommendations/recommendation-result";
+import { primaryItems } from "@/domain/recommendations/recommendation-items";
+import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
 import type { SessionSignals } from "@/domain/session/visitor-session";
 
 /**

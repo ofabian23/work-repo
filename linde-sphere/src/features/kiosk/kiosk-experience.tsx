@@ -5,7 +5,8 @@ import { InactivityWarning } from "@/components/overlay/inactivity-warning";
 import type { PublicContentBundle } from "@/domain/content/visibility";
 import { recommend } from "@/domain/recommendations/engine";
 import { RecommendationReadiness } from "@/domain/recommendations/recommendation-readiness";
-import { primaryItems, type RecommendationResult } from "@/domain/recommendations/recommendation-result";
+import { primaryItems } from "@/domain/recommendations/recommendation-items";
+import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
 import {
   evidenceKey,
   recommendationChanges,
@@ -13,7 +14,8 @@ import {
   stabilizeRecommendations,
 } from "@/domain/recommendations/recommendation-stability";
 import type { NextStep } from "@/domain/session/session-event";
-import { EMPTY_SIGNALS, type EntryPath } from "@/domain/session/visitor-session";
+import { EMPTY_SIGNALS } from "@/domain/session/session-log";
+import type { EntryPath } from "@/domain/session/visitor-session";
 import { appConfig } from "@/lib/config/app-config";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -32,8 +34,8 @@ import { RoleChallengesScreen } from "./journey/role-challenges-screen";
 import { TailoringScreen } from "./journey/tailoring-screen";
 import { ChallengesPathScreen } from "./journey/challenges-path-screen";
 import { SummaryRequestScreen } from "./journey/summary-request-screen";
-import { createLeadApi, type LeadApi } from "./lead/lead-api";
-import { LeadFormScreen } from "./lead/lead-form-screen";
+import type { LeadApi } from "./lead/lead-api";
+import { LazyLeadFormScreen, preloadLeadForm } from "./lead/lazy-lead-form";
 import { AttractScreen } from "./screens/attract-screen";
 import { WelcomeScreen } from "./screens/welcome-screen";
 import { sessionPhase, type JourneyScreen } from "./state/kiosk-state";
@@ -149,10 +151,16 @@ export function KioskExperience({
   const toggleOther = () => dispatch({ type: "TOGGLE_OTHER_CHALLENGE" });
   const challengesById = (ids: string[]) =>
     ids.flatMap((id) => content.challenges.find((c) => c.id === id) ?? []);
-  const api = useMemo(
-    () => leadApi ?? createLeadApi({ timeoutMs: appConfig.leadForm.requestTimeoutMs }),
-    [leadApi],
-  );
+  // Fetch the lead form's code (and the validation library it uses) once the browser is idle after start-up.
+  useEffect(() => {
+    const load = () => void preloadLeadForm().catch(() => undefined);
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(load, { timeout: 5_000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = setTimeout(load, 1_000);
+    return () => clearTimeout(timer);
+  }, []);
   const finishVisit = useCallback(() => reset("completed"), [reset]);
   const phase = sessionPhase(state, { recommendationReady: readiness.ready });
   // Typing takes longer than tapping: the lead form gets a longer inactivity allowance. The timer is off
@@ -268,11 +276,11 @@ export function KioskExperience({
       break;
     case "lead-form":
       screen = session && (
-        <LeadFormScreen
+        <LazyLeadFormScreen
           content={content}
           session={{ sessionId: session.id, sessionStartedAt: session.startedAt, signals }}
           recommendations={snapshot ?? displayed}
-          api={api}
+          api={leadApi}
           statusPoll={leadStatusPoll}
           confirmationResetMs={confirmationResetMs}
           onSubmitted={() => dispatch({ type: "LEAD_SUBMITTED" })}

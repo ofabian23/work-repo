@@ -460,9 +460,22 @@ to its first phrase after 30 s without touches.
 
 ### 5.5 Kiosk hardening (CSS/HTML)
 
-`touch-action: manipulation` · `overscroll-behavior: none` · `user-select: none` (except inputs) ·
-`-webkit-touch-callout: none` · `draggable="false"` on images · context menu suppressed ·
-viewport `width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no` (ADR-022).
+Amended by ADR-058; the original design is in ADR-022.
+
+- **Viewport:** `width=device-width, initial-scale=1`. Browser zoom stays available (WCAG 1.4.4).
+- **Gestures:**
+  - `touch-action: manipulation` on the page: no double-tap zoom.
+  - `touch-action: pan-x pan-y` on the scene art box: a pinch there cannot zoom the scene out of place.
+  - `overscroll-behavior: none`.
+- **Kiosk frame only (`.kiosk-surface`):** `user-select: none` and `-webkit-touch-callout: none`, image
+  dragging off, and the long-press context menu suppressed. Inputs and `[data-selectable]` text (the
+  visitor's own entries on the review step) stay selectable and keep the menu. The admin utility is outside
+  the frame and behaves like a normal page.
+- **Scroll regions:** scrollable dialog bodies and tables are focusable, labeled regions (keyboard
+  scrolling).
+- **Orientation:** layout is fluid (container-query scene box, `dvh`). State lives in React, so rotation
+  never resets it. This is covered by an E2E test that rotates mid-journey with a sheet open.
+- **Physical-device checks:** MANUAL_KIOSK_TEST.md.
 
 ---
 
@@ -1242,7 +1255,26 @@ Scripts: `lint`, `typecheck`, `format:check`, `test`, `test:e2e`, `content:check
 
 ## 18. Performance budgets
 
-- Initial load on LAN ≤ 2 s to interactive on a mid-range Android device.
-- Scene layer assets: SVG or WebP, ≤ 300 KB per scene.
-- JS for the kiosk route ≤ 250 KB gzipped (excluding scene assets).
-- Transitions at 60 fps; no layout thrash (transform/opacity only).
+- Initial load on LAN ≤ 2 s to interactive on a mid-range Android device. This is checked by hand
+  (MANUAL_KIOSK_TEST.md). E2E asserts < 8 s on the CI machine, as a gross-regression guard only.
+- **First-load JS for the kiosk route:** < 250 KB gzipped, with no zod. `tests/e2e/kiosk-device.spec.ts`
+  checks this against the build manifest.
+  - The lead form and its validation library load lazily and are prefetched while idle (ADR-058).
+  - Measured: see TASKS Phase 10a.
+- **Third parties:** none. No request may leave the kiosk origin (E2E).
+- **Scene layer assets:** SVG or WebP/AVIF at 1200 × 1500.
+  - Per-file budgets (images ≤ 1 MB, SVG ≤ 512 KB) are enforced by `content:check`.
+  - Target ≤ 300 KB per scene.
+  - The placeholder art totals ~90 KB (~16 KB gzipped).
+- **Scene images:** intrinsic `width`/`height`, `decoding="async"`, and `fetchpriority="high"` on the
+  current background. Neighboring scenes are prefetched while idle.
+- **Transitions:** 60 fps with no layout thrash. Keyframes animate transform and opacity only. Reduced
+  motion removes them.
+- **Report:** build and render in < 25 ms, with email HTML < 60 KB (unit test). The report is rendered
+  before the storage transaction, never inside it.
+- **Database:** one transaction per submission. SQLite in WAL mode. Content is cached per process in
+  production.
+- **Re-renders:**
+  - Idle tracking uses refs; activity events do not re-render.
+  - Lead-form typing re-renders the form only.
+  - Context values are memoized.

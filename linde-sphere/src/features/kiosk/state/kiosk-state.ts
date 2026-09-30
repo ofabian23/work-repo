@@ -1,19 +1,7 @@
-import type { ContentMode } from "@/domain/content/primitives";
 import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
-import {
-  appendSessionEvent,
-  type NextStep,
-  type SessionEvent,
-  type SessionEventType,
-} from "@/domain/session/session-event";
-import {
-  EMPTY_SIGNALS,
-  VisitorSessionSchema,
-  type EntryPath,
-  type SessionOutcome,
-  type SessionSignals,
-  type VisitorSession,
-} from "@/domain/session/visitor-session";
+import type { NextStep, SessionEvent, SessionEventType } from "@/domain/session/session-event";
+import { appendSessionEvent, EMPTY_SIGNALS } from "@/domain/session/session-log";
+import type { EntryPath, SessionSignals } from "@/domain/session/visitor-session";
 
 /**
  * Kiosk session state machine (pure, ADR-004/ADR-005/ADR-047/ADR-048).
@@ -371,33 +359,6 @@ function reduce(state: KioskState, action: KioskAction): KioskState {
         },
       };
   }
-}
-
-/**
- * Anonymous (class C1) summary for booth metrics (sent on reset from Phase 7, ADR-026).
- * Validated against VisitorSessionSchema, which rejects any extra field.
- */
-export function toSessionSummary(
-  session: ActiveSession,
-  meta: {
-    language: "es" | "en";
-    contentMode: ContentMode;
-    contentVersion: string;
-    outcome: SessionOutcome;
-    endedAt: string | null;
-  },
-): VisitorSession {
-  return VisitorSessionSchema.parse({
-    id: session.id,
-    startedAt: session.startedAt,
-    endedAt: meta.endedAt,
-    language: meta.language,
-    entryPath: session.entryPath,
-    contentMode: meta.contentMode,
-    contentVersion: meta.contentVersion,
-    outcome: meta.outcome,
-    signals: session.signals,
-  });
 }
 
 /** The kiosk's session states (ADR-055). */

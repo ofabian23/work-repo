@@ -268,6 +268,18 @@ These commands run only on the laptop (there is no web page for them) and use th
 Microsoft Graph (Microsoft 365) sending is not available: it needs an organizational app registration and
 admin consent. The code is structured so a Graph provider can be added later.
 
+## Accessibility, performance and device testing
+
+- `tests/e2e/accessibility.spec.ts` runs axe-core (WCAG 2.2 AA) on every screen and dialog, plus keyboard,
+  focus, form-error and language checks.
+- `tests/e2e/kiosk-device.spec.ts` checks the kiosk-device behavior (zoom, gestures, selection, rotation)
+  and the performance budgets: first-load JavaScript, no third-party requests.
+- Both run with the rest of the E2E suite (`npx playwright test`).
+- Asset size budgets are part of `npm run content:check`. Replacement scene art should be exported at
+  1200 × 1500 as WebP, AVIF or SVG, under 1 MB per file.
+- Before each event, go through [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md) on the real touchscreen:
+  browser settings, touch and gestures, TalkBack, reset and privacy, network drop and recovery.
+
 ## Privacy and security
 
 - **What is collected, where it goes, and what still needs approval:** see [PRIVACY_REVIEW.md](./PRIVACY_REVIEW.md).

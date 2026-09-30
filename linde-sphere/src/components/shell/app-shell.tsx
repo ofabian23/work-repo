@@ -1,10 +1,20 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import type { ContentMode } from "@/domain/content/primitives";
 import { appConfig } from "@/lib/config/app-config";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { KioskHeader } from "./kiosk-header";
+
+/**
+ * Long-press on the touchscreen opens Chrome's context menu (save image, open link in new tab…), which
+ * leads visitors out of the kiosk. It stays available in form fields (paste) and selectable text (ADR-058).
+ */
+function suppressContextMenu(event: MouseEvent) {
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target?.closest("input, textarea, select, [contenteditable='true'], [data-selectable]"))
+    event.preventDefault();
+}
 
 /**
  * Portrait-first kiosk frame: KioskHeader, flexible main area, discreet footer.
@@ -22,7 +32,10 @@ export function AppShell({
   const { t } = useLanguage();
 
   return (
-    <div className="bg-canvas flex min-h-dvh justify-center">
+    <div
+      className="kiosk-surface bg-canvas flex min-h-dvh justify-center"
+      onContextMenu={suppressContextMenu}
+    >
       <div className="bg-surface flex min-h-dvh w-full max-w-[1080px] flex-col shadow-[0_0_60px_rgba(19,35,47,0.08)]">
         <KioskHeader actions={headerActions} />
 

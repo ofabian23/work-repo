@@ -193,7 +193,8 @@ entry here — architecture is never changed silently.
 
 ## ADR-022 — Page zoom disabled on the kiosk
 
-- **Date:** 2026-09-29 · **Status:** Accepted
+- **Date:** 2026-09-29 · **Status:** Superseded in part by ADR-058 (browser zoom is allowed again; pinch is
+  blocked on the scene only)
 - **Context:** Pinch-zoom on a shared kiosk leaves the layout broken for the next visitor.
 - **Decision:** Viewport disables user scaling. To compensate, base type is ≥ 22 px, targets are ≥ 64 px,
   and contrast is AA or better.
@@ -1007,3 +1008,63 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
     database, email or network is unavailable. These behaviors are covered by unit and E2E tests.
   - Remaining risks are recorded in PRIVACY_REVIEW.md §10: plain HTTP on the LAN, spoofable per-client
     limits, and admin without roles.
+
+## ADR-058 — Accessibility and performance pass: zoom allowed, gestures scoped, zod off the first load
+
+- **Date:** 2026-09-30 · **Status:** Accepted (amends ADR-022)
+- **Context:** An automated WCAG 2.2 AA pass (axe-core in Playwright) and a performance review for a
+  portrait Android touchscreen running Chrome. Findings:
+  - The viewport disabled zoom (`user-scalable=no, maximum-scale=1`), which fails WCAG 1.4.4.
+  - Scrollable dialog bodies and admin tables could not be scrolled with the keyboard.
+  - `user-select: none` applied to the whole page, including the admin utility on the laptop.
+  - The first screen downloaded ~277 KB of compressed JavaScript, and about a third of it (~98 KB) was zod. Client
+    code imported plain constants (languages, limits, helpers) from schema modules, and the brand config
+    ran its schema in the browser.
+- **Decision:**
+  - **Zoom and gestures:**
+    - The viewport allows zoom (`width=device-width, initial-scale=1`).
+    - Accidental gestures are handled in CSS: `touch-action: manipulation` on the page (no double-tap
+      zoom) and `touch-action: pan-x pan-y` on the scene art box, so a pinch that starts on the hospital
+      scene does not zoom it.
+    - Kiosk operators who need a fixed scale set it in the kiosk browser (MANUAL_KIOSK_TEST.md).
+  - **Selection, dragging and the context menu:** limited to the kiosk frame (`.kiosk-surface`).
+    - Kiosk controls are not selectable or draggable, and the long-press menu is suppressed.
+    - Form fields and the visitor's own entries on the review step (`data-selectable`) stay selectable and
+      keep the menu, so paste works.
+    - The admin utility behaves like a normal desktop page.
+  - **Scroll regions:** scrollable dialog bodies and tables are focusable, labeled regions.
+  - **Zod-free client modules:**
+    - Constants and helpers that client code needs move to zod-free modules: `domain/content/constants.ts`,
+      `domain/session/session-log.ts` and `domain/recommendations/recommendation-items.ts`.
+    - Schema modules re-export them, so server code is unchanged. Tests check that the plain
+      `isEventTarget` accepts exactly what `EventTargetSchema` accepts.
+    - The brand values are plain data. `BrandConfigSchema` (`brand-config-schema.ts`) validates them with
+      the content at start-up and in `content:check`.
+    - `toSessionSummary` (used only by tests until booth metrics exist) moves out of the client state
+      module.
+  - **Lazy lead form:**
+    - The lead form is the only screen that validates with the shared schemas in the browser. It is loaded
+      on demand (`lazy-lead-form.tsx`) and prefetched while the browser is idle after start-up.
+    - A failed download shows a recoverable error (retry or back).
+    - The server remains the authority for every validation.
+  - **Scene images:**
+    - Images declare their intrinsic size (1200 × 1500) and decode asynchronously.
+    - The current background has `fetchpriority="high"`.
+    - The scenes one touch away (navigation targets and the parent) are prefetched while idle.
+  - **Budgets, checked automatically:**
+    - First-load JavaScript for the kiosk route (framework plus app chunks) is read from the build manifests:
+      < 250 KB gzipped, and no zod.
+    - No third-party requests. HTML < 400 KB.
+    - Each `public/` asset has a size budget (images 1 MB, SVG 512 KB), enforced by `content:check`.
+    - Report build and render: < 25 ms, and email HTML < 60 KB.
+  - **SQLite:**
+    - WAL journal mode is set once at start-up, so reads no longer wait behind writes. `synchronous` stays
+      FULL.
+    - Backups keep using the SQLite backup API, which is WAL-safe.
+- **Consequences:**
+  - Zoom works for visitors who need it, and a pinch on the scene can no longer break its layout.
+  - First-load JavaScript went from ~277 KB to ~173 KB compressed (~415 KB less to parse) before the first screen.
+  - Client code must import runtime values from the zod-free modules. The E2E budget test fails if zod
+    reaches the first load again.
+  - Physical-device behavior (Fully Kiosk or Chrome settings, rotation lock, real touch) cannot be
+    automated. It is covered by MANUAL_KIOSK_TEST.md.

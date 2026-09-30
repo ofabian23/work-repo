@@ -6,7 +6,8 @@ import { PendingValidationBadge } from "@/components/content/pending-validation-
 import { SparkIcon } from "@/components/icons";
 import { Sheet } from "@/components/overlay/dialog";
 import type { PublicContentBundle } from "@/domain/content/visibility";
-import { primaryItems, type RecommendationResult } from "@/domain/recommendations/recommendation-result";
+import { primaryItems } from "@/domain/recommendations/recommendation-items";
+import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
 import { recommendationChanges } from "@/domain/recommendations/recommendation-stability";
 import { useLanguage } from "@/lib/i18n/language-provider";
 

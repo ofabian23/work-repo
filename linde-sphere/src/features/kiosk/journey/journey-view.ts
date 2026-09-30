@@ -1,7 +1,8 @@
 import type { LocalizedText } from "@/domain/content/primitives";
 import type { Persona } from "@/domain/content/taxonomy";
 import type { PublicContentBundle } from "@/domain/content/visibility";
-import { primaryItems, type RecommendationResult } from "@/domain/recommendations/recommendation-result";
+import { primaryItems } from "@/domain/recommendations/recommendation-items";
+import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
 
 /** At most this many challenges are suggested after choosing a role (quick to scan on the kiosk). */
 export const MAX_SUGGESTED_CHALLENGES = 4;

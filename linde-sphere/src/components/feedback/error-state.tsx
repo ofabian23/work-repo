@@ -12,6 +12,7 @@ export function ErrorState({
   digest,
   onRetry,
   onHome,
+  homeLabel,
   headingLevel,
 }: {
   title?: string;
@@ -20,6 +21,8 @@ export function ErrorState({
   digest?: string;
   onRetry?: () => void;
   onHome?: () => void;
+  /** Label for the `onHome` action when it goes somewhere other than the start. */
+  homeLabel?: string;
   headingLevel?: 1 | 2 | 3;
 }) {
   const { t } = useLanguage();
@@ -37,7 +40,7 @@ export function ErrorState({
       }
     >
       {onRetry && <PrimaryAction onClick={onRetry}>{t("status.retry")}</PrimaryAction>}
-      {onHome && <SecondaryAction onClick={onHome}>{t("status.backHome")}</SecondaryAction>}
+      {onHome && <SecondaryAction onClick={onHome}>{homeLabel ?? t("status.backHome")}</SecondaryAction>}
       {digest && (
         <p className="text-ink-muted text-caption w-full">{t("status.errorReference", { digest })}</p>
       )}

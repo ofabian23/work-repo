@@ -296,7 +296,7 @@ export function ReviewStep({
   const row = (label: string, value: ReactNode, testId: string) => (
     <div className="flex flex-col gap-1 sm:flex-row sm:gap-6">
       <dt className="text-label text-ink-muted font-semibold sm:w-64 sm:shrink-0">{label}</dt>
-      <dd className="text-lead text-ink break-words" data-testid={testId}>
+      <dd className="text-lead text-ink break-words" data-testid={testId} data-selectable>
         {value}
       </dd>
     </div>

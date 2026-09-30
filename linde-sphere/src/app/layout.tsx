@@ -11,12 +11,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** Kiosk viewport: page zoom is disabled on the shared touchscreen (ADR-022). */
+/**
+ * Viewport (ADR-058, amends ADR-022): browser zoom stays available for visitors who need it (WCAG 1.4.4).
+ * Accidental gestures are handled in CSS instead: no double-tap zoom anywhere (`touch-action:
+ * manipulation`) and no pinch on the hospital scene, where zooming would hide its points.
+ */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: brandConfig.colors.surface,
 };
 

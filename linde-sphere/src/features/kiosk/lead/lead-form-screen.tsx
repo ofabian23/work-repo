@@ -14,7 +14,8 @@ import { useLanguage } from "@/lib/i18n/language-provider";
 import { ScreenFrame } from "../journey/screen-frame";
 import { CompletionScreen } from "./completion-screen";
 import { createSessionId } from "../state/session-id";
-import { awaitDelivery, type DeliveryOutcome, type LeadApi } from "./lead-api";
+import { appConfig } from "@/lib/config/app-config";
+import { awaitDelivery, createLeadApi, type DeliveryOutcome, type LeadApi } from "./lead-api";
 import {
   buildSubmission,
   CONTACT_FIELDS,
@@ -49,7 +50,7 @@ export function LeadFormScreen({
   content,
   session,
   recommendations,
-  api,
+  api: injectedApi,
   statusPoll,
   confirmationResetMs,
   onSubmitted,
@@ -62,7 +63,8 @@ export function LeadFormScreen({
   content: PublicContentBundle;
   session: SessionContext;
   recommendations: RecommendationResult | null;
-  api: LeadApi;
+  /** Injected in tests; defaults to the real /api/leads client. */
+  api?: LeadApi;
   statusPoll: { attempts: number; intervalMs: number };
   confirmationResetMs: number;
   /** Records the anonymous "lead-submitted" event once the server has stored the lead. */
@@ -76,6 +78,10 @@ export function LeadFormScreen({
   onFinish: () => void;
 }) {
   const { t, language, localize } = useLanguage();
+  const api = useMemo(
+    () => injectedApi ?? createLeadApi({ timeoutMs: appConfig.leadForm.requestTimeoutMs }),
+    [injectedApi],
+  );
   const interests = useMemo(
     () => interestOptions(session.signals, recommendations, content),
     // The options are fixed when the form opens, so the list does not shift while the visitor edits it.

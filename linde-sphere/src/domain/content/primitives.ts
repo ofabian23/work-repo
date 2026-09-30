@@ -1,22 +1,37 @@
 import { z } from "zod";
+import {
+  CONTENT_MODES,
+  ID_MAX_LENGTH,
+  ID_MIN_LENGTH,
+  ID_PATTERN,
+  LANGUAGES,
+  MARKETS,
+  VALIDATION_STATUSES,
+} from "./constants";
+
+export {
+  CONTENT_MODES,
+  LANGUAGES,
+  MARKETS,
+  MAX_SELECTED_CHALLENGES,
+  TEMPLATE_PLACEHOLDERS,
+  VALIDATION_STATUSES,
+  extractPlaceholders,
+  type TemplatePlaceholder,
+} from "./constants";
 
 /**
  * Shared building blocks for every content and runtime schema.
  * All schemas are strict: unknown keys are rejected so typos in JSON content fail validation.
  */
 
-export const LANGUAGES = ["es", "en"] as const;
 export const LanguageSchema = z.enum(LANGUAGES);
 export type Language = z.infer<typeof LanguageSchema>;
 
 /** Kebab-case identifier, e.g. `supply-continuity`. */
-export const IdSchema = z
-  .string()
-  .min(2)
-  .max(64)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    error: "Must be kebab-case: lowercase letters, digits and single hyphens (e.g. 'gas-plant')",
-  });
+export const IdSchema = z.string().min(ID_MIN_LENGTH).max(ID_MAX_LENGTH).regex(ID_PATTERN, {
+  error: "Must be kebab-case: lowercase letters, digits and single hyphens (e.g. 'gas-plant')",
+});
 export type Id = z.infer<typeof IdSchema>;
 
 /** URL-safe slug; same format as ids but kept separate so they can diverge later. */
@@ -38,15 +53,12 @@ export const LocalizedLabelSchema = z.strictObject({
 });
 export type LocalizedLabel = z.infer<typeof LocalizedLabelSchema>;
 
-export const VALIDATION_STATUSES = ["validated", "assumed", "placeholder", "unavailable"] as const;
 export const ValidationStatusSchema = z.enum(VALIDATION_STATUSES);
 export type ValidationStatus = z.infer<typeof ValidationStatusSchema>;
 
-export const MARKETS = ["puerto-rico", "united-states-reference", "global-reference", "unknown"] as const;
 export const MarketSchema = z.enum(MARKETS);
 export type Market = z.infer<typeof MarketSchema>;
 
-export const CONTENT_MODES = ["production", "demo"] as const;
 export const ContentModeSchema = z.enum(CONTENT_MODES);
 export type ContentMode = z.infer<typeof ContentModeSchema>;
 
@@ -54,9 +66,6 @@ export type ContentMode = z.infer<typeof ContentModeSchema>;
 export const IsoDateSchema = z.iso.date();
 /** Timestamp with timezone offset, e.g. `2026-09-29T14:00:00Z`. */
 export const IsoDateTimeSchema = z.iso.datetime({ offset: true });
-
-/** A visitor may select at most this many challenges. */
-export const MAX_SELECTED_CHALLENGES = 3;
 
 export const SortOrderSchema = z.number().int().min(0).max(10_000);
 
@@ -156,20 +165,4 @@ export function refineGovernance(value: Governance, ctx: z.RefinementCtx): void 
       message: `'${value.validationStatus}' content must set requiresSalesValidation: true`,
     });
   }
-}
-
-/** Placeholders allowed in explanation templates, mapped to the signal they render. */
-export const TEMPLATE_PLACEHOLDERS = [
-  "persona",
-  "challenges",
-  "facilityType",
-  "scenes",
-  "hotspots",
-  "interests",
-  "solution",
-] as const;
-export type TemplatePlaceholder = (typeof TEMPLATE_PLACEHOLDERS)[number];
-
-export function extractPlaceholders(text: string): string[] {
-  return [...text.matchAll(/\{([^{}]*)\}/g)].map((m) => m[1] ?? "");
 }

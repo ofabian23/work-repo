@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   INITIAL_KIOSK_STATE,
   kioskReducer,
-  toSessionSummary,
   type KioskAction,
   type KioskState,
 } from "@/features/kiosk/state/kiosk-state";
 import { createSessionId } from "@/features/kiosk/state/session-id";
+import { toSessionSummary } from "@/features/kiosk/state/session-summary";
 import { visibleContent } from "@/domain/content";
 import { recommend } from "@/domain/recommendations/engine";
 import { EMPTY_SIGNALS } from "@/domain/session/visitor-session";

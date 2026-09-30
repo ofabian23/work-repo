@@ -162,7 +162,4 @@ export const RecommendationResultSchema = z
   });
 export type RecommendationResult = z.infer<typeof RecommendationResultSchema>;
 
-export const primaryItems = (result: RecommendationResult | null) =>
-  (result?.items ?? []).filter((i) => i.tier === "primary");
-export const secondaryItems = (result: RecommendationResult | null) =>
-  (result?.items ?? []).filter((i) => i.tier === "secondary");
+export { primaryItems, secondaryItems } from "./recommendation-items";

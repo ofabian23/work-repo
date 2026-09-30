@@ -10,6 +10,8 @@ import {
   type IssueSeverity,
 } from "../../domain/content/bundle";
 import { EngineSettingsSchema } from "../../domain/content/engine-settings";
+import { brandConfig } from "../../lib/config/brand-config";
+import { BrandConfigSchema } from "../../lib/config/brand-config-schema";
 import { DigitalAssetSchema, SolutionSchema } from "../../domain/content/offering";
 import { RecommendationRuleSchema } from "../../domain/content/recommendation-rule";
 import { SceneSchema } from "../../domain/content/scene";
@@ -188,6 +190,10 @@ export function loadContentFromDirectory(
       message: `${prefix}${issue.message}`,
     });
   }
+
+  // Brand values are code, not JSON, but are validated with the content so bad colors fail the same way.
+  const brand = BrandConfigSchema.safeParse(brandConfig);
+  if (!brand.success) issues.push(...zodIssuesToLoadIssues(brand.error, "src/lib/config/brand-config.ts"));
 
   if (publicDir) {
     for (const { file, message } of scanPublicAssets(publicDir, projectRoot)) {

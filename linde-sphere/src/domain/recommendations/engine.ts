@@ -1,6 +1,6 @@
 import type { EngineSettings } from "../content/engine-settings";
 import type { LocalizedText } from "../content/primitives";
-import { extractPlaceholders } from "../content/primitives";
+import { extractPlaceholders } from "../content/constants";
 import type { RecommendationRule, SignalType } from "../content/recommendation-rule";
 import type { Hotspot } from "../content/scene";
 import {

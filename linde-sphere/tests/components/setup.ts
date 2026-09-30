@@ -17,3 +17,7 @@ if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.sho
 
 // jsdom does not implement scrolling; the kiosk scrolls to the top on every screen change.
 window.scrollTo = () => {};
+
+// The kiosk lazy-loads the lead form (ADR-058); load it up front so screen changes render synchronously.
+const { preloadLeadForm } = await import("@/features/kiosk/lead/lazy-lead-form");
+await preloadLeadForm();

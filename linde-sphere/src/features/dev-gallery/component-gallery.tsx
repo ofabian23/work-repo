@@ -26,7 +26,7 @@ import { LanguageToggle } from "@/components/shell/language-toggle";
 import type { PublicContentBundle } from "@/domain/content/visibility";
 import type { Hotspot } from "@/domain/content/scene";
 import { recommend } from "@/domain/recommendations/engine";
-import { EMPTY_SIGNALS } from "@/domain/session/visitor-session";
+import { EMPTY_SIGNALS } from "@/domain/session/session-log";
 import { appConfig } from "@/lib/config/app-config";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { useHydrated } from "@/lib/use-hydrated";

@@ -100,7 +100,17 @@ function Dialog({
               </button>
             )}
           </header>
-          {children && <div className="px-gutter overflow-y-auto pb-6">{children}</div>}
+          {children && (
+            // Long content scrolls; the region is focusable so keyboard users can scroll it too (WCAG 2.1.1).
+            <div
+              role="region"
+              aria-labelledby={titleId}
+              tabIndex={0}
+              className="px-gutter focus-ring overflow-y-auto pb-6"
+            >
+              {children}
+            </div>
+          )}
           {footer && (
             <div className="border-line px-gutter flex flex-col-reverse gap-4 border-t py-5 sm:flex-row sm:justify-end">
               {footer}

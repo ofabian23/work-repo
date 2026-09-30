@@ -44,15 +44,7 @@ export const SessionSignalsSchema = z
   });
 export type SessionSignals = z.infer<typeof SessionSignalsSchema>;
 
-export const EMPTY_SIGNALS: SessionSignals = {
-  personaId: null,
-  challengeIds: [],
-  facilityTypeId: null,
-  visitedSceneIds: [],
-  openedHotspotIds: [],
-  engagedHotspotIds: [],
-  explicitInterestIds: [],
-};
+export { EMPTY_SIGNALS } from "./session-log";
 
 export const EntryPathSchema = z.enum(["role", "challenge", "explore"]);
 export type EntryPath = z.infer<typeof EntryPathSchema>;

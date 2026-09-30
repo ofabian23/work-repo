@@ -1,4 +1,5 @@
-import { LANGUAGES, MAX_SELECTED_CHALLENGES, type Language } from "@/domain/content/primitives";
+import type { Language } from "@/domain/content/primitives";
+import { LANGUAGES, MAX_SELECTED_CHALLENGES } from "@/domain/content/constants";
 
 /**
  * Centralized, client-safe application configuration. Never put secrets or environment-dependent

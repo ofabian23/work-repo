@@ -103,7 +103,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
       <p className="text-body text-ink-muted" data-testid="admin-result-count">
         {total} lead(s) · página {filters.page} de {pages}
       </p>
-      <div className="overflow-x-auto">
+      <div role="region" aria-label="Tabla de leads" tabIndex={0} className="focus-ring overflow-x-auto">
         <table className="text-body w-full border-collapse text-left" data-testid="admin-leads">
           <thead>
             <tr className="border-line text-ink-muted border-b">

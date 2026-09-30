@@ -18,6 +18,24 @@ export const ALLOWED_ASSET_EXTENSIONS = [
   ".mp4",
   ".webm",
 ];
+/**
+ * Size budget per file (ADR-058). Scene art is drawn at 1200 × 1500 (SCENE_ART) and shown at most ~1000 px
+ * wide on the kiosk, so an optimized WebP/AVIF/PNG export fits well under 1 MB; anything larger slows scene
+ * changes on the kiosk's Wi-Fi and usually means an unoptimized export.
+ */
+export const ASSET_SIZE_BUDGET_BYTES: Record<string, number> = {
+  ".svg": 512 * 1024,
+  ".png": 1024 * 1024,
+  ".jpg": 1024 * 1024,
+  ".jpeg": 1024 * 1024,
+  ".webp": 1024 * 1024,
+  ".avif": 1024 * 1024,
+  ".pdf": 5 * 1024 * 1024,
+  ".mp4": 20 * 1024 * 1024,
+  ".webm": 20 * 1024 * 1024,
+};
+const kb = (bytes: number) => `${Math.round(bytes / 1024)} KB`;
+
 /** Documentation files that may live next to assets. */
 const IGNORED_FILES = new Set(["README.md", ".gitkeep"]);
 
@@ -42,7 +60,8 @@ export function scanPublicAssets(publicDir: string, projectRoot = path.dirname(p
   const walk = (dir: string) => {
     for (const name of readdirSync(dir)) {
       const full = path.join(dir, name);
-      if (statSync(full).isDirectory()) {
+      const stat = statSync(full);
+      if (stat.isDirectory()) {
         walk(full);
         continue;
       }
@@ -55,6 +74,13 @@ export function scanPublicAssets(publicDir: string, projectRoot = path.dirname(p
           message: `File type ${ext || "(none)"} is not allowed in public/ (${ALLOWED_ASSET_EXTENSIONS.join(" ")})`,
         });
         continue;
+      }
+      const budget = ASSET_SIZE_BUDGET_BYTES[ext]!;
+      if (stat.size > budget) {
+        issues.push({
+          file,
+          message: `File is ${kb(stat.size)}; the budget for ${ext} is ${kb(budget)} (optimize or resize the export)`,
+        });
       }
       if (ext === ".svg") {
         for (const label of checkSvgContent(readFileSync(full, "utf8"))) {

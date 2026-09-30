@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { en } from "@/data/i18n/en";
 import { es } from "@/data/i18n/es";
 import { appConfig } from "@/lib/config/app-config";
-import { BrandConfigSchema, brandConfig, brandCssVariables } from "@/lib/config/brand-config";
+import { brandConfig, brandCssVariables } from "@/lib/config/brand-config";
+import { BrandConfigSchema } from "@/lib/config/brand-config-schema";
 import { interpolate, localize, translate } from "@/lib/i18n/translate";
 
 function leafKeys(obj: object, prefix = ""): string[] {
@@ -78,6 +79,10 @@ describe("brand configuration", () => {
     expect(brandConfig.productName).toBe("Linde Sphere");
     expect(brandConfig.logo).toBeNull();
     expect(brandConfig.approvalStatus).toBe("placeholder");
+  });
+
+  it("the shipped values pass the schema (also checked at start-up and by content:check)", () => {
+    expect(BrandConfigSchema.safeParse(brandConfig).success).toBe(true);
   });
 
   it("rejects invalid colors", () => {

@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { HotspotButton } from "@/components/explorer/hotspot-button";
 import type { Hotspot, Scene } from "@/domain/content/scene";
-import { SCENE_ART_RATIO } from "@/domain/content/scene-art";
+import { SCENE_ART, SCENE_ART_RATIO } from "@/domain/content/scene-art";
 import { cn } from "@/lib/cn";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { layoutHotspots, metricsFor, type LayoutMetrics } from "./hotspot-layout";
@@ -47,6 +47,40 @@ const ENTER_CLASS: Record<Exclude<TransitionMode, "none">, string> = {
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
+/** Layer URLs already requested in this page load (the browser cache keeps them). */
+const prefetched = new Set<string>();
+
+/**
+ * After the current scene is shown, warm the cache with the scenes one touch away (navigation targets and
+ * the parent) while the browser is idle, so the next zoom/pan starts with its art already decoded.
+ */
+function usePrefetchNeighbors(scene: Scene, scenesById: ReadonlyMap<string, Scene>) {
+  useEffect(() => {
+    const neighbors = [
+      ...scene.hotspots.flatMap((h) => (h.type === "navigation" ? [h.targetSceneId] : [])),
+      ...(scene.parentSceneId ? [scene.parentSceneId] : []),
+    ];
+    const urls = neighbors
+      .map((id) => scenesById.get(id))
+      .flatMap((s) => (s ? [s.background.src, ...s.foregroundLayers.map((l) => l.src)] : []))
+      .filter((url) => !prefetched.has(url));
+    if (urls.length === 0) return;
+    const run = () =>
+      urls.forEach((url) => {
+        prefetched.add(url);
+        const img = new Image();
+        img.decoding = "async";
+        img.src = url;
+      });
+    if (typeof window.requestIdleCallback === "function") {
+      const id = window.requestIdleCallback(run, { timeout: 2_000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const timer = setTimeout(run, 300);
+    return () => clearTimeout(timer);
+  }, [scene, scenesById]);
+}
+
 const labelAlways = (h: Hotspot, metrics: LayoutMetrics | null) =>
   !metrics?.compact && (h.visualImportance === "primary" || h.type === "navigation");
 
@@ -87,6 +121,7 @@ export function SceneViewer({
   const boxRef = useRef<HTMLDivElement>(null);
   const [metrics, setMetrics] = useState<LayoutMetrics | null>(null);
   const [finishedTransition, setFinishedTransition] = useState(0);
+  usePrefetchNeighbors(scene, scenesById);
 
   // Measure the art box so markers can be laid out for the real screen size.
   useEffect(() => {
@@ -176,7 +211,8 @@ export function SceneViewer({
         data-layout-ready={metrics ? "true" : undefined}
         // overflow-clip, not hidden: a hidden box can still be scrolled (e.g. when a focused hotspot's label
         // reaches the edge), which would shift every marker off its feature.
-        className="rounded-card bg-surface-muted absolute inset-0 m-auto overflow-clip"
+        // pan-x pan-y: scrolling still works, but a pinch that starts on the scene does not zoom the page.
+        className="rounded-card bg-surface-muted absolute inset-0 m-auto [touch-action:pan-x_pan-y] overflow-clip"
         style={{
           width: `min(100cqw, calc(100cqh * ${SCENE_ART_RATIO}))`,
           height: `min(100cqh, calc(100cqw / ${SCENE_ART_RATIO}))`,
@@ -230,9 +266,14 @@ function SceneLayers({
       aria-hidden={inert || undefined}
       data-testid={inert ? "scene-layers-outgoing" : "scene-layers"}
     >
+      {/* Intrinsic size avoids layout work while loading; the current background is the page's key image. */}
       <img
         src={scene.background.src}
         alt={localize(scene.background.alt)}
+        width={SCENE_ART.width}
+        height={SCENE_ART.height}
+        decoding="async"
+        fetchPriority={inert ? "low" : "high"}
         draggable={false}
         className="absolute inset-0 size-full select-none"
       />
@@ -242,6 +283,9 @@ function SceneLayers({
           src={layer.src}
           alt=""
           aria-hidden
+          width={SCENE_ART.width}
+          height={SCENE_ART.height}
+          decoding="async"
           draggable={false}
           data-testid="scene-foreground"
           className={cn(

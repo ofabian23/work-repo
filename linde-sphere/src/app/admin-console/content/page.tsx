@@ -10,7 +10,12 @@ export default async function AdminContentPage() {
       title="Contenido pendiente de validación"
       lead={`${rows.length} elemento(s) requieren validación antes del modo de producción. Descargue la lista completa en Exportaciones.`}
     >
-      <div className="overflow-x-auto">
+      <div
+        role="region"
+        aria-label="Tabla de contenido pendiente"
+        tabIndex={0}
+        className="focus-ring overflow-x-auto"
+      >
         <table className="text-body w-full border-collapse text-left" data-testid="admin-pending-content">
           <thead>
             <tr className="border-line text-ink-muted border-b">

@@ -276,11 +276,36 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       same-origin traffic only, empty browser storage, network drop and reconnect, refresh, safe error bodies
 - [x] PRIVACY_REVIEW.md with owner labels for every open approval
 
+## Phase 10a — Accessibility and performance pass (ADR-058) ✅
+
+- [x] axe-core (WCAG 2.2 A/AA) on every visitor screen and dialog (Spanish and English), on the admin
+      pages, and at kiosk, laptop and phone sizes; one `h1` per screen; touch targets ≥ 48 px
+- [x] Keyboard: visible focus (≥ 2 px outline), heading focused on screen change, dialog focus trap and
+      return, Escape closes; scrollable regions focusable and labeled
+- [x] Forms: labels, `aria-invalid`, errors linked by `aria-describedby`, icon plus text (never color alone);
+      `lang` follows the language toggle
+- [x] Zoom allowed (WCAG 1.4.4); pinch blocked on the scene only; no double-tap zoom
+- [x] Selection, drag and long-press menu blocked on kiosk controls only; form fields and review entries
+      selectable; admin behaves like a normal page
+- [x] Rotation mid-journey (with a sheet open) keeps the state; the scene re-fits (E2E)
+- [x] zod removed from the first load (zod-free constants and helpers, brand schema on the server, lazy
+      lead form prefetched while idle, with retry on failure)
+- [x] Scene images: intrinsic size, async decoding, priority for the current background, idle prefetch of
+      neighboring scenes
+- [x] Budgets: first-load JS from the build manifest (E2E); no third-party requests; asset size budget in
+      `content:check`; report render time and size (unit)
+- [x] SQLite WAL at start-up; report rendered outside the transaction; idle timer without re-renders
+- [x] MANUAL_KIOSK_TEST.md: physical-device checklist
+- Measured on the production build: first-load JS for the kiosk route went from ~277 KB to ~173 KB
+  gzipped (~578 KB raw; framework 130 KB and app 43 KB; zod now only in the lazy lead-form chunk); interactive in about READY_MS ms on the local E2E server.
+
 ## Phase 10 — Hardening, accessibility, deployment
 
 - [ ] E2E: full quick/discovery/explore journeys; post-reset storage/DOM/history assertions; no external requests
-- [ ] Accessibility pass: target sizes, contrast test, focus order, screen-reader labels, reduced motion
-- [ ] Performance pass: bundle budget, asset sizes, throttled-device run
+- [x] Accessibility pass: target sizes, contrast test, focus order, screen-reader labels, reduced motion
+      (Phase 10a)
+- [x] Performance pass: bundle budget, asset sizes (Phase 10a)
+- [ ] Throttled or physical-device run: MANUAL_KIOSK_TEST.md, on the event hardware
 - [ ] `DEPLOYMENT.md`: Windows setup (Node LTS, install, `.env`, migration, firewall, hotspot, startup script, power settings, BitLocker), Android kiosk setup (Chrome, screen pinning, autofill off, portrait lock), event-day checklist, recovery procedures
 - [x] `npm run start:network` (`next start -H 0.0.0.0`), done in Phase 1
 - [ ] Rehearsal script: 20 consecutive visitor sessions with resets; offline email test

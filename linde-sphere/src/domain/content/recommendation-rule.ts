@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SIGNAL_TYPES } from "./constants";
 import type { ScoringSettings } from "./engine-settings";
 import {
   IdSchema,
@@ -15,14 +16,7 @@ import {
  * weights of the visitor signals it matches. The engine (Phase 3) is a pure function over these rules.
  */
 
-export const SIGNAL_TYPES = [
-  "personas",
-  "challenges",
-  "facilityTypes",
-  "scenes",
-  "hotspots",
-  "explicitInterests",
-] as const;
+export { SIGNAL_TYPES };
 export const SignalTypeSchema = z.enum(SIGNAL_TYPES);
 export type SignalType = z.infer<typeof SignalTypeSchema>;
 

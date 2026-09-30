@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { IdSchema } from "../content/primitives";
+import { MAX_SESSION_EVENTS } from "./session-log";
 
 /**
  * Anonymous (class C1) session events: what the visitor did, in order, never who they are.
@@ -48,8 +49,7 @@ export const NEXT_STEPS = ["view-recommendations", "refine-challenges", "explore
 export const NextStepSchema = z.enum(NEXT_STEPS);
 export type NextStep = z.infer<typeof NextStepSchema>;
 
-/** Upper bound per session; later events are dropped (a visit is a few minutes long). */
-export const MAX_SESSION_EVENTS = 200;
+export { MAX_SESSION_EVENTS, appendSessionEvent, isEventTarget } from "./session-log";
 
 /** A content/option id: kebab-case with at least one letter, so digit runs (e.g. phone numbers) never pass. */
 export const EventTargetSchema = IdSchema.regex(/[a-z]/, { error: "An event target must contain a letter" });
@@ -69,17 +69,3 @@ export const SessionEventListSchema = z
   .array(SessionEventSchema)
   .max(MAX_SESSION_EVENTS)
   .refine((events) => events.every((e, i) => e.seq === i), { error: "Events must be numbered 0, 1, 2…" });
-
-/**
- * Appends an event, or returns the list unchanged when the cap is reached or the target is not a
- * well-formed id (so free text can never be recorded, even by mistake).
- */
-export function appendSessionEvent(
-  events: SessionEvent[],
-  type: SessionEventType,
-  targetId: string | null = null,
-): SessionEvent[] {
-  if (events.length >= MAX_SESSION_EVENTS) return events;
-  if (targetId !== null && !EventTargetSchema.safeParse(targetId).success) return events;
-  return [...events, { seq: events.length, type, targetId }];
-}
