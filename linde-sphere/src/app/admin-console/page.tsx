@@ -49,15 +49,15 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
         className="rounded-card border-line bg-surface flex flex-wrap items-end gap-4 border p-4"
         data-testid="admin-filters"
       >
-        <label className="text-label flex flex-col gap-1 font-semibold">
+        <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
           Desde
           <input className={input} type="date" name="from" defaultValue={filters.from} />
         </label>
-        <label className="text-label flex flex-col gap-1 font-semibold">
+        <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
           Hasta
           <input className={input} type="date" name="to" defaultValue={filters.to} />
         </label>
-        <label className="text-label flex flex-col gap-1 font-semibold">
+        <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
           Estado del lead
           <select className={input} name="status" defaultValue={filters.status ?? ""}>
             <option value="">Todos</option>
@@ -68,7 +68,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
             ))}
           </select>
         </label>
-        <label className="text-label flex flex-col gap-1 font-semibold">
+        <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
           Envío del resumen
           <select
             className={input}
@@ -84,7 +84,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
             ))}
           </select>
         </label>
-        <label className="text-label flex flex-col gap-1 font-semibold">
+        <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
           Exportado
           <select className={input} name="exported" defaultValue={filters.exported ?? ""}>
             <option value="">Todos</option>

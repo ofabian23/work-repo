@@ -43,22 +43,22 @@ export default async function AdminExportsPage({ searchParams }: PageProps<"/adm
       <form method="post" action={`${base}/api/export`} className={section} data-testid="export-leads-form">
         <h2 className="text-lead font-bold">Leads e intereses (CSV)</h2>
         <div className="flex flex-wrap gap-4">
-          <label className="text-label flex flex-col gap-1 font-semibold">
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
             Archivo
             <select className={input} name="kind" defaultValue="leads" data-testid="export-kind">
               <option value="leads">Un lead por fila (intereses agrupados)</option>
               <option value="interests">Un interés por fila</option>
             </select>
           </label>
-          <label className="text-label flex flex-col gap-1 font-semibold">
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
             Desde
             <input className={input} type="date" name="from" />
           </label>
-          <label className="text-label flex flex-col gap-1 font-semibold">
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
             Hasta
             <input className={input} type="date" name="to" />
           </label>
-          <label className="text-label flex flex-col gap-1 font-semibold">
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
             Estado
             <select className={input} name="status" defaultValue="">
               <option value="">Todos</option>
@@ -69,7 +69,7 @@ export default async function AdminExportsPage({ searchParams }: PageProps<"/adm
               ))}
             </select>
           </label>
-          <label className="text-label flex flex-col gap-1 font-semibold">
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
             Envío
             <select className={input} name="delivery" defaultValue="">
               <option value="">Todos</option>
@@ -80,7 +80,7 @@ export default async function AdminExportsPage({ searchParams }: PageProps<"/adm
               ))}
             </select>
           </label>
-          <label className="text-label flex flex-col gap-1 font-semibold">
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
             Exportado
             <select className={input} name="exported" defaultValue="">
               <option value="">Todos</option>

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { E2E_ADMIN_PASSPHRASE, E2E_ADMIN_PATH, GALLERY_PORT } from "../../playwright.config";
+import { expectNoHorizontalOverflow } from "./helpers";
 
 /**
  * Local administration utility (ADR-056). The main server has admin disabled; the second server enables
@@ -114,6 +115,17 @@ test.describe("admin security boundary", () => {
 
 test.describe("admin features", () => {
   test.describe.configure({ mode: "serial" });
+
+  test("admin pages fit the screen without horizontal scrolling (browser zoom stays usable)", async ({
+    page,
+  }) => {
+    await signIn(page);
+    await expect(page).toHaveURL(ADMIN);
+    for (const suffix of ["", "/exports", "/content"]) {
+      await page.goto(`${ADMIN}${suffix}`);
+      await expectNoHorizontalOverflow(page);
+    }
+  });
 
   test("overview, filters, lead detail, mark exported, confirmed exports and backup", async ({ page }) => {
     const lastName = uniqueName();

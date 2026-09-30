@@ -59,7 +59,9 @@ export const button =
   "focus-ring rounded-control bg-primary text-on-primary text-label inline-flex min-h-12 items-center justify-center px-5 font-semibold";
 export const secondaryButton =
   "focus-ring rounded-control border-primary text-primary bg-surface text-label inline-flex min-h-12 items-center justify-center border-2 px-5 font-semibold";
-export const input = "focus-ring rounded-control border-line bg-surface text-body min-h-12 border-2 px-3";
+// max-w-full: long option labels must not widen the page on narrow screens.
+export const input =
+  "focus-ring rounded-control border-line bg-surface text-body min-h-12 max-w-full border-2 px-3";
 
 export const DELIVERY_LABELS: Record<string, string> = {
   pending: "Pendiente",

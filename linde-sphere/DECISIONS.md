@@ -1072,6 +1072,10 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
     reaches the first load again.
   - Physical-device behavior (Fully Kiosk or Chrome settings, rotation lock, real touch) cannot be
     automated. It is covered by MANUAL_KIOSK_TEST.md.
+  - Allowing zoom exposed a hidden overflow. On a phone-width screen, a long option label widened the admin
+    exports page to 453 px. Mobile Chrome then widened the layout viewport, and taps on the backup button
+    were lost in E2E. Admin fields are now width-limited, and an E2E test checks that no admin page
+    scrolls horizontally at any size.
 
 ## ADR-059 — Windows launch scripts for the kiosk network; organizational settings stay manual
 
