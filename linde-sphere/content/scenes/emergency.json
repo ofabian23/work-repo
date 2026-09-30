@@ -36,7 +36,7 @@
       "visualImportance": "secondary",
       "recommendationSignals": {
         "challengeIds": ["emergency-preparedness", "supply-continuity"],
-        "solutionIds": []
+        "solutionIds": ["backup-emergency-supply"]
       },
       "validationStatus": "assumed",
       "panel": {
@@ -45,8 +45,8 @@
           "en": "Readiness for sudden surges"
         },
         "body": {
-          "es": "Durante huracanes, apagones o eventos con múltiples víctimas, la demanda de recursos críticos puede cambiar en minutos. La planificación anticipada ayuda a los equipos a responder.",
-          "en": "During hurricanes, power outages or mass-casualty events, demand for critical resources can change within minutes. Planning ahead helps teams respond."
+          "es": "Durante huracanes, apagones o eventos con múltiples víctimas, la demanda de recursos críticos puede cambiar rápidamente. La planificación anticipada ayuda a los equipos a responder.",
+          "en": "During hurricanes, power outages or mass-casualty events, demand for critical resources can change quickly. Planning ahead helps teams respond."
         },
         "bullets": [
           {
@@ -68,20 +68,20 @@
       "width": 16,
       "height": 10,
       "label": {
-        "es": "Gases para cuidado crítico",
-        "en": "Critical-care gases"
+        "es": "Oxígeno en emergencias",
+        "en": "Oxygen in emergency care"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones relacionadas con gases para cuidado crítico en emergencias",
-        "en": "View solutions related to critical-care gases in the emergency department"
+        "es": "Ver categorías relacionadas con el oxígeno y el suministro de respaldo en emergencias",
+        "en": "View categories related to oxygen and backup supply in the emergency department"
       },
       "visualImportance": "primary",
       "recommendationSignals": {
-        "challengeIds": ["patient-safety", "emergency-preparedness"],
-        "solutionIds": ["clinical-gases-critical-care", "emergency-backup-planning"]
+        "challengeIds": ["patient-staff-safety", "emergency-preparedness"],
+        "solutionIds": ["clinical-oxygen-support", "backup-emergency-supply"]
       },
       "validationStatus": "assumed",
-      "targetSolutionIds": ["clinical-gases-critical-care", "emergency-backup-planning"]
+      "targetSolutionIds": ["clinical-oxygen-support", "backup-emergency-supply"]
     }
   ],
   "parentSceneId": "campus",

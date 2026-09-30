@@ -50,6 +50,29 @@ export const PROHIBITED_CLAIM_PATTERNS: readonly { pattern: RegExp; label: strin
   { pattern: /\bahorr\w*|\bsavings?\b|\bsave[sd]?\b/i, label: "savings claim" },
   { pattern: /\bROI\b/, label: "ROI claim" },
   { pattern: /\btestimoni\w*/i, label: "testimonial" },
+  // Local availability is decided by the Puerto Rico sales team, never asserted in content.
+  {
+    pattern: /\b(disponibles?|available|ofrecid[oa]s?|offered)\s+(en|in)\s+puerto\s+rico\b/i,
+    label: "local availability claim",
+  },
+  {
+    pattern: /\b(NFPA|FDA|OSHA|CMS|USP|Joint Commission|ISO\s?\d{3,5})\b/,
+    label: "regulatory or standards reference",
+  },
+  {
+    pattern:
+      /\breduc\w*\s+(los\s+|el\s+|sus\s+)?(costos?|gastos?)\b|\b(reduces?|reduced|reducing|lowers?)\s+(your\s+)?costs?\b|\bcost\s+reduction\b/i,
+    label: "cost-reduction claim",
+  },
+  {
+    pattern: /\b24\/7\b|\buptime\b|\btiempo de actividad\b|\bsin interrupciones\b/i,
+    label: "performance claim",
+  },
+  { pattern: /[™®©]/, label: "product or trademark marking" },
+  {
+    pattern: /\b(l[ií]der(es)?|leading|best-in-class|world-class|de clase mundial|n[uú]mero uno)\b|#1\b/i,
+    label: "superlative claim",
+  },
 ];
 
 /** Cross-record checks that single-record schemas cannot express. Pure: no I/O. */

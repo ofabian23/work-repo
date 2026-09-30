@@ -6,14 +6,14 @@
     "en": "Laboratory"
   },
   "description": {
-    "es": "Diagnóstico e investigación que dependen de gases y almacenamiento especializados.",
-    "en": "Diagnostics and research that depend on specialized gases and storage."
+    "es": "Diagnóstico e investigación que dependen de gases y prácticas de manejo especializadas.",
+    "en": "Diagnostics and research that depend on gases and specialized handling practices."
   },
   "background": {
     "src": "/assets/scenes/placeholder/laboratory-background.svg",
     "alt": {
-      "es": "Ilustración isométrica de un laboratorio con equipos analíticos y congeladores.",
-      "en": "Isometric illustration of a laboratory with analytical instruments and freezers."
+      "es": "Ilustración isométrica de un laboratorio con equipos analíticos y cilindros.",
+      "en": "Isometric illustration of a laboratory with analytical instruments and cylinders."
     },
     "depth": 0,
     "assetStatus": "placeholder"
@@ -21,46 +21,65 @@
   "foregroundLayers": [],
   "hotspots": [
     {
-      "id": "lab-specialty-gases",
+      "id": "lab-gas-supply",
       "type": "solution",
       "x": 32,
       "y": 42,
       "label": {
-        "es": "Gases de laboratorio",
-        "en": "Laboratory gases"
+        "es": "Suministro del laboratorio",
+        "en": "Laboratory supply"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones de gases de laboratorio y especialidad",
-        "en": "View laboratory and specialty gas solutions"
+        "es": "Ver planificación del suministro y manejo de cilindros para el laboratorio",
+        "en": "View supply planning and cylinder management for the laboratory"
       },
       "visualImportance": "primary",
       "recommendationSignals": {
-        "challengeIds": ["workflow-efficiency", "supply-continuity"],
-        "solutionIds": ["laboratory-specialty-gases"]
+        "challengeIds": ["supply-continuity", "cylinder-inventory"],
+        "solutionIds": ["medical-gas-supply-planning", "cylinder-inventory-management"]
       },
       "validationStatus": "assumed",
-      "targetSolutionIds": ["laboratory-specialty-gases"]
+      "targetSolutionIds": ["medical-gas-supply-planning", "cylinder-inventory-management"]
     },
     {
-      "id": "lab-sample-storage",
-      "type": "solution",
+      "id": "lab-safe-handling",
+      "type": "information",
       "x": 68,
       "y": 60,
       "label": {
-        "es": "Preservación de muestras",
-        "en": "Sample preservation"
+        "es": "Manejo seguro",
+        "en": "Safe handling"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones de almacenamiento criogénico y preservación de muestras",
-        "en": "View cryogenic storage and sample preservation solutions"
+        "es": "Información sobre el manejo seguro de gases en el laboratorio",
+        "en": "Information about safe gas handling in the laboratory"
       },
-      "visualImportance": "primary",
+      "visualImportance": "secondary",
       "recommendationSignals": {
-        "challengeIds": ["supply-continuity", "facility-expansion"],
-        "solutionIds": ["cryogenic-storage"]
+        "challengeIds": ["patient-staff-safety"],
+        "solutionIds": ["training-operational-readiness"]
       },
       "validationStatus": "assumed",
-      "targetSolutionIds": ["cryogenic-storage"]
+      "panel": {
+        "title": {
+          "es": "Manejo seguro en el laboratorio",
+          "en": "Safe handling in the laboratory"
+        },
+        "body": {
+          "es": "Los laboratorios utilizan distintos gases y requieren prácticas claras de almacenamiento, manejo y capacitación del personal.",
+          "en": "Laboratories use a variety of gases and need clear storage, handling and staff training practices."
+        },
+        "bullets": [
+          {
+            "es": "Almacenamiento",
+            "en": "Storage"
+          },
+          {
+            "es": "Capacitación del personal",
+            "en": "Staff training"
+          }
+        ]
+      }
     }
   ],
   "parentSceneId": "campus",

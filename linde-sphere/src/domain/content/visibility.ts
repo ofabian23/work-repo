@@ -41,7 +41,7 @@ type StripGovernance<T> = Omit<
   T,
   "internalNotes" | "reviewedBy" | "sourceLabel" | "lastReviewedAt" | "requiresSalesValidation" | "market"
 >;
-export type PublicSolution = StripGovernance<Solution>;
+export type PublicSolution = Omit<StripGovernance<Solution>, "salesReview">;
 export type PublicDigitalAsset = StripGovernance<DigitalAsset>;
 export type PublicRecommendationRule = Omit<RecommendationRule, "internalNotes" | "exclusions"> & {
   exclusions: Omit<RecommendationRule["exclusions"][number], "reason">[];
@@ -62,7 +62,14 @@ export type PublicContentBundle = {
   consent: PublicConsentTextSet;
 };
 
-function stripGovernance<T extends Solution | DigitalAsset>(record: T): StripGovernance<T> {
+function stripSolution(solution: Solution): PublicSolution {
+  const { salesReview: _salesReview, ...rest } = solution;
+  return stripGovernance(rest);
+}
+
+function stripGovernance<T extends Omit<Solution, "salesReview"> | DigitalAsset>(
+  record: T,
+): StripGovernance<T> {
   const {
     internalNotes: _internalNotes,
     reviewedBy: _reviewedBy,
@@ -138,7 +145,7 @@ export function visibleContent(
   }));
 
   const solutions = solutionsRaw.map((s) =>
-    stripGovernance({
+    stripSolution({
       ...s,
       relatedChallengeIds: s.relatedChallengeIds.filter((id) => challengeIds.has(id)),
       relatedSceneIds: s.relatedSceneIds.filter((id) => sceneIds.has(id)),

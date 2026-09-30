@@ -16,7 +16,7 @@ const lead = () => ({
   email: "  Maria.Rivera@Hospital.example ",
   phone: "+1 (787) 555-0100",
   preferredLanguage: "es",
-  selectedInterestIds: ["supply-continuity", "supply-level-monitoring"],
+  selectedInterestIds: ["supply-continuity", "monitoring-telemetry"],
   consents: { reportDelivery: true, salesFollowUp: false },
   consentVersion: "0.1.0",
   signals: signals(),
@@ -128,7 +128,7 @@ const report = () => ({
   areasExplored: [{ id: "gas-plant", title: "Planta de gases medicinales" }],
   recommendations: [
     {
-      solutionId: "medical-gas-supply-continuity",
+      solutionId: "medical-gas-supply-planning",
       title: "Continuidad del suministro de gases medicinales",
       summary: "Opciones de suministro a granel y en cilindros.",
       reasons: ["Porque indicó como prioridad mejorar la continuidad del suministro."],

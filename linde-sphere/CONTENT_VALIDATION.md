@@ -66,15 +66,24 @@ Every **solution** and **digital asset** carries these governance fields (flat, 
 
 ```jsonc
 {
-  "id": "medical-gas-supply-continuity",
+  "id": "backup-emergency-supply",
   // …content fields…
   "validationStatus": "assumed", // validated | assumed | placeholder | unavailable
   "market": "global-reference", // puerto-rico | united-states-reference | global-reference | unknown
-  "internalNotes": "DEMONSTRATIVE ASSUMPTION - … requires Puerto Rico sales validation …",
+  "internalNotes": "PENDING PUERTO RICO VALIDATION - demonstrative assumption … requires Puerto Rico sales validation …",
   "lastReviewedAt": null, // YYYY-MM-DD, required once validated/unavailable
   "reviewedBy": null, // "Name, Role", required once validated/unavailable
   "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
   "requiresSalesValidation": true,
+  // Solutions only: the sales-review worksheet (§11)
+  "salesReview": {
+    "decision": "pending", // pending | keep | remove | rename
+    "proposedName": null, // { es, en } when decision is "rename"
+    "puertoRicoAvailability": "requires-verification", // requires-verification | available | not-available
+    "conventionPriority": "high", // high | medium | low | unset
+    "priorityConfirmedBySales": false,
+    "notes": "Priority proposed by the project team; sales to confirm.",
+  },
 }
 ```
 
@@ -84,9 +93,12 @@ Schema-enforced rules (`npm run content:check` fails otherwise):
 - `validated` ⇒ `market` must be `puerto-rico` and `requiresSalesValidation` must be `false`.
 - `assumed` or `placeholder` ⇒ `requiresSalesValidation` must be `true`.
 - A validated digital asset cannot point to a reserved `example.com/.org/.net` URL.
+- Sales review and status must agree: `validated` ⇒ `puertoRicoAvailability: "available"` and decision
+  `keep` or `rename`; `not-available` or decision `remove` ⇒ `validationStatus: "unavailable"`;
+  `rename` ⇒ `proposedName` required.
 
-`internalNotes`, `reviewedBy`, `sourceLabel`, `lastReviewedAt`, `requiresSalesValidation` and `market` are
-**internal**. The visibility filter strips them before content reaches the kiosk or a report.
+`internalNotes`, `reviewedBy`, `sourceLabel`, `lastReviewedAt`, `requiresSalesValidation`, `market` and
+`salesReview` are **internal**. The visibility filter strips them before content reaches the kiosk or a report.
 
 Taxonomy items, scenes, hotspots, rules and consent text carry `validationStatus` (plus `internalNotes`
 on rules and consent). Promoting them to `validated` is recorded in the sign-off log (§9).
@@ -154,9 +166,16 @@ Automatically flagged where possible (`content:check` pattern scan), and always 
 - Patient information, case stories with identifiable data, or any PHI
 - Copyrighted images or text copied from reference websites
 
+- Claims that something is available or offered in Puerto Rico (only the sales review decides that, §11)
+- Named products, trademarks (™ ®) and superlatives ("leading", "líder", "world-class")
+
 `content:check` scans every localized string in solutions, digital assets, rules, scenes/hotspots, personas
 and challenges for these markers: percentage figures, currency amounts, "garantiz*/guarant*",
-"certificado(a)/certified", "cumple con/compliant", "ahorr*/savings/save", "ROI" and "testimoni*". Any
+"certificado(a)/certified", "cumple con/compliant", "ahorr*/savings/save", "ROI", "testimoni*",
+"disponible/available/ofrecido/offered en/in Puerto Rico", regulatory references (NFPA, FDA, OSHA, CMS, USP,
+Joint Commission, ISO numbers), cost-reduction wording ("reduce costos", "reduces costs", "cost
+reduction"), performance wording ("24/7", "uptime", "tiempo de actividad", "sin interrupciones"),
+™ ® © and superlatives. Any
 match is an **error**. There is deliberately no override flag. If approved wording ever needs one of
 these terms, it requires a documented decision (DECISIONS.md) and a code change.
 
@@ -164,40 +183,32 @@ these terms, it requires a documented decision (DECISIONS.md) and a code change.
 
 ### 9.1 Taxonomy
 
-| Area                  | Items                 | Status                                 | Notes                                            |
-| --------------------- | --------------------- | -------------------------------------- | ------------------------------------------------ |
-| Personas              | 10 (PROJECT_BRIEF §4) | `assumed`                              | Spanish labels are drafts                        |
-| Challenges            | 12 (PROJECT_BRIEF §5) | `assumed`                              | Customer language. Confirm the Spanish phrasing. |
-| Facility types        | 7 (PROJECT_BRIEF §6)  | `assumed`                              |                                                  |
-| Environments / scenes | 8 (PROJECT_BRIEF §7)  | `assumed` (text) · `placeholder` (art) | Generic educational descriptions only            |
-| UI strings            | `messages/*.json`     | `assumed`                              | Owner review of tone (formal "usted")            |
+| Area                  | Items                 | Status                                 | Notes                                             |
+| --------------------- | --------------------- | -------------------------------------- | ------------------------------------------------- |
+| Personas              | 10 (PROJECT_BRIEF §4) | `assumed`                              | Spanish labels are drafts                         |
+| Challenges            | 12 (PROJECT_BRIEF §5) | `assumed`                              | Customer language (v0.2.0 list). Confirm Spanish. |
+| Facility types        | 7 (PROJECT_BRIEF §6)  | `assumed`                              |                                                   |
+| Environments / scenes | 8 (PROJECT_BRIEF §7)  | `assumed` (text) · `placeholder` (art) | Generic educational descriptions only             |
+| UI strings            | `src/data/i18n/*.ts`  | `assumed`                              | Owner review of tone (formal "usted")             |
 
 ### 9.2 Sample solution categories (offering)
 
-All 13 seed solutions in `content/solutions.json` are **demonstrative assumptions, not confirmed Puerto
-Rico offerings**. Each is `validationStatus: "assumed"`, `market: "global-reference"`,
-`requiresSalesValidation: true`, and its `internalNotes` states that it requires Puerto Rico sales
-validation. Descriptions stay generic ("support for…", "options…", "may be relevant") with no metrics or
-guarantees.
+`content/solutions.json` (content v0.2.0) holds 10 assumed categories plus the "Talk with a specialist"
+fallback. **All are demonstrative assumptions pending Puerto Rico validation, not confirmed Puerto Rico
+offerings.** Each has `validationStatus: "assumed"`, `market: "global-reference"`,
+`requiresSalesValidation: true`, `salesReview.puertoRicoAvailability: "requires-verification"`, and
+`internalNotes` beginning with "PENDING PUERTO RICO VALIDATION". In demo mode the kiosk and report show
+the "Content pending local validation" indicator on each one; production mode hides them.
 
-| #   | ID                              | Working title (EN)                                         | Related challenges                           | Related environments     | Status    |
-| --- | ------------------------------- | ---------------------------------------------------------- | -------------------------------------------- | ------------------------ | --------- |
-| S1  | `medical-gas-supply-continuity` | Medical gas supply continuity (bulk and cylinder)          | Supply continuity, emergencies               | Gas plant, campus        | `assumed` |
-| S2  | `supply-level-monitoring`       | Supply level monitoring and visibility                     | Monitoring visibility, supply continuity     | Gas plant, utilities     | `assumed` |
-| S3  | `cylinder-inventory-management` | Cylinder and inventory management support                  | Operational complexity, workflow efficiency  | Patient care, utilities  | `assumed` |
-| S4  | `pipeline-infrastructure`       | Medical gas pipeline and outlet infrastructure support     | Modernize infrastructure, facility expansion | Utilities, OR, ICU       | `assumed` |
-| S5  | `emergency-backup-planning`     | Emergency and backup supply planning                       | Prepare for emergencies                      | Gas plant, emergency     | `assumed` |
-| S6  | `compliance-documentation`      | Medical gas compliance, testing, and documentation support | Compliance readiness, patient safety         | Utilities, gas plant     | `assumed` |
-| S7  | `clinical-gases-critical-care`  | Clinical gases for critical care and surgical areas        | Patient safety, workflow efficiency          | ICU, OR, emergency       | `assumed` |
-| S8  | `laboratory-specialty-gases`    | Laboratory and specialty gases                             | Workflow efficiency, supply continuity       | Laboratory               | `assumed` |
-| S9  | `cryogenic-storage`             | Cryogenic storage and sample preservation support          | Supply continuity, facility expansion        | Laboratory               | `assumed` |
-| S10 | `homecare-respiratory-services` | Homecare respiratory services                              | Support care outside the hospital            | Patient care (discharge) | `assumed` |
-| S11 | `gas-safety-training`           | Gas handling safety and staff training                     | Staff safety, compliance readiness           | Utilities, patient care  | `assumed` |
-| S12 | `lifecycle-cost-review`         | Supply and infrastructure lifecycle review                 | Lifecycle costs, operational complexity      | Campus, utilities        | `assumed` |
-| F0  | `talk-to-specialist`            | Speak with a specialist (fallback)                         | —                                            | —                        | `assumed` |
+Medical gas supply planning · Bulk or centralized supply · Cylinder and inventory management · Backup and
+emergency supply · Monitoring and telemetry · Medical gas infrastructure assessment · Preventive service
+and maintenance · Clinical oxygen support · Ambulatory and homecare support · Training and operational
+readiness.
 
-The sales team may rename, merge, split, mark `unavailable`, or add categories. Rules and weights are
-tuned after the list is confirmed.
+Descriptions describe scope only ("options for…", "support for…", "a review of…") and relevance ("may be
+relevant when…"). They make no claims about specific products, savings, compliance, performance or local
+availability. The generated worksheet in §11 lists every category per decision, and the CSV export
+contains every content item.
 
 ### 9.3 Digital assets (offering)
 
@@ -234,3 +245,176 @@ tuned after the list is confirmed.
 | Date | Content version | Scope | Approver (name, role) | Decision | Notes                     |
 | ---- | --------------- | ----- | --------------------- | -------- | ------------------------- |
 | —    | —               | —     | —                     | —        | No approvals recorded yet |
+
+## 11. Sales review worksheet (generated)
+
+Do not edit between the markers by hand. Run `npm run content:export` after changing `content/`.
+`npm run check` fails if this section or the CSV is out of date.
+
+<!-- BEGIN GENERATED: sales-review (npm run content:export) -->
+
+### 11.1 How to use this worksheet
+
+The tables below are generated from `content/` by `npm run content:export`, which also writes
+[`exports/content-validation.csv`](./exports/content-validation.csv) (UTF-8, opens in Excel). Every sample
+solution is a **demonstrative assumption pending Puerto Rico validation**. To record a decision, either fill in
+the `sales_*` columns of the CSV and return it, or edit `salesReview` in `content/solutions.json`
+(`decision`, `proposedName`, `puertoRicoAvailability`, `conventionPriority`, `priorityConfirmedBySales`), then run
+`npm run content:export`. Removed or not-available solutions must also be set to `validationStatus: "unavailable"`
+(the schema enforces this).
+
+### 11.2 Keep
+
+_None yet. Awaiting the Puerto Rico sales review._
+
+### 11.3 Remove
+
+_None yet. Awaiting the Puerto Rico sales review._
+
+### 11.4 Rename
+
+_None yet. Awaiting the Puerto Rico sales review._
+
+### 11.5 Available in Puerto Rico
+
+_None yet. Awaiting the Puerto Rico sales review._
+
+### 11.6 Not available in Puerto Rico
+
+_None yet. Awaiting the Puerto Rico sales review._
+
+### 11.7 Requires verification
+
+Confirm for each: whether it is offered in Puerto Rico, the approved name in both languages, and the scope
+described in the summary.
+
+| ID                               | Name (EN)                             | Name (ES)                                             | Summary shown to visitors (EN)                                                                                               |
+| -------------------------------- | ------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `medical-gas-supply-planning`    | Medical gas supply planning           | Planificación del suministro de gases medicinales     | A joint review of how medical gases are supplied today and what your organization will need as it changes.                   |
+| `bulk-centralized-supply`        | Bulk or centralized supply            | Suministro a granel o centralizado                    | Options for supplying medical gases from a central point, such as a tank or supply station, instead of individual cylinders. |
+| `cylinder-inventory-management`  | Cylinder and inventory management     | Manejo de cilindros e inventario                      | Support for organizing, locating and replenishing cylinders across hospital areas.                                           |
+| `backup-emergency-supply`        | Backup and emergency supply           | Suministro de respaldo y emergencias                  | Planning of backup sources and supply procedures for hurricanes, power outages or other disruptions.                         |
+| `monitoring-telemetry`           | Monitoring and telemetry              | Monitoreo y telemetría                                | Tools to check the status of tanks, levels or supply systems remotely.                                                       |
+| `infrastructure-assessment`      | Medical gas infrastructure assessment | Evaluación de la infraestructura de gases medicinales | A review of the condition of your facility's medical gas distribution network, outlets and equipment.                        |
+| `preventive-service-maintenance` | Preventive service and maintenance    | Servicio preventivo y mantenimiento                   | Planned inspection and maintenance programs for medical gas systems.                                                         |
+| `clinical-oxygen-support`        | Clinical oxygen support               | Apoyo en oxígeno clínico                              | Support related to supplying medical oxygen to clinical areas such as emergency, intensive care and inpatient floors.        |
+| `ambulatory-homecare-support`    | Ambulatory and homecare support       | Apoyo para cuidado ambulatorio y en el hogar          | Support for patients who continue respiratory therapy outside the hospital, in outpatient centers or at home.                |
+| `training-operational-readiness` | Training and operational readiness    | Capacitación y preparación operacional                | Training for staff on safe handling of medical gases and on the procedures your organization defines.                        |
+
+### 11.8 Missing asset
+
+**Solutions without an approved digital asset** (reports will show no resource links):
+
+| ID                               | Name (EN)                             | Linked placeholder assets          |
+| -------------------------------- | ------------------------------------- | ---------------------------------- |
+| `medical-gas-supply-planning`    | Medical gas supply planning           | asset-medical-gas-overview         |
+| `bulk-centralized-supply`        | Bulk or centralized supply            | asset-medical-gas-overview         |
+| `cylinder-inventory-management`  | Cylinder and inventory management     | —                                  |
+| `backup-emergency-supply`        | Backup and emergency supply           | asset-emergency-planning-checklist |
+| `monitoring-telemetry`           | Monitoring and telemetry              | —                                  |
+| `infrastructure-assessment`      | Medical gas infrastructure assessment | —                                  |
+| `preventive-service-maintenance` | Preventive service and maintenance    | —                                  |
+| `clinical-oxygen-support`        | Clinical oxygen support               | —                                  |
+| `ambulatory-homecare-support`    | Ambulatory and homecare support       | asset-homecare-guide               |
+| `training-operational-readiness` | Training and operational readiness    | —                                  |
+
+**Digital assets not yet approved:**
+
+| ID                                   | Title (EN)                   | Status      | Used by                                              |
+| ------------------------------------ | ---------------------------- | ----------- | ---------------------------------------------------- |
+| `asset-medical-gas-overview`         | Medical gas overview         | placeholder | medical-gas-supply-planning, bulk-centralized-supply |
+| `asset-emergency-planning-checklist` | Emergency planning checklist | placeholder | backup-emergency-supply                              |
+| `asset-homecare-guide`               | Home transition guide        | placeholder | ambulatory-homecare-support                          |
+
+**Scenes using placeholder illustrations:**
+
+| Scene            | Title (EN)                      |
+| ---------------- | ------------------------------- |
+| `campus`         | Hospital campus                 |
+| `emergency`      | Emergency department            |
+| `gas-plant`      | Medical-gas plant               |
+| `icu`            | Intensive care unit             |
+| `laboratory`     | Laboratory                      |
+| `operating-room` | Operating room                  |
+| `patient-care`   | Patient-care area               |
+| `utilities`      | Utility and infrastructure area |
+
+### 11.9 Priority at convention
+
+Proposed by the project team; sales confirms or changes each priority.
+
+| Priority | ID                               | Name (EN)                             | Confirmed by sales |
+| -------- | -------------------------------- | ------------------------------------- | ------------------ |
+| high     | `backup-emergency-supply`        | Backup and emergency supply           | no                 |
+| high     | `clinical-oxygen-support`        | Clinical oxygen support               | no                 |
+| high     | `medical-gas-supply-planning`    | Medical gas supply planning           | no                 |
+| medium   | `ambulatory-homecare-support`    | Ambulatory and homecare support       | no                 |
+| medium   | `bulk-centralized-supply`        | Bulk or centralized supply            | no                 |
+| medium   | `cylinder-inventory-management`  | Cylinder and inventory management     | no                 |
+| medium   | `infrastructure-assessment`      | Medical gas infrastructure assessment | no                 |
+| medium   | `monitoring-telemetry`           | Monitoring and telemetry              | no                 |
+| low      | `preventive-service-maintenance` | Preventive service and maintenance    | no                 |
+| low      | `training-operational-readiness` | Training and operational readiness    | no                 |
+
+### 11.10 What visitors would see (demo mode)
+
+Top recommendations produced by the deterministic rules for single-signal journeys, so sales can judge
+relevance. Order is the ranking shown to visitors.
+
+**Persona only**
+
+| Persona                                           | Recommendations                                                                                   |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Executive leadership                              | Backup and emergency supply → Medical gas supply planning                                         |
+| Operations and facilities                         | Medical gas infrastructure assessment → Backup and emergency supply → Medical gas supply planning |
+| Procurement and supply chain                      | Medical gas supply planning → Cylinder and inventory management → Bulk or centralized supply      |
+| Clinical and respiratory care                     | Clinical oxygen support → Cylinder and inventory management                                       |
+| Quality, safety, risk and compliance              | Training and operational readiness                                                                |
+| Finance and reimbursement                         | Medical gas supply planning → Preventive service and maintenance                                  |
+| Technology, biomedical and digital transformation | Monitoring and telemetry → Preventive service and maintenance                                     |
+| Ambulatory care and homecare                      | Ambulatory and homecare support                                                                   |
+| Academia and research                             | Medical gas supply planning → Training and operational readiness                                  |
+| Government or healthcare-system stakeholder       | Backup and emergency supply → Medical gas supply planning                                         |
+
+**Challenge only**
+
+| Challenge                         | Recommendations                                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Improve supply continuity         | Medical gas supply planning → Bulk or centralized supply → Backup and emergency supply           |
+| Prepare for emergencies           | Backup and emergency supply                                                                      |
+| Modernize aging infrastructure    | Medical gas infrastructure assessment → Preventive service and maintenance                       |
+| Support facility expansion        | Medical gas infrastructure assessment → Medical gas supply planning → Bulk or centralized supply |
+| Improve visibility and monitoring | Monitoring and telemetry                                                                         |
+| Manage cylinders and inventory    | Cylinder and inventory management                                                                |
+| Reduce operational complexity     | Cylinder and inventory management                                                                |
+| Improve patient and staff safety  | Training and operational readiness → Clinical oxygen support                                     |
+| Improve clinical workflow         | Clinical oxygen support                                                                          |
+| Strengthen compliance readiness   | Training and operational readiness → Preventive service and maintenance                          |
+| Control lifecycle costs           | Preventive service and maintenance → Medical gas supply planning                                 |
+| Support care outside the hospital | Ambulatory and homecare support                                                                  |
+
+**Exploration only** (visiting the scene and opening one hotspot)
+
+| Scene                           | Hotspot                  | Recommendations                                                                                                 |
+| ------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Hospital campus                 | New areas                | Medical gas supply planning → Bulk or centralized supply                                                        |
+| Emergency department            | Patient surges           | Backup and emergency supply → Medical gas supply planning                                                       |
+| Emergency department            | Oxygen in emergency care | Backup and emergency supply → Clinical oxygen support → Training and operational readiness                      |
+| Medical-gas plant               | Storage tank             | Bulk or centralized supply → Monitoring and telemetry → Medical gas supply planning                             |
+| Medical-gas plant               | Backup supply            | Backup and emergency supply                                                                                     |
+| Intensive care unit             | Bedside oxygen           | Clinical oxygen support → Medical gas supply planning                                                           |
+| Intensive care unit             | Clinical oxygen          | Clinical oxygen support → Training and operational readiness                                                    |
+| Intensive care unit             | Supply monitoring        | Monitoring and telemetry                                                                                        |
+| Laboratory                      | Laboratory supply        | Medical gas supply planning → Cylinder and inventory management → Bulk or centralized supply                    |
+| Laboratory                      | Safe handling            | Training and operational readiness                                                                              |
+| Operating room                  | Gas outlets              | Medical gas infrastructure assessment                                                                           |
+| Operating room                  | Gas infrastructure       | Medical gas infrastructure assessment → Preventive service and maintenance                                      |
+| Patient-care area               | Cylinder handling        | Cylinder and inventory management → Training and operational readiness                                          |
+| Patient-care area               | Cylinder inventory       | Cylinder and inventory management → Clinical oxygen support                                                     |
+| Patient-care area               | Hospital to home         | Ambulatory and homecare support                                                                                 |
+| Utility and infrastructure area | Manifold room            | Medical gas infrastructure assessment → Preventive service and maintenance → Training and operational readiness |
+| Utility and infrastructure area | Alarm panel              | Monitoring and telemetry                                                                                        |
+| Utility and infrastructure area | Planned maintenance      | Preventive service and maintenance → Medical gas infrastructure assessment                                      |
+| Utility and infrastructure area | Safety training          | Training and operational readiness → Medical gas infrastructure assessment                                      |
+
+<!-- END GENERATED: sales-review -->

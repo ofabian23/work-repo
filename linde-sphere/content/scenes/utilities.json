@@ -6,7 +6,7 @@
     "en": "Utility and infrastructure area"
   },
   "description": {
-    "es": "Los sistemas detrás de las paredes que mantienen el hospital funcionando.",
+    "es": "Los sistemas detrás de las paredes que mantienen el hospital en funcionamiento.",
     "en": "The systems behind the walls that keep the hospital running."
   },
   "background": {
@@ -23,30 +23,30 @@
     {
       "id": "utilities-manifold-room",
       "type": "information",
-      "x": 30,
-      "y": 34,
+      "x": 28,
+      "y": 30,
       "label": {
         "es": "Cuarto de manifolds",
         "en": "Manifold room"
       },
       "accessibleLabel": {
-        "es": "Información sobre inspecciones y documentación del cuarto de manifolds",
-        "en": "Information about manifold room inspections and documentation"
+        "es": "Información sobre inspecciones y registros del cuarto de manifolds",
+        "en": "Information about manifold room inspections and records"
       },
       "visualImportance": "secondary",
       "recommendationSignals": {
-        "challengeIds": ["compliance-readiness"],
-        "solutionIds": ["compliance-documentation"]
+        "challengeIds": ["compliance-readiness", "aging-infrastructure"],
+        "solutionIds": ["infrastructure-assessment", "preventive-service-maintenance"]
       },
       "validationStatus": "assumed",
       "panel": {
         "title": {
-          "es": "Inspecciones y documentación",
-          "en": "Inspections and documentation"
+          "es": "Inspecciones y registros",
+          "en": "Inspections and records"
         },
         "body": {
-          "es": "Los sistemas de gases medicinales requieren inspecciones periódicas y registros actualizados para las auditorías y acreditaciones.",
-          "en": "Medical gas systems require periodic inspections and up-to-date records for audits and accreditation."
+          "es": "Las inspecciones y los registros de los sistemas de gases medicinales suelen revisarse durante auditorías y acreditaciones.",
+          "en": "Inspections and records for medical gas systems are commonly reviewed during audits and accreditation."
         },
         "bullets": [
           {
@@ -61,46 +61,86 @@
       }
     },
     {
+      "id": "utilities-alarm-panel",
+      "type": "information",
+      "x": 72,
+      "y": 26,
+      "label": {
+        "es": "Panel de alarmas",
+        "en": "Alarm panel"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre paneles de alarma y el estado de los sistemas de gases",
+        "en": "Information about alarm panels and gas system status"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["visibility-monitoring"],
+        "solutionIds": ["monitoring-telemetry"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Alarmas y estado del sistema",
+          "en": "Alarms and system status"
+        },
+        "body": {
+          "es": "Los paneles de alarma muestran el estado de los sistemas de gases. Algunas organizaciones quieren consultar esa información también desde otros lugares.",
+          "en": "Alarm panels show the status of gas systems. Some organizations also want to see that information from other locations."
+        },
+        "bullets": [
+          {
+            "es": "Estado del sistema",
+            "en": "System status"
+          },
+          {
+            "es": "Consulta a distancia",
+            "en": "Remote visibility"
+          }
+        ]
+      }
+    },
+    {
+      "id": "utilities-maintenance",
+      "type": "solution",
+      "x": 46,
+      "y": 58,
+      "label": {
+        "es": "Mantenimiento planificado",
+        "en": "Planned maintenance"
+      },
+      "accessibleLabel": {
+        "es": "Ver servicio preventivo y evaluación de infraestructura",
+        "en": "View preventive service and infrastructure assessment"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["lifecycle-costs", "aging-infrastructure"],
+        "solutionIds": ["preventive-service-maintenance", "infrastructure-assessment"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["preventive-service-maintenance", "infrastructure-assessment"]
+    },
+    {
       "id": "utilities-safety-training",
       "type": "solution",
-      "x": 68,
-      "y": 46,
+      "x": 70,
+      "y": 80,
       "label": {
         "es": "Capacitación en seguridad",
         "en": "Safety training"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones de capacitación en manejo seguro de gases",
-        "en": "View safe gas handling training solutions"
+        "es": "Ver capacitación y preparación operacional",
+        "en": "View training and operational readiness"
       },
       "visualImportance": "secondary",
       "recommendationSignals": {
-        "challengeIds": ["staff-safety"],
-        "solutionIds": ["gas-safety-training"]
+        "challengeIds": ["patient-staff-safety", "compliance-readiness"],
+        "solutionIds": ["training-operational-readiness"]
       },
       "validationStatus": "assumed",
-      "targetSolutionIds": ["gas-safety-training"]
-    },
-    {
-      "id": "utilities-lifecycle",
-      "type": "solution",
-      "x": 46,
-      "y": 74,
-      "label": {
-        "es": "Ciclo de vida de la infraestructura",
-        "en": "Infrastructure lifecycle"
-      },
-      "accessibleLabel": {
-        "es": "Ver soluciones de revisión del ciclo de vida del suministro y la infraestructura",
-        "en": "View supply and infrastructure lifecycle review solutions"
-      },
-      "visualImportance": "primary",
-      "recommendationSignals": {
-        "challengeIds": ["lifecycle-costs", "modernize-infrastructure"],
-        "solutionIds": ["lifecycle-cost-review", "pipeline-infrastructure"]
-      },
-      "validationStatus": "assumed",
-      "targetSolutionIds": ["lifecycle-cost-review", "pipeline-infrastructure"]
+      "targetSolutionIds": ["training-operational-readiness"]
     }
   ],
   "parentSceneId": "campus",

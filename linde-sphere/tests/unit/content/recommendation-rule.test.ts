@@ -130,7 +130,7 @@ describe("RecommendationRuleSchema", () => {
 });
 
 describe("maxAchievableScore", () => {
-  it("counts single-choice signals once and caps challenges at the selection limit", () => {
+  it("is a cap-aware upper bound matching the engine's scoring", () => {
     const parsed = expectValid(RecommendationRuleSchema, {
       ...rule(),
       weights: {
@@ -142,7 +142,21 @@ describe("maxAchievableScore", () => {
         explicitInterests: { s1: 6 },
       },
     });
-    // persona max 3 + facility max 2 + top-3 challenges 12 + scenes 2 + hotspots 2 + interests 6
-    expect(maxAchievableScore(parsed)).toBe(27);
+    // persona max 3 + facility max 2 + top-3 challenges 12 + implied cap 3 (a 4th challenge exists)
+    // + scenes 2 + hotspot 2 with engaged bonus 1 + interests 6
+    expect(maxAchievableScore(parsed)).toBe(31);
+  });
+
+  it("caps scene and hotspot contributions", () => {
+    const parsed = expectValid(RecommendationRuleSchema, {
+      ...rule(),
+      weights: {
+        ...emptyWeights(),
+        scenes: { s1: 2, s2: 2, s3: 2 },
+        hotspots: { h1: 4, h2: 4, h3: 4 },
+      },
+    });
+    // scenes capped at 3, hotspots capped at 8
+    expect(maxAchievableScore(parsed)).toBe(11);
   });
 });

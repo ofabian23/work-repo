@@ -6,8 +6,8 @@
     "en": "Medical-gas plant"
   },
   "description": {
-    "es": "El origen del suministro de gases medicinales de todo el hospital.",
-    "en": "The source of medical gas supply for the entire hospital."
+    "es": "El punto de origen del suministro de gases medicinales del hospital.",
+    "en": "The starting point of the hospital's medical gas supply."
   },
   "background": {
     "src": "/assets/scenes/placeholder/gas-plant-background.svg",
@@ -42,16 +42,16 @@
         "en": "Storage tank"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones de continuidad y monitoreo del suministro a granel",
-        "en": "View bulk supply continuity and monitoring solutions"
+        "es": "Ver suministro centralizado y monitoreo del tanque",
+        "en": "View centralized supply and tank monitoring"
       },
       "visualImportance": "primary",
       "recommendationSignals": {
-        "challengeIds": ["supply-continuity", "monitoring-visibility"],
-        "solutionIds": ["medical-gas-supply-continuity", "supply-level-monitoring"]
+        "challengeIds": ["supply-continuity", "visibility-monitoring"],
+        "solutionIds": ["bulk-centralized-supply", "monitoring-telemetry"]
       },
       "validationStatus": "assumed",
-      "targetSolutionIds": ["medical-gas-supply-continuity", "supply-level-monitoring"]
+      "targetSolutionIds": ["bulk-centralized-supply", "monitoring-telemetry"]
     },
     {
       "id": "gas-plant-backup",
@@ -63,16 +63,16 @@
         "en": "Backup supply"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones de planificación de suministro de respaldo y emergencias",
-        "en": "View backup and emergency supply planning solutions"
+        "es": "Ver planificación de suministro de respaldo y emergencias",
+        "en": "View backup and emergency supply planning"
       },
       "visualImportance": "primary",
       "recommendationSignals": {
         "challengeIds": ["emergency-preparedness"],
-        "solutionIds": ["emergency-backup-planning"]
+        "solutionIds": ["backup-emergency-supply"]
       },
       "validationStatus": "assumed",
-      "targetSolutionIds": ["emergency-backup-planning"]
+      "targetSolutionIds": ["backup-emergency-supply"]
     },
     {
       "id": "gas-plant-to-utilities",

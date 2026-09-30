@@ -176,6 +176,46 @@
       },
       "validationStatus": "assumed",
       "targetSceneId": "utilities"
+    },
+    {
+      "id": "campus-expansion",
+      "type": "information",
+      "x": 50,
+      "y": 66,
+      "label": {
+        "es": "Nuevas áreas",
+        "en": "New areas"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre el crecimiento del campus y nuevas áreas",
+        "en": "Information about campus growth and new areas"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["facility-expansion", "supply-continuity"],
+        "solutionIds": ["medical-gas-supply-planning"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Crecimiento del campus",
+          "en": "Campus growth"
+        },
+        "body": {
+          "es": "Cuando se añaden camas, áreas o edificios, también cambian las necesidades de servicios como los gases medicinales. Considerarlas desde el inicio ayuda a coordinar a los equipos.",
+          "en": "When beds, areas or buildings are added, needs for services such as medical gases change too. Considering them early helps teams coordinate."
+        },
+        "bullets": [
+          {
+            "es": "Planificación de capacidad",
+            "en": "Capacity planning"
+          },
+          {
+            "es": "Coordinación con proyectos de construcción",
+            "en": "Coordination with construction projects"
+          }
+        ]
+      }
     }
   ],
   "parentSceneId": null,

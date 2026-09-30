@@ -392,3 +392,45 @@ entry here — architecture is never changed silently.
   kiosk fits without scrolling, and health. The config uses a preinstalled Chromium when present
   (`/opt/pw-browsers/chromium` or `PLAYWRIGHT_CHROMIUM_PATH`); otherwise `npx playwright install chromium`.
 - **Consequences:** `test-results/` is git-ignored. E2E is part of the standard phase checks from now on.
+
+## ADR-041 — Recommendation engine implemented with code-level tuning constants
+
+- **Date:** 2026-09-30 · **Status:** Accepted (amends the planned `content/settings.json`)
+- **Context:** The convention content seed must prove that persona-only, challenge-only, persona + challenge,
+  exploration-only and blended journeys produce relevant results. That needs the engine now (Phase 3 work).
+- **Decision:** `src/domain/recommendations/engine.ts` is a pure function over `PublicContentBundle`. Rule
+  weights stay in content. Combination constants (scene cap 3, hotspot cap 8, hotspot affinity 2, engaged
+  bonus 1, implied-challenge factor 0.5 capped at 3, default 3 results) live in `engine-config.ts`, because
+  they are engine behaviour, not sales content. Every contribution is recorded as a `MatchedSignal` with a
+  `kind`. "Why this appeared" is generated from the matched signals (quoted labels, so no grammar
+  guessing). Implied signals are phrased as "related to what you explored". The rule template becomes a
+  claim-free "relevance" sentence, and `fallbackExplanation` is now required only when the template uses
+  placeholders. `RecommendationItem.explanation` is replaced by `whyThisAppeared` + `relevance`.
+- **Consequences:** Coverage (what each persona, challenge or hotspot alone yields) is generated into
+  CONTENT_VALIDATION.md §11.10 for sales review. `maxAchievableScore` is cap-aware.
+
+## ADR-042 — Sales-review worksheet stored with each solution; CSV export generated from seed data
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Decision:** `Solution.salesReview` holds `decision` (pending/keep/remove/rename), `proposedName`,
+  `puertoRicoAvailability` (requires-verification/available/not-available), `conventionPriority` and
+  `priorityConfirmedBySales`. The schema enforces consistency with `validationStatus`: validated ⇒ available
+  and kept or renamed; removed or not-available ⇒ unavailable. It is internal and stripped by the visibility
+  filter. `npm run content:export` generates `exports/content-validation.csv` (every content item, blank
+  `sales_*` columns, UTF-8 BOM, CRLF, formula-injection guard) and the Markdown sections between markers
+  in CONTENT_VALIDATION.md §11. `--check` runs in `npm run check`, and a unit test fails when the committed
+  files are stale.
+- **Consequences:** Sales can work in Excel or through the JSON. Decisions and the documentation cannot drift.
+
+## ADR-043 — Stricter claim policy for convention content
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Decision:** The prohibited-claim scan also rejects local-availability wording ("disponible/available en/in
+  Puerto Rico"), regulatory and standards references (NFPA, FDA, OSHA, CMS, USP, Joint Commission, ISO
+  numbers), cost-reduction wording, performance wording ("24/7", "uptime", "sin interrupciones"), ™ ® ©, and
+  superlatives. A manual review softened statements that implied outcomes or clinical guidance, for example
+  "supply **and use** of medical oxygen" → "supplying medical oxygen", "makes it possible to act in time" →
+  "teams often want to know the status before it becomes urgent", and "procedures to maintain supply" →
+  "supply procedures for …".
+- **Consequences:** Descriptions state scope and potential relevance only. Any future need for such wording
+  requires a new ADR.

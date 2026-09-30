@@ -53,7 +53,7 @@ describe("getHealthReport", () => {
     expect(report.status).toBe("degraded");
     expect(report.ready).toBe(false);
     expect(report.app.name).toBe("Linde Sphere");
-    expect(report.content).toEqual({ status: "valid", version: "0.1.0", errorCount: 0 });
+    expect(report.content).toEqual({ status: "valid", version: "0.2.0", errorCount: 0 });
     expect(report.database.status).toBe("not_initialized");
   });
 

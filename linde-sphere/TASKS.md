@@ -48,18 +48,25 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] 171 unit tests covering schema success/failure, cross-checks, loader errors, visibility, seed content
 - **Moved to later phases:** `settings.json`, `report.json`, `sales-contacts.json` (Phases 3–8); brand config and ES/EN dictionaries with `t()` were delivered in Phase 1; cached server loader that refuses to boot on invalid content (Phase 4, first page that reads content); placeholder SVG files (Phase 6)
 
+## Phase 2b — Convention-focused content seed ✅
+
+- [x] 10 personas (unchanged); 12 customer-language challenges (v0.2.0 list: aging infrastructure, visibility and monitoring, cylinders and inventory, patient and staff safety, clinical workflow, …)
+- [x] 10 assumed solution categories + fallback, each marked **PENDING PUERTO RICO VALIDATION** with a `salesReview` worksheet (decision, proposed name, PR availability, convention priority) (ADR-042)
+- [x] Scenes/hotspots reworked around the new categories (27 hotspots); placeholder assets relinked
+- [x] Deterministic rules (threshold 3) covering persona-only, challenge-only, persona + challenge, exploration-only and blended journeys, with a plain-language "Why this appeared" for every recommendation
+- [x] Wider prohibited-claim scan (local availability, regulatory references, cost reduction, uptime, trademarks, superlatives) and manual wording review; ambiguous statements softened (ADR-043)
+- [x] `npm run content:export` → `exports/content-validation.csv` + generated CONTENT_VALIDATION.md §11 (Keep, Remove, Rename, Available / Not available in PR, Requires verification, Missing asset, Priority at convention, coverage); `--check` in `npm run check`
+
 ## Phase 3 — Recommendation engine and lead scoring (pure logic)
 
-- [ ] `content/settings.json` (topN, per-type caps, hotspot-signal discount, explicit-interest weight, engagement threshold) + schema
-
-- [ ] `SessionSignals` types + normalization (dedupe, caps, max challenges)
-- [ ] `recommend()` with weights, per-type caps, min score, tie-breakers, top-N, fallback
-- [ ] Render `explanationTemplate` placeholders from matched labels (lower-casing, ES "y" / EN "and" joins) with `fallbackExplanation` when a placeholder has no match
-- [ ] Output validated against `RecommendationResultSchema`
-- [ ] `hasMinimumInfo` / prompt selectors
-- [ ] `lead-scoring.ts` (server-only) + config
-- [ ] Unit tests: determinism, ordering, caps, reasons, fallback, mode filtering, scoring bounds/tiers
-- **Done when:** the engine suite passes with high branch coverage and no I/O in `src/domain`.
+- [x] Engine tuning constants in `src/domain/recommendations/engine-config.ts` (replaces the planned `content/settings.json`, ADR-041)
+- [x] Signal normalization (unknown/hidden ids, duplicates), per-type caps, implied challenges, hotspot affinity, engaged bonus
+- [x] `recommend()` with weights, exclusions, thresholds, tie-breakers, top-N, fallback; output validated against `RecommendationResultSchema`
+- [x] "Why this appeared" generation (ES/EN, quoted labels) + relevance template rendering with placeholder fallback
+- [x] Unit tests: five journey types, full persona/challenge/hotspot coverage, determinism and order independence, exclusions, thresholds, tie-breaks, caps, fallback, production mode
+- [ ] `hasMinimumInfo` / prompt selectors (with the kiosk state machine, Phase 4–5)
+- [ ] `lead-scoring.ts` (server-only) + `config/lead-scoring.json` + tests
+- **Done when:** lead scoring is implemented and tested; the engine suite already passes with no I/O in `src/domain`.
 
 ## Phase 4 — Kiosk shell
 

@@ -35,8 +35,8 @@
       },
       "visualImportance": "secondary",
       "recommendationSignals": {
-        "challengeIds": ["staff-safety", "operational-complexity"],
-        "solutionIds": []
+        "challengeIds": ["cylinder-inventory", "patient-staff-safety"],
+        "solutionIds": ["cylinder-inventory-management", "training-operational-readiness"]
       },
       "validationStatus": "assumed",
       "panel": {
@@ -70,12 +70,12 @@
         "en": "Cylinder inventory"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones de manejo de inventario de cilindros",
-        "en": "View cylinder inventory management solutions"
+        "es": "Ver manejo de cilindros e inventario",
+        "en": "View cylinder and inventory management"
       },
       "visualImportance": "secondary",
       "recommendationSignals": {
-        "challengeIds": ["operational-complexity", "workflow-efficiency"],
+        "challengeIds": ["cylinder-inventory", "clinical-workflow"],
         "solutionIds": ["cylinder-inventory-management"]
       },
       "validationStatus": "assumed",
@@ -91,16 +91,16 @@
         "en": "Hospital to home"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones para la continuidad del cuidado respiratorio en el hogar",
-        "en": "View solutions for continuity of respiratory care at home"
+        "es": "Ver apoyo para cuidado ambulatorio y en el hogar",
+        "en": "View ambulatory and homecare support"
       },
       "visualImportance": "primary",
       "recommendationSignals": {
         "challengeIds": ["care-outside-hospital"],
-        "solutionIds": ["homecare-respiratory-services"]
+        "solutionIds": ["ambulatory-homecare-support"]
       },
       "validationStatus": "assumed",
-      "targetSolutionIds": ["homecare-respiratory-services"]
+      "targetSolutionIds": ["ambulatory-homecare-support"]
     }
   ],
   "parentSceneId": "campus",

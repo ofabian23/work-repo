@@ -104,16 +104,24 @@ Customer-language challenges, **never product names**. Initial set (all `assumed
 
 1. Improve supply continuity
 2. Prepare for emergencies
-3. Modernize infrastructure
-4. Improve monitoring visibility
-5. Support facility expansion
-6. Reduce operational complexity
-7. Improve patient safety
-8. Improve staff safety
-9. Strengthen compliance readiness
-10. Control lifecycle costs
-11. Improve workflow efficiency
+3. Modernize aging infrastructure
+4. Support facility expansion
+5. Improve visibility and monitoring
+6. Manage cylinders and inventory
+7. Reduce operational complexity
+8. Improve patient and staff safety
+9. Improve clinical workflow
+10. Strengthen compliance readiness
+11. Control lifecycle costs
 12. Support care outside the hospital
+
+### 5.1 Assumed solution categories (demonstration only)
+
+All are **pending Puerto Rico validation** and hidden in production mode until sales validates them
+(CONTENT_VALIDATION.md §11): Medical gas supply planning · Bulk or centralized supply · Cylinder and
+inventory management · Backup and emergency supply · Monitoring and telemetry · Medical gas infrastructure
+assessment · Preventive service and maintenance · Clinical oxygen support · Ambulatory and homecare support
+· Training and operational readiness · plus the "Talk with a specialist" fallback.
 
 Visitors select up to **3** challenges (configurable).
 
@@ -175,7 +183,10 @@ dwell/engagement signals (bucketed and capped) · explicit interests.
 **Outputs (visitor-facing):**
 
 - Top recommended **solution categories** (default 3, max 5)
-- **Why it appeared** — human-readable reasons derived from the matched rules
+- **Why this appeared** — a plain-language sentence generated from the visitor's matched signals, e.g.
+  _"Aparece porque eligió «Prepararse para emergencias»."_ / _"This appeared because you chose “Prepare for
+  emergencies”."_ Signals implied by exploration are phrased as "related to what you explored", never as a
+  visitor choice. Each item also carries a short, claim-free relevance sentence from its rule.
 - Related healthcare environments
 - Suggested next step
 - Relevant **approved** digital resources

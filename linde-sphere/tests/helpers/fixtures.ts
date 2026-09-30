@@ -101,6 +101,15 @@ export const validatedGovernance = () => ({
   requiresSalesValidation: false,
 });
 
+export const pendingReview = () => ({
+  decision: "pending",
+  proposedName: null,
+  puertoRicoAvailability: "requires-verification",
+  conventionPriority: "unset",
+  priorityConfirmedBySales: false,
+  notes: "",
+});
+
 export const solution = () => ({
   id: "clinical-gases",
   slug: "clinical-gases",
@@ -112,6 +121,17 @@ export const solution = () => ({
   digitalAssetIds: [],
   isFallback: false,
   ...assumedGovernance(),
+  salesReview: pendingReview(),
+});
+
+/** Sales review of a solution that sales has confirmed for Puerto Rico. */
+export const confirmedReview = () => ({
+  decision: "keep",
+  proposedName: null,
+  puertoRicoAvailability: "available",
+  conventionPriority: "high",
+  priorityConfirmedBySales: true,
+  notes: "",
 });
 
 export const digitalAsset = () => ({

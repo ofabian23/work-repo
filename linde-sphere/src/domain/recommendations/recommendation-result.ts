@@ -6,9 +6,22 @@ import { uniqueIds } from "../session/visitor-session";
 export const MAX_RECOMMENDATIONS = 5;
 
 /** One matched signal that contributed to a recommendation — the basis of "why it appeared". */
+export const MatchKindSchema = z.enum([
+  /** The visitor selected / opened / visited this signal and the rule weights it. */
+  "direct",
+  /** A challenge implied by an opened hotspot's recommendationSignals (not selected by the visitor). */
+  "implied-challenge",
+  /** An opened hotspot lists this solution in its recommendationSignals. */
+  "hotspot-affinity",
+  /** Bonus for a contributing hotspot whose panel stayed open past the engagement threshold. */
+  "engaged-bonus",
+]);
+export type MatchKind = z.infer<typeof MatchKindSchema>;
+
 export const MatchedSignalSchema = z.strictObject({
   signalType: SignalTypeSchema,
   signalId: IdSchema,
+  kind: MatchKindSchema,
   weight: z.number().positive(),
 });
 export type MatchedSignal = z.infer<typeof MatchedSignalSchema>;
@@ -22,8 +35,13 @@ export const RecommendationItemSchema = z
     /** Relevance score used for ordering. Never displayed to visitors; unrelated to lead scoring. */
     score: z.number().min(0),
     matchedSignals: z.array(MatchedSignalSchema).max(40),
-    /** Rendered in both languages so the UI can switch language without recomputing. */
-    explanation: LocalizedTextSchema,
+    /**
+     * Plain-language "Why this appeared", generated from the visitor's matched signals.
+     * Rendered in both languages so the UI can switch language without recomputing.
+     */
+    whyThisAppeared: LocalizedTextSchema,
+    /** Rule-specific sentence on when this category tends to matter (no claims). */
+    relevance: LocalizedTextSchema,
     relatedSceneIds: uniqueIds(8),
     digitalAssetIds: uniqueIds(8),
     nextStep: LocalizedTextSchema,

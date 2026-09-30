@@ -63,7 +63,11 @@ describe("seed content", () => {
       expect(s.validationStatus, s.id).toBe("assumed");
       expect(s.requiresSalesValidation, s.id).toBe(true);
       expect(s.market, s.id).not.toBe("puerto-rico");
+      expect(s.internalNotes, s.id).toMatch(/^PENDING PUERTO RICO VALIDATION/);
       expect(s.internalNotes, s.id).toMatch(/requires puerto rico sales validation/i);
+      expect(s.salesReview.puertoRicoAvailability, s.id).toBe("requires-verification");
+      expect(s.salesReview.decision, s.id).toBe("pending");
+      expect(s.salesReview.priorityConfirmedBySales, s.id).toBe(false);
     }
   });
 
@@ -77,6 +81,39 @@ describe("seed content", () => {
       ...seed.recommendationRules,
     ].map((r) => r.validationStatus);
     expect(statuses).not.toContain("validated");
+  });
+
+  it("contains the twelve convention challenges in customer language", () => {
+    expect(seed.challenges.map((c) => c.label.en)).toEqual([
+      "Improve supply continuity",
+      "Prepare for emergencies",
+      "Modernize aging infrastructure",
+      "Support facility expansion",
+      "Improve visibility and monitoring",
+      "Manage cylinders and inventory",
+      "Reduce operational complexity",
+      "Improve patient and staff safety",
+      "Improve clinical workflow",
+      "Strengthen compliance readiness",
+      "Control lifecycle costs",
+      "Support care outside the hospital",
+    ]);
+  });
+
+  it("contains the ten assumed solution categories plus the fallback", () => {
+    expect(seed.solutions.filter((s) => !s.isFallback).map((s) => s.title.en)).toEqual([
+      "Medical gas supply planning",
+      "Bulk or centralized supply",
+      "Cylinder and inventory management",
+      "Backup and emergency supply",
+      "Monitoring and telemetry",
+      "Medical gas infrastructure assessment",
+      "Preventive service and maintenance",
+      "Clinical oxygen support",
+      "Ambulatory and homecare support",
+      "Training and operational readiness",
+    ]);
+    expect(seed.solutions.filter((s) => s.isFallback).map((s) => s.id)).toEqual(["talk-to-specialist"]);
   });
 
   it("has exactly one rule for every non-fallback solution", () => {
@@ -178,6 +215,26 @@ describe("checkContentBundle cross-record rules", () => {
     expect(messages.some((m) => m.includes("savings claim"))).toBe(true);
   });
 
+  it.each([
+    ["Disponible en Puerto Rico desde 2026.", "local availability claim"],
+    ["Designed to meet NFPA 99 requirements.", "regulatory or standards reference"],
+    ["Reduce los costos de operación.", "cost-reduction claim"],
+    ["Lowers costs across the campus.", "cost-reduction claim"],
+    ["Monitoring 24/7 with full uptime.", "performance claim"],
+    ["Sistema OxyMax™ incluido.", "product or trademark marking"],
+    ["El proveedor líder del mercado.", "superlative claim"],
+  ])("flags unsupported claims: %s", (text, label) => {
+    const b = clone(seed);
+    b.solutions[0]!.summary.es = text;
+    const messages = errorsOf(checkContentBundle(b)).map((i) => i.message);
+    expect(messages.some((m) => m.includes(label))).toBe(true);
+  });
+
+  it("does not flag the customer-language challenge list", () => {
+    const flagged = errorsOf(checkContentBundle(seed)).filter((i) => i.collection === "challenges");
+    expect(flagged).toEqual([]);
+  });
+
   it("warns (not errors) when translations look missing", () => {
     const b = clone(seed);
     b.challenges[0]!.description = { es: "Same untranslated text", en: "Same untranslated text" };
@@ -245,7 +302,7 @@ describe("loadContentFromDirectory", () => {
     expect(result.issues).toContainEqual(
       expect.objectContaining({
         path: "[1].market",
-        message: expect.stringMatching(/^supply-level-monitoring: /),
+        message: expect.stringMatching(/^bulk-centralized-supply: /),
       }),
     );
   });

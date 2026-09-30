@@ -6,8 +6,8 @@
     "en": "Operating room"
   },
   "description": {
-    "es": "Un entorno donde la infraestructura debe funcionar sin interrupciones.",
-    "en": "An environment where infrastructure must work without interruption."
+    "es": "Un entorno donde la infraestructura de gases forma parte de cada procedimiento.",
+    "en": "An environment where gas infrastructure is part of every procedure."
   },
   "background": {
     "src": "/assets/scenes/placeholder/operating-room-background.svg",
@@ -30,13 +30,13 @@
         "en": "Gas outlets"
       },
       "accessibleLabel": {
-        "es": "Información sobre salidas y sistemas de distribución de gases en la sala de operaciones",
-        "en": "Information about gas outlets and distribution systems in the operating room"
+        "es": "Información sobre las salidas y la red de distribución de gases en la sala de operaciones",
+        "en": "Information about gas outlets and the distribution network in the operating room"
       },
       "visualImportance": "secondary",
       "recommendationSignals": {
-        "challengeIds": ["modernize-infrastructure", "patient-safety"],
-        "solutionIds": []
+        "challengeIds": ["aging-infrastructure", "patient-staff-safety"],
+        "solutionIds": ["infrastructure-assessment"]
       },
       "validationStatus": "assumed",
       "panel": {
@@ -45,41 +45,41 @@
           "en": "Outlets and distribution"
         },
         "body": {
-          "es": "Las salidas de gases medicinales y su red de distribución forman parte de la infraestructura que el equipo quirúrgico necesita en cada procedimiento.",
-          "en": "Medical gas outlets and their distribution network are part of the infrastructure the surgical team needs in every procedure."
+          "es": "Las salidas de gases medicinales y su red de distribución forman parte de la infraestructura que el equipo quirúrgico utiliza en cada procedimiento.",
+          "en": "Medical gas outlets and their distribution network are part of the infrastructure the surgical team uses in every procedure."
         },
         "bullets": [
           {
-            "es": "Inspección y mantenimiento",
-            "en": "Inspection and maintenance"
+            "es": "Estado de las salidas",
+            "en": "Condition of outlets"
           },
           {
-            "es": "Documentación",
-            "en": "Documentation"
+            "es": "Planes de renovación",
+            "en": "Renovation plans"
           }
         ]
       }
     },
     {
-      "id": "or-pipeline",
+      "id": "or-infrastructure",
       "type": "solution",
       "x": 30,
       "y": 66,
       "label": {
-        "es": "Infraestructura de tuberías",
-        "en": "Pipeline infrastructure"
+        "es": "Infraestructura de gases",
+        "en": "Gas infrastructure"
       },
       "accessibleLabel": {
-        "es": "Ver soluciones de infraestructura de tuberías de gases medicinales",
-        "en": "View medical gas pipeline infrastructure solutions"
+        "es": "Ver evaluación de infraestructura y servicio preventivo",
+        "en": "View infrastructure assessment and preventive service"
       },
       "visualImportance": "primary",
       "recommendationSignals": {
-        "challengeIds": ["modernize-infrastructure", "compliance-readiness"],
-        "solutionIds": ["pipeline-infrastructure", "compliance-documentation"]
+        "challengeIds": ["aging-infrastructure", "compliance-readiness"],
+        "solutionIds": ["infrastructure-assessment", "preventive-service-maintenance"]
       },
       "validationStatus": "assumed",
-      "targetSolutionIds": ["pipeline-infrastructure", "compliance-documentation"]
+      "targetSolutionIds": ["infrastructure-assessment", "preventive-service-maintenance"]
     }
   ],
   "parentSceneId": "campus",

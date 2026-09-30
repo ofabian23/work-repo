@@ -121,18 +121,21 @@ linde-sphere/
 │  ├─ components/ui/button.tsx · components/shell/{app-shell,brand-wordmark,status-screen}.tsx ✅
 │  ├─ features/language/{language-provider,language-switcher}.tsx                         ✅
 │  ├─ features/home/home-screen.tsx · features/status/{loading,error,not-found}-screen.tsx ✅
-│  ├─ lib/config/{app-config,brand-config}.ts · lib/i18n/translate.ts · lib/cn.ts          ✅
+│  ├─ lib/config/{app-config,brand-config}.ts · lib/i18n/translate.ts · lib/cn.ts · lib/csv.ts ✅
 │  ├─ data/i18n/{es,en}.ts                                                                  ✅
 │  ├─ types/{i18n,health}.ts                                                                ✅
 │  ├─ styles/globals.css                                                                    ✅
-│  ├─ domain/                     # content/, session/, recommendations/, leads/, report/, email/ ✅
+│  ├─ domain/                     # content/, session/, leads/, report/, email/                 ✅
+│  │  ├─ recommendations/         # engine.ts, explanations.ts, engine-config.ts, result schema ✅
+│  │  └─ review/content-review.ts # sales-review CSV rows + generated Markdown                 ✅
 │  ├─ server/
 │  │  ├─ env.ts · health.ts · database-probe.ts                                             ✅
 │  │  ├─ content/load-content.ts  # fs loader (no `server-only` so CLI scripts can use it)  ✅
 │  │  └─ db.ts · lead-scoring.ts · leads.ts · report/ · email/ · outbox/ · log.ts  (Phases 3–9)
 │  ├─ instrumentation.ts          # validates env at server boot (outbox worker: Phase 8)   ✅
 │  └─ proxy.ts                    # admin guard (Phase 9)
-├─ scripts/content-check.ts       ✅ · leads-export / leads-purge / outbox-retry (Phase 9)
+├─ scripts/content-check.ts · content-export.ts (+ lib/)   ✅ · leads-export / leads-purge / outbox-retry (Phase 9)
+├─ exports/content-validation.csv # generated sales worksheet (UTF-8 BOM, CRLF; `.gitattributes -text`) ✅
 ├─ tests/
 │  ├─ helpers/ · unit/content · unit/runtime · unit/app                                     ✅
 │  ├─ e2e/foundation.spec.ts      # Playwright: kiosk 1080×1920, laptop 1440×900, phone 390×844 ✅
@@ -364,13 +367,19 @@ ignored when `NODE_ENV=production`.
 
 ## 7. Recommendation engine
 
+Implemented in `src/domain/recommendations/` (`engine.ts`, `explanations.ts`, `engine-config.ts`), ADR-041.
+
 ### 7.1 Properties
 
-- **Pure and isomorphic:** `recommend(signals, content, settings) → Recommendation[]`, no I/O, no clock,
-  no randomness.
-- **Deterministic:** stable ordering with explicit tie-breakers.
-- **Explainable:** each score contribution carries a reason code, rendered to localized text.
-- **Versioned:** `ENGINE_VERSION` constant + `contentVersion` stored with every snapshot.
+- **Pure and isomorphic:** `recommend(signals, publicContent, { maxResults }) → RecommendationResult | null`.
+  No I/O, no clock, no randomness. The kiosk uses it for live display; the server recomputes it (ADR-025).
+- **Deterministic:** stable ordering with explicit tie-breakers, independent of the order in which signals
+  were collected. Sorting uses locale-independent comparisons.
+- **Explainable:** every item lists its `matchedSignals` (`signalType`, `signalId`, `kind`, `weight`) and a
+  plain-language **"Why this appeared"** sentence in ES and EN.
+- **Versioned:** `ENGINE_VERSION` (`1.0.0`) and `contentVersion` travel with every result.
+- Returns `null` only when nothing, not even the fallback, is visible (e.g., production mode before
+  validation).
 
 ### 7.2 Signals
 
@@ -388,9 +397,7 @@ type SessionSignals = {
 };
 ```
 
-Raw timestamps are never used for scoring. Dwell is reduced to a boolean "engaged" per hotspot and is
-capped (ADR-023) so idle screens cannot inflate scores. Opening a hotspot also contributes its
-`recommendationSignals` (related challenge/solution ids) at a discounted weight defined in Phase 3.
+Unknown or hidden ids are ignored. Raw timestamps are never used; dwell is reduced to "engaged" (ADR-023).
 
 ### 7.3 Rules (`content/recommendation-rules.json`)
 
@@ -398,52 +405,75 @@ Rules are data, one per non-fallback solution (ADR-028):
 
 ```jsonc
 {
-  "id": "rule-medical-gas-supply-continuity",
-  "solutionId": "medical-gas-supply-continuity",
+  "id": "rule-backup-emergency-supply",
+  "solutionId": "backup-emergency-supply",
   "weights": {
     // 0 < weight ≤ 10, keys must reference existing ids
-    "personas": { "procurement-supply": 3 },
-    "challenges": { "supply-continuity": 5 },
-    "facilityTypes": { "acute-hospital": 1 },
-    "scenes": { "gas-plant": 2 },
-    "hotspots": { "gas-plant-bulk-tank": 3 },
-    "explicitInterests": { "medical-gas-supply-continuity": 6 }, // keyed by solution id
+    "personas": { "government-system": 4, "executive": 3 },
+    "challenges": { "emergency-preparedness": 5, "supply-continuity": 3 },
+    "facilityTypes": { "public-health-system": 2 },
+    "scenes": { "emergency": 2, "gas-plant": 1 },
+    "hotspots": { "gas-plant-backup": 4, "emergency-surge-readiness": 3 },
+    "explicitInterests": { "backup-emergency-supply": 6 }, // keyed by solution id
   },
-  "minimumScore": 5, // must be reachable (checked)
-  "exclusions": [
-    // any match ⇒ solution not recommended
-    { "signalType": "facilityTypes", "ids": ["homecare-organization"], "reason": "internal note" },
-  ],
+  "minimumScore": 3, // must be reachable (checked, cap-aware)
+  "exclusions": [], // e.g. { "signalType": "facilityTypes", "ids": ["homecare-organization"], "reason": "…" }
   "explanationTemplate": {
-    "es": "Porque indicó como prioridad {challenges}, …",
-    "en": "Because you prioritized {challenges}, …",
+    // "relevance" sentence shown with the recommendation; placeholders optional
+    "es": "Relevante para organizaciones que revisan o actualizan su plan de contingencia.",
+    "en": "Relevant for organizations reviewing or updating their contingency plans.",
   },
-  "fallbackExplanation": { "es": "Relacionado con …", "en": "Related to …" }, // no placeholders
+  // "fallbackExplanation" is required only if the template uses placeholders
   "priority": 90, // tie-breaker, 1–100
   "validationStatus": "assumed",
   "internalNotes": "…",
 }
 ```
 
+Weighting convention in the seed rules: a primary persona 3–5, a primary challenge 4–5, secondary signals
+1–3, a primary hotspot 3–4, explicit interest 6, and `minimumScore` 3. So a single primary persona,
+challenge or hotspot is enough (persona-only, challenge-only and exploration-only journeys all work), but
+a secondary signal alone is not.
+
 Allowed placeholders: `{persona}`, `{challenges}`, `{facilityType}`, `{scenes}`, `{hotspots}`,
-`{interests}`, `{solution}`. ES and EN must use the same set. At runtime a placeholder renders the
-visitor's matched labels for that signal type (lower-cased mid-sentence, joined with "y"/"and"). If any
-placeholder has no match, the engine uses `fallbackExplanation`.
+`{interests}`, `{solution}`. ES and EN must use the same set. They render the visitor's matched labels
+(joined with "y"/"and"). If any placeholder has no match, `fallbackExplanation` is used.
 
 ### 7.4 Scoring algorithm
 
-1. Filter solutions and rules through `visibleContent`; drop any rule whose exclusions match.
-2. For each remaining rule, sum the weights of matched signals. Each match yields
-   `{ signalType, signalId, weight, reasonCode }`.
-3. Per-signal-type caps (e.g., scenes contribute at most 4 total) keep exploration from dominating the visitor's explicit choices.
-4. Discard solutions below their rule's `minimumScore`.
-5. Sort by: total score ↓ → explicit score (challenges + interests) ↓ → rule `priority` ↓ → `solutionId` ↑.
-6. Take `settings.topN` (default 3, max 5).
-7. For each, render the rule's `explanationTemplate` (or `fallbackExplanation`) in both languages and keep
-   the matched signals as the machine-readable "why".
-8. If empty, return the configured **fallback** recommendation ("Speak with a specialist").
+Constants in `engine-config.ts`:
 
-Numeric scores are **not displayed** to visitors.
+| Constant                    | Value | Meaning                                                                           |
+| --------------------------- | ----- | --------------------------------------------------------------------------------- |
+| `DEFAULT_MAX_RESULTS`       | 3     | Items returned (schema max 5)                                                     |
+| `SCENE_CAP`                 | 3     | Max total contribution of visited scenes per solution                             |
+| `HOTSPOT_CAP`               | 8     | Max total contribution of hotspots (direct + affinity + engaged)                  |
+| `HOTSPOT_SOLUTION_AFFINITY` | 2     | An opened hotspot listing the solution in its signals, when not weighted directly |
+| `ENGAGED_HOTSPOT_BONUS`     | 1     | Per contributing hotspot whose panel stayed open past the threshold               |
+| `IMPLIED_CHALLENGE_FACTOR`  | 0.5   | Weight fraction for challenges implied by opened hotspots (not selected)          |
+| `IMPLIED_CHALLENGE_CAP`     | 3     | Max total implied-challenge contribution                                          |
+
+1. Use `visibleContent(bundle, mode)`, so hidden solutions, rules and references never score.
+2. Normalize signals: drop unknown or hidden ids and duplicates.
+3. Skip a rule if any exclusion matches (persona, selected challenges, facility, visited scenes, opened
+   hotspots, explicit interests).
+4. Score: persona + selected challenges + facility type + capped scenes + capped hotspots (direct weight,
+   otherwise affinity, plus engaged bonus) + capped implied challenges + explicit interests. Each
+   contribution is a `MatchedSignal` with `kind` = `direct` | `implied-challenge` | `hotspot-affinity` |
+   `engaged-bonus`.
+5. Discard rules below `minimumScore`.
+6. Sort: score ↓ → explicit score (direct challenges + interests) ↓ → rule `priority` ↓ → `solutionId` ↑.
+7. Take `maxResults`.
+8. **Why this appeared:** group matches (interest, challenge, persona, hotspot, scene, facility, implied),
+   rank the groups by weight and render the top 3 with up to 2 quoted labels each. For example:
+   _"Aparece porque eligió «Prepararse para emergencias»."_ or _"This appeared because: you opened “Storage
+   tank”; you explored “Medical-gas plant”; what you explored relates to “Improve supply continuity”."_
+9. **Relevance:** render the rule's `explanationTemplate`.
+10. If nothing qualifies, return the fallback solution with a neutral explanation ("a specialist can help
+    you explore options").
+
+Numeric scores are **not displayed** to visitors. `CONTENT_VALIDATION.md` §11.10 lists what each persona,
+challenge and hotspot alone would produce, regenerated by `npm run content:export`.
 
 ### 7.5 Minimum information and prompt
 
@@ -667,12 +697,13 @@ promised. Demo mode marks assumed offering items with the pending-validation not
 
 ## 14. Administration and operations
 
-| Capability            | Primary (no network exposure)                | Secondary (optional, guarded web UI) |
-| --------------------- | -------------------------------------------- | ------------------------------------ |
-| CSV export            | `npm run leads:export -- --out leads.csv`    | `/admin` → Export                    |
-| Outbox status / retry | `npm run outbox:retry`                       | `/admin` → Outbox                    |
-| Purge after retention | `npm run leads:purge -- --before 2026-12-31` | —                                    |
-| Content readiness     | `npm run content:check -- --mode production` | `/admin` → Content status            |
+| Capability            | Primary (no network exposure)                              | Secondary (optional, guarded web UI) |
+| --------------------- | ---------------------------------------------------------- | ------------------------------------ |
+| CSV export            | `npm run leads:export -- --out leads.csv`                  | `/admin` → Export                    |
+| Outbox status / retry | `npm run outbox:retry`                                     | `/admin` → Outbox                    |
+| Purge after retention | `npm run leads:purge -- --before 2026-12-31`               | —                                    |
+| Content readiness     | `npm run content:check -- --mode production`               | `/admin` → Content status            |
+| Sales review export   | `npm run content:export` (CSV + CONTENT_VALIDATION.md §11) | —                                    |
 
 CSV: UTF-8 with BOM, one row per lead, columns for contact fields, consents + version, language,
 persona, challenges, interests, recommended solution ids/titles, scenes explored, lead score/tier, email

@@ -1,6 +1,6 @@
 import { describe, it } from "vitest";
 import { DigitalAssetSchema, SolutionSchema } from "@/domain/content";
-import { digitalAsset, solution, validatedGovernance } from "../../helpers/fixtures";
+import { confirmedReview, digitalAsset, solution, validatedGovernance } from "../../helpers/fixtures";
 import { expectInvalid, expectValid } from "../../helpers/schema";
 
 describe("SolutionSchema", () => {
@@ -9,7 +9,7 @@ describe("SolutionSchema", () => {
   });
 
   it("accepts a validated Puerto Rico solution with review metadata", () => {
-    expectValid(SolutionSchema, { ...solution(), ...validatedGovernance() });
+    expectValid(SolutionSchema, { ...solution(), ...validatedGovernance(), salesReview: confirmedReview() });
   });
 
   it("requires every governance field", () => {
@@ -71,6 +71,74 @@ describe("SolutionSchema", () => {
       SolutionSchema,
       { ...solution(), ...validatedGovernance(), lastReviewedAt: "15/10/2026" },
       "lastReviewedAt",
+    );
+  });
+});
+
+describe("Solution sales review", () => {
+  const review = (overrides: Record<string, unknown>) => ({ ...solution().salesReview, ...overrides });
+
+  it("requires a proposed name only when renaming", () => {
+    expectInvalid(
+      SolutionSchema,
+      { ...solution(), salesReview: review({ decision: "rename" }) },
+      "salesReview.proposedName",
+    );
+    expectValid(SolutionSchema, {
+      ...solution(),
+      salesReview: review({ decision: "rename", proposedName: { es: "Nuevo", en: "New" } }),
+    });
+    expectInvalid(
+      SolutionSchema,
+      { ...solution(), salesReview: review({ proposedName: { es: "Nuevo", en: "New" } }) },
+      "salesReview.proposedName",
+    );
+  });
+
+  it("requires unavailable status when sales marks a solution not available or removed", () => {
+    expectInvalid(
+      SolutionSchema,
+      { ...solution(), salesReview: review({ puertoRicoAvailability: "not-available" }) },
+      "validationStatus",
+      "not available",
+    );
+    expectInvalid(
+      SolutionSchema,
+      { ...solution(), salesReview: review({ decision: "remove" }) },
+      "validationStatus",
+      "removed",
+    );
+    expectValid(SolutionSchema, {
+      ...solution(),
+      validationStatus: "unavailable",
+      reviewedBy: "Sales PR",
+      lastReviewedAt: "2026-10-15",
+      salesReview: review({ decision: "remove", puertoRicoAvailability: "not-available" }),
+    });
+  });
+
+  it("requires validated solutions to be available and kept", () => {
+    expectInvalid(
+      SolutionSchema,
+      { ...solution(), ...validatedGovernance(), salesReview: review({ decision: "keep" }) },
+      "salesReview.puertoRicoAvailability",
+    );
+    expectInvalid(
+      SolutionSchema,
+      {
+        ...solution(),
+        ...validatedGovernance(),
+        salesReview: review({ puertoRicoAvailability: "available" }),
+      },
+      "salesReview.decision",
+    );
+  });
+
+  it("rejects a confirmed but unset convention priority", () => {
+    expectInvalid(
+      SolutionSchema,
+      { ...solution(), salesReview: review({ priorityConfirmedBySales: true }) },
+      "salesReview.conventionPriority",
     );
   });
 });

@@ -35,21 +35,22 @@ npm run dev                 # open http://localhost:3000
 
 ## Scripts
 
-| Command                                      | What it does                                                        |
-| -------------------------------------------- | ------------------------------------------------------------------- |
-| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)     |
-| `npm run dev:network`                        | Development server reachable from **other devices** on the network  |
-| `npm run build`                              | Production build                                                    |
-| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`) |
-| `npm run start:network`                      | Serve the production build to the network (kiosk use)               |
-| `npm run lint`                               | ESLint (zero warnings allowed)                                      |
-| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                   |
-| `npm run test`                               | Unit tests (Vitest)                                                 |
-| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes      |
-| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)           |
-| `npm run content:check -- --mode production` | Also require production readiness (validated content only)          |
-| `npm run check`                              | content check + lint + typecheck + format check + unit tests        |
-| `npm run format`                             | Format all files with Prettier                                      |
+| Command                                      | What it does                                                              |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)           |
+| `npm run dev:network`                        | Development server reachable from **other devices** on the network        |
+| `npm run build`                              | Production build                                                          |
+| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)       |
+| `npm run start:network`                      | Serve the production build to the network (kiosk use)                     |
+| `npm run lint`                               | ESLint (zero warnings allowed)                                            |
+| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                         |
+| `npm run test`                               | Unit tests (Vitest)                                                       |
+| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes            |
+| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                 |
+| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                |
+| `npm run content:export`                     | Regenerate the sales CSV (`exports/`) and CONTENT_VALIDATION.md §11       |
+| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests |
+| `npm run format`                             | Format all files with Prettier                                            |
 
 Use another port with `-- -p <port>`, for example `npm run dev -- -p 4000`.
 
@@ -112,5 +113,6 @@ variable name only), content validity and database readiness. It is never cached
 ## Editing content
 
 Content lives in `content/` as JSON. Spanish and English are required for every visitor-facing string.
-All sample solutions are **demonstrative assumptions** that require Puerto Rico sales validation. Run
-`npm run content:check` after every edit.
+All sample solutions are **demonstrative assumptions pending Puerto Rico validation**. Run
+`npm run content:check` and `npm run content:export` after every edit. The sales team reviews
+`exports/content-validation.csv` or CONTENT_VALIDATION.md §11.

@@ -1,5 +1,11 @@
 import { z } from "zod";
 import {
+  ENGAGED_HOTSPOT_BONUS,
+  HOTSPOT_CAP,
+  IMPLIED_CHALLENGE_CAP,
+  SCENE_CAP,
+} from "../recommendations/engine-config";
+import {
   IdSchema,
   LocalizedTextSchema,
   MAX_SELECTED_CHALLENGES,
@@ -104,7 +110,8 @@ export const RecommendationRuleSchema = z
      * labels for that signal type. If any placeholder has no match, `fallbackExplanation` is used.
      */
     explanationTemplate: LocalizedTextSchema,
-    fallbackExplanation: LocalizedTextSchema,
+    /** Required only when `explanationTemplate` uses placeholders. */
+    fallbackExplanation: LocalizedTextSchema.optional(),
     /** Tie-breaker between equal scores: higher priority wins (1–100). */
     priority: z.number().int().min(1).max(100),
     validationStatus: ValidationStatusSchema,
@@ -116,7 +123,18 @@ export const RecommendationRuleSchema = z
       ctx.addIssue({ code: "custom", path: ["weights"], message: "A rule must weight at least one signal" });
     }
     refineTemplate(rule.explanationTemplate, ["explanationTemplate"], ctx, { allowPlaceholders: true });
-    refineTemplate(rule.fallbackExplanation, ["fallbackExplanation"], ctx, { allowPlaceholders: false });
+    if (rule.fallbackExplanation) {
+      refineTemplate(rule.fallbackExplanation, ["fallbackExplanation"], ctx, { allowPlaceholders: false });
+    } else if (
+      extractPlaceholders(rule.explanationTemplate.es).length > 0 ||
+      extractPlaceholders(rule.explanationTemplate.en).length > 0
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["fallbackExplanation"],
+        message: "fallbackExplanation is required when explanationTemplate uses placeholders",
+      });
+    }
 
     rule.exclusions.forEach((ex, i) => {
       const overlap = ex.ids.filter((id) => id in rule.weights[ex.signalType]);
@@ -138,17 +156,21 @@ const sumTop = (values: number[], n: number) =>
     .reduce((a, b) => a + b, 0);
 
 /**
- * Highest score a single visitor could reach for this rule (used by cross-checks to catch
- * unreachable thresholds). Persona and facility type are single-choice; challenges are capped.
+ * Upper bound of the score a single visitor could reach for this rule, using the engine's caps
+ * (used by cross-checks to catch unreachable thresholds). Persona and facility type are single-choice;
+ * challenges are limited by the selection cap, scenes and hotspots by the engine caps.
  */
 export function maxAchievableScore(rule: RecommendationRule): number {
   const w = rule.weights;
+  const hotspotWeights = Object.values(w.hotspots);
+  const hotspotMax = hotspotWeights.reduce((a, b) => a + b + ENGAGED_HOTSPOT_BONUS, 0);
   return (
     sumTop(Object.values(w.personas), 1) +
     sumTop(Object.values(w.facilityTypes), 1) +
     sumTop(Object.values(w.challenges), MAX_SELECTED_CHALLENGES) +
-    sumTop(Object.values(w.scenes), Infinity) +
-    sumTop(Object.values(w.hotspots), Infinity) +
+    (Object.keys(w.challenges).length > MAX_SELECTED_CHALLENGES ? IMPLIED_CHALLENGE_CAP : 0) +
+    Math.min(sumTop(Object.values(w.scenes), Infinity), SCENE_CAP) +
+    Math.min(hotspotMax, HOTSPOT_CAP) +
     sumTop(Object.values(w.explicitInterests), Infinity)
   );
 }
