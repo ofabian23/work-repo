@@ -85,6 +85,32 @@ describe("POST /api/leads", () => {
   });
 });
 
+describe("POST /api/leads: the database itself rejects the data", () => {
+  it("answers a generic 500, stores nothing at all, and logs only the error name and code", async () => {
+    // A constraint the application does not know about (as a future migration or corrupted row could add):
+    // SQLite aborts the insert inside the lead transaction.
+    t.raw().exec(
+      "CREATE TRIGGER reject_lead BEFORE INSERT ON Lead BEGIN SELECT RAISE(ABORT, 'CHECK constraint failed: test_rule'); END;",
+    );
+    const { logs, create } = setup();
+    const res = await create(post(validLead()));
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "server_error" });
+    for (const table of [
+      "lead",
+      "leadInterest",
+      "visitorSessionSummary",
+      "report",
+      "emailDelivery",
+    ] as const) {
+      expect(await (t.db[table] as { count: () => Promise<number> }).count(), table).toBe(0);
+    }
+    expect(logs.text()).toContain("lead.store_failed");
+    expect(logs.text()).not.toContain("test_rule"); // the database message is not logged
+    PERSONAL_VALUES.forEach((v) => expect(logs.text()).not.toContain(v));
+  });
+});
+
 describe("GET /api/leads/status/:token", () => {
   it("returns the delivery state for a known token and 404 otherwise", async () => {
     const { service, logs, create } = setup();

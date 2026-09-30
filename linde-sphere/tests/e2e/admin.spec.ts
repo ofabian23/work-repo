@@ -125,6 +125,12 @@ test.describe("admin features", () => {
       await page.goto(`${ADMIN}${suffix}`);
       await expectNoHorizontalOverflow(page);
     }
+    // A lead detail page (its interests table scrolls inside its own region).
+    await createLead(page, "Hospital de Pruebas (ficticio)", uniqueName());
+    await page.goto(ADMIN);
+    await page.getByTestId("admin-leads").getByRole("link").first().click();
+    await expect(page).toHaveURL(/\/leads\//);
+    await expectNoHorizontalOverflow(page);
   });
 
   test("sales validation: every item with its review fields, filters, and a confirmed CSV download", async ({

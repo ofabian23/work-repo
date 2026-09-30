@@ -94,26 +94,33 @@ export default async function AdminLeadPage({
         {lead.interests.length === 0 ? (
           <p className="text-body text-ink-muted">Sin intereses registrados.</p>
         ) : (
-          <table className="text-body w-full text-left">
-            <thead>
-              <tr className="text-ink-muted">
-                <th className="p-1">Tipo</th>
-                <th className="p-1">Elemento</th>
-                <th className="p-1">Origen</th>
-                <th className="p-1">Relevancia</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lead.interests.map((i) => (
-                <tr key={`${i.category}-${i.value}-${i.sourceType}`}>
-                  <td className="p-1">{i.category}</td>
-                  <td className="p-1">{i.value}</td>
-                  <td className="p-1">{i.sourceType}</td>
-                  <td className="p-1">{i.relevance ?? "—"}</td>
+          <div
+            role="region"
+            aria-label="Intereses del lead"
+            tabIndex={0}
+            className="focus-ring overflow-x-auto"
+          >
+            <table className="text-body w-full text-left">
+              <thead>
+                <tr className="text-ink-muted">
+                  <th className="p-1">Tipo</th>
+                  <th className="p-1">Elemento</th>
+                  <th className="p-1">Origen</th>
+                  <th className="p-1">Relevancia</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {lead.interests.map((i) => (
+                  <tr key={`${i.category}-${i.value}-${i.sourceType}`}>
+                    <td className="p-1">{i.category}</td>
+                    <td className="p-1">{i.value}</td>
+                    <td className="p-1">{i.sourceType}</td>
+                    <td className="p-1">{i.relevance ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 

@@ -151,6 +151,19 @@ describe("lead service — idempotency and double taps", () => {
   });
 });
 
+describe("lead service — consent version", () => {
+  it("refuses a submission made against an older consent text and stores nothing", async () => {
+    const { service } = createTestLeadService(t.db);
+    const result = await service.submitLead(validLead({ consentVersion: "0.0.9" }));
+    expect(result.outcome).toBe("invalid");
+    const issues = result.outcome === "invalid" ? result.issues : [];
+    expect(issues).toContainEqual(
+      expect.objectContaining({ field: "consentVersion", code: "consent_version_mismatch" }),
+    );
+    expect(await counts()).toMatchObject({ leads: 0 });
+  });
+});
+
 describe("lead service — validation", () => {
   it.each([
     ["invalid email", { email: "not-an-email" }, "email"],

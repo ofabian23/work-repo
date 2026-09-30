@@ -9,17 +9,18 @@ The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md
 
 ## Documentation
 
-| Document                                                             | Purpose                                                     |
-| -------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [PROJECT_BRIEF.md](./PROJECT_BRIEF.md)                               | Scope, journey, MVP boundaries, acceptance criteria         |
-| [ARCHITECTURE.md](./ARCHITECTURE.md)                                 | Stack, structure, content model, engine, privacy boundaries |
-| [DECISIONS.md](./DECISIONS.md)                                       | Architecture decision records                               |
-| [TASKS.md](./TASKS.md)                                               | Phased implementation plan and progress                     |
-| [CONTENT_VALIDATION.md](./CONTENT_VALIDATION.md)                     | Content statuses, visibility rules, validation workflow     |
-| [PRIVACY_REVIEW.md](./PRIVACY_REVIEW.md)                             | Data, storage, transmission, consent, open approvals        |
-| [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md)             | How the Puerto Rico sales team reviews and approves content |
-| [CONVENTION_STARTUP_CHECKLIST.md](./CONVENTION_STARTUP_CHECKLIST.md) | Daily startup, test and shutdown checklist at the booth     |
-| [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md)                       | Physical-device test of the Android kiosk                   |
+| Document                                                             | Purpose                                                              |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| [PROJECT_BRIEF.md](./PROJECT_BRIEF.md)                               | Scope, journey, MVP boundaries, acceptance criteria                  |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)                                 | Stack, structure, content model, engine, privacy boundaries          |
+| [DECISIONS.md](./DECISIONS.md)                                       | Architecture decision records                                        |
+| [TASKS.md](./TASKS.md)                                               | Phased implementation plan and progress                              |
+| [CONTENT_VALIDATION.md](./CONTENT_VALIDATION.md)                     | Content statuses, visibility rules, validation workflow              |
+| [PRIVACY_REVIEW.md](./PRIVACY_REVIEW.md)                             | Data, storage, transmission, consent, open approvals                 |
+| [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md)             | How the Puerto Rico sales team reviews and approves content          |
+| [CONVENTION_STARTUP_CHECKLIST.md](./CONVENTION_STARTUP_CHECKLIST.md) | Daily startup, test and shutdown checklist at the booth              |
+| [TESTING.md](./TESTING.md)                                           | How the app is tested; requirement-to-test map; what cannot run here |
+| [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md)                       | Physical-device test of the Android kiosk                            |
 
 ## Requirements
 

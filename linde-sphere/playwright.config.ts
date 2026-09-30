@@ -20,6 +20,12 @@ const E2E_EMAIL_PREVIEW_DIR = "data/e2e-email-preview";
 export const GALLERY_PORT = PORT + 1;
 /** Third server on the same build in production content mode: validated content only (ADR-060). */
 export const PRODUCTION_CONTENT_PORT = PORT + 2;
+/**
+ * Fourth server: real SMTP provider pointed at a closed local port, so every email attempt genuinely
+ * fails (critical journey 5). It has its own database, because each server's email worker processes
+ * every due delivery in its database, and admin enabled for the retry.
+ */
+export const FAILING_EMAIL_PORT = PORT + 3;
 
 /**
  * Uses a pre-installed Chromium when available (cloud dev container); otherwise the browser installed
@@ -106,6 +112,26 @@ export default defineConfig({
       },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
+    },
+    {
+      command: `npm run db:deploy && npx next start -H localhost -p ${FAILING_EMAIL_PORT}`,
+      url: `http://localhost:${FAILING_EMAIL_PORT}/api/health`,
+      env: {
+        DATABASE_URL: "file:./data/e2e-failing-email.db",
+        EMAIL_PROVIDER: "smtp",
+        // Nothing listens on the discard port locally: the connection is refused (a transient failure).
+        SMTP_HOST: "127.0.0.1",
+        SMTP_PORT: "9",
+        EMAIL_FROM: "reportes@kiosk.test",
+        // No automatic retry during a test run; only the immediate attempt and the admin's manual retry.
+        EMAIL_WORKER_INTERVAL_MS: "3600000",
+        LEAD_RATE_LIMIT_PER_MINUTE: "1000",
+        ADMIN_ENABLED: "true",
+        ADMIN_PATH: E2E_ADMIN_PATH,
+        ADMIN_PASSPHRASE_HASH: E2E_ADMIN_PASSPHRASE_HASH,
+      },
+      reuseExistingServer: !process.env.CI,
+      timeout: 90_000,
     },
   ],
 });

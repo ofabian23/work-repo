@@ -342,6 +342,21 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] Sales review itself: owners, answers and approvals (**[Linde Marketing]** with PR sales, PRIVACY_REVIEW
       A13)
 
+## Phase 10d — Focused automated testing ✅
+
+- [x] TESTING.md: how to run each layer, and a map from every required unit, integration and E2E item to
+      its tests, plus what cannot run here
+- [x] New unit tests: duplicate interactions, CSV escaping, consent-version refusal
+- [x] New integration tests (real SQLite):
+  - the lead is committed before the provider is called;
+  - a failing provider leaves the lead;
+  - a database-level rejection is handled safely
+- [x] `tests/e2e/critical-journeys.spec.ts`: the ten critical journeys in three browser profiles. A fourth
+      E2E server (real SMTP to a closed port, own database, admin) covers email failure and admin retry.
+- [x] Fixed: the admin lead-detail interests table widened the page at phone width (now a scroll region)
+- [ ] Not automatable here: successful real SMTP delivery, physical kiosk, Windows PowerShell 5.1
+      (TESTING.md §5)
+
 ## Phase 10 — Hardening, accessibility, deployment
 
 - [ ] E2E: full quick/discovery/explore journeys; post-reset storage/DOM/history assertions; no external requests

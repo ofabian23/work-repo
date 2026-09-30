@@ -238,6 +238,38 @@ describe("delivery workflow: store lead → report → pending event → attempt
   });
 });
 
+describe("ordering: the lead is committed before any email attempt", () => {
+  it("when the provider is called, the lead, its report and the pending delivery are already stored", async () => {
+    const seenAtSend: { leads: number; reports: number; status: string | null }[] = [];
+    const { provider } = fakeProvider(async () => {
+      const row = await t.db.emailDelivery.findFirst();
+      seenAtSend.push({
+        leads: await t.db.lead.count(),
+        reports: await t.db.report.count(),
+        status: row?.status ?? null,
+      });
+      return { messageId: "msg-order" };
+    });
+    const { box } = outbox(provider);
+    // The production wiring (src/server/leads/index.ts): the service schedules an attempt after commit.
+    const { service } = createTestLeadService(t.db, { onDeliveryQueued: (id) => box.schedule(id) });
+    expect((await service.submitLead(validLead())).outcome).toBe("created");
+    await vi.waitFor(() => expect(seenAtSend).toHaveLength(1));
+    expect(seenAtSend[0]).toEqual({ leads: 1, reports: 1, status: "pending" });
+  });
+
+  it("a failing provider leaves the stored lead untouched", async () => {
+    const { provider } = fakeProvider(transient);
+    const { box } = outbox(provider);
+    const { service } = createTestLeadService(t.db, { onDeliveryQueued: (id) => box.schedule(id) });
+    expect((await service.submitLead(validLead())).outcome).toBe("created");
+    await vi.waitFor(async () => expect((await t.db.emailDelivery.findFirstOrThrow()).attempts).toBe(1));
+    expect(await t.db.lead.count()).toBe(1);
+    expect(await t.db.report.count()).toBe(1);
+    expect((await t.db.emailDelivery.findFirstOrThrow()).status).toBe("retrying");
+  });
+});
+
 describe("delivery without a report", () => {
   it("is recorded as failed with REPORT_UNAVAILABLE (lead kept, nothing retried)", async () => {
     const repo = (await import("@/server/leads/lead-repository")).createPrismaLeadRepository(t.db);
