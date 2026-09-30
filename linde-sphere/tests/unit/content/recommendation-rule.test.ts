@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RecommendationRuleSchema, maxAchievableScore } from "@/domain/content";
 import { emptyWeights, localized, rule } from "../../helpers/fixtures";
-import { expectInvalid, expectValid } from "../../helpers/schema";
+import { expectInvalid, expectValid, loadSeedBundle } from "../../helpers/schema";
 
 describe("RecommendationRuleSchema", () => {
   it("accepts a valid rule", () => {
@@ -129,6 +129,8 @@ describe("RecommendationRuleSchema", () => {
   });
 });
 
+const scoring = loadSeedBundle().settings.scoring;
+
 describe("maxAchievableScore", () => {
   it("is a cap-aware upper bound matching the engine's scoring", () => {
     const parsed = expectValid(RecommendationRuleSchema, {
@@ -144,7 +146,25 @@ describe("maxAchievableScore", () => {
     });
     // persona max 3 + facility max 2 + top-3 challenges 12 + implied cap 3 (a 4th challenge exists)
     // + scenes 2 + hotspot 2 with engaged bonus 1 + interests 6
-    expect(maxAchievableScore(parsed)).toBe(31);
+    expect(maxAchievableScore(parsed, scoring)).toBe(31);
+  });
+
+  it("follows the configured caps", () => {
+    const parsed = expectValid(RecommendationRuleSchema, {
+      ...rule(),
+      weights: { ...emptyWeights(), scenes: { s1: 2, s2: 2, s3: 2 } },
+    });
+    expect(maxAchievableScore(parsed, { ...scoring, sceneCap: 5 })).toBe(5);
+  });
+
+  it("rejects fractional weights and thresholds", () => {
+    expectInvalid(
+      RecommendationRuleSchema,
+      { ...rule(), weights: { ...emptyWeights(), personas: { finance: 2.5 } } },
+      "weights.personas.finance",
+      "whole",
+    );
+    expectInvalid(RecommendationRuleSchema, { ...rule(), minimumScore: 2.5 }, "minimumScore", "whole");
   });
 
   it("caps scene and hotspot contributions", () => {
@@ -157,6 +177,6 @@ describe("maxAchievableScore", () => {
       },
     });
     // scenes capped at 3, hotspots capped at 8
-    expect(maxAchievableScore(parsed)).toBe(11);
+    expect(maxAchievableScore(parsed, scoring)).toBe(11);
   });
 });

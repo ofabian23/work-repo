@@ -17,6 +17,8 @@ export function RecommendationCard({
   relevance,
   nextStep,
   relatedAreas = [],
+  relevanceLabel,
+  resources = [],
   pendingValidation,
   actions,
   testId,
@@ -28,6 +30,10 @@ export function RecommendationCard({
   relevance?: string;
   nextStep?: string;
   relatedAreas?: string[];
+  /** Relevance in words, e.g. "Muy relevante" (never a number or percentage). */
+  relevanceLabel?: string;
+  /** Titles of approved resources for this recommendation. */
+  resources?: string[];
   pendingValidation: boolean;
   actions?: ReactNode;
   testId?: string;
@@ -48,7 +54,17 @@ export function RecommendationCard({
         </span>
         <div className="flex flex-1 flex-col gap-2">
           <h3 className="text-title text-ink font-bold text-balance">{title}</h3>
-          {pendingValidation && <PendingValidationBadge className="self-start" />}
+          <div className="flex flex-wrap gap-2">
+            {relevanceLabel && (
+              <span
+                data-testid="relevance-label"
+                className="bg-success-surface text-success text-label rounded-full px-3 py-1 font-semibold"
+              >
+                {relevanceLabel}
+              </span>
+            )}
+            {pendingValidation && <PendingValidationBadge className="self-start" />}
+          </div>
         </div>
       </header>
 
@@ -65,7 +81,7 @@ export function RecommendationCard({
         </div>
       </section>
 
-      {(relevance || nextStep || relatedAreas.length > 0) && (
+      {(relevance || nextStep || relatedAreas.length > 0 || resources.length > 0) && (
         <dl className="grid gap-4">
           {relevance && (
             <div>
@@ -85,6 +101,18 @@ export function RecommendationCard({
                     {area}
                   </span>
                 ))}
+              </dd>
+            </div>
+          )}
+          {resources.length > 0 && (
+            <div>
+              <dt className="text-label text-ink-muted font-semibold">{t("recommendations.resources")}</dt>
+              <dd className="text-body text-ink">
+                <ul className="list-disc pl-6" data-testid="recommendation-resources">
+                  {resources.map((r) => (
+                    <li key={r}>{r}</li>
+                  ))}
+                </ul>
               </dd>
             </div>
           )}

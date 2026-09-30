@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { vi } from "vitest";
 import { AppShell } from "@/components/shell/app-shell";
 import { visibleContent, type PublicContentBundle } from "@/domain/content/visibility";
@@ -29,11 +30,13 @@ export function renderKiosk({
   idle = { warningAfterMs: 60_000, countdownMs: 15_000 },
   attractTimings = { rotationMs: 1_000, revertMs: 5_000 },
   tailoringMs = 1_800,
+  conversionPrompt,
 }: {
   content?: PublicContentBundle;
   idle?: { warningAfterMs: number; countdownMs: number };
   attractTimings?: { rotationMs: number; revertMs: number };
   tailoringMs?: number;
+  conversionPrompt?: ComponentProps<typeof KioskExperience>["conversionPrompt"];
 } = {}) {
   const onHardReset = vi.fn();
   const utils = render(
@@ -48,6 +51,7 @@ export function renderKiosk({
             idle={idle}
             attractTimings={attractTimings}
             tailoringMs={tailoringMs}
+            conversionPrompt={conversionPrompt}
           />
         </AppShell>
         <SessionProbe />

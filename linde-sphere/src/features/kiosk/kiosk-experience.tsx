@@ -4,13 +4,17 @@ import { useCallback, useEffect, useMemo } from "react";
 import { InactivityWarning } from "@/components/overlay/inactivity-warning";
 import type { PublicContentBundle } from "@/domain/content/visibility";
 import { recommend } from "@/domain/recommendations/engine";
-import { recommendationThreshold } from "@/domain/recommendations/threshold";
+import { RecommendationReadiness } from "@/domain/recommendations/recommendation-readiness";
+import { primaryItems } from "@/domain/recommendations/recommendation-result";
 import type { NextStep } from "@/domain/session/session-event";
 import { EMPTY_SIGNALS, type EntryPath } from "@/domain/session/visitor-session";
 import { appConfig } from "@/lib/config/app-config";
 import { useHydrated } from "@/lib/use-hydrated";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
 import { ExplorerScreen } from "../explorer/explorer-screen";
+import { ConversionPrompt } from "./conversion/conversion-prompt";
+import type { ConversionPromptConfig } from "./conversion/conversion-policy";
+import { useConversionPrompt } from "./conversion/use-conversion-prompt";
 import { labelsFor, relevantSceneIds, suggestedChallengeIds } from "./journey/journey-view";
 import { NextStepsScreen } from "./journey/next-steps-screen";
 import { PersonaScreen } from "./journey/persona-screen";
@@ -34,11 +38,13 @@ export function KioskExperience({
   idle = appConfig.kiosk.idle,
   attractTimings,
   tailoringMs = appConfig.kiosk.tailoringTransitionMs,
+  conversionPrompt = appConfig.kiosk.conversionPrompt,
 }: {
   content: PublicContentBundle;
   idle?: IdleConfig;
   attractTimings?: { rotationMs?: number; revertMs?: number };
   tailoringMs?: number;
+  conversionPrompt?: ConversionPromptConfig & { screens: readonly string[] };
 }) {
   const { state, dispatch, startSession, choosePath, goToWelcome, reset } = useKioskSession();
   const ready = useHydrated();
@@ -78,7 +84,18 @@ export function KioskExperience({
     chooseNextStep(step);
     if (step === "explore-areas") enterExplorer();
   };
-  const threshold = recommendationThreshold(signals);
+  const readiness = RecommendationReadiness.assess(signals, content);
+  const showRecommendations = () => {
+    commitRecommendations();
+    dispatch({ type: "GO_TO", screen: "recommendations" });
+  };
+  const prompt = useConversionPrompt({
+    ready: readiness.ready,
+    screenAllowed: session !== null && conversionPrompt.screens.includes(state.screen),
+    sceneKey: session?.currentSceneId ?? null,
+    config: conversionPrompt,
+    onShown: () => dispatch({ type: "CONVERSION_PROMPT", outcome: "shown" }),
+  });
   // Stable identity: the explorer's engagement timer depends on it.
   const engageHotspot = useCallback(
     (hotspotId: string) => dispatch({ type: "ENGAGE_HOTSPOT", hotspotId }),
@@ -160,7 +177,7 @@ export function KioskExperience({
         <NextStepsScreen
           personaLabel={persona?.label ?? null}
           challengeLabels={labelsFor(signals.challengeIds, content.challenges)}
-          recommendationCount={preliminary?.items.length ?? 0}
+          recommendationCount={primaryItems(preliminary).length}
           areaLabels={labelsFor(areaIds, content.scenes)}
           maxChallenges={maxChallenges}
           onChoose={chooseStep}
@@ -175,6 +192,10 @@ export function KioskExperience({
           content={content}
           onRefine={() => chooseStep("refine-challenges")}
           onExplore={() => chooseStep("explore-areas")}
+          onViewScene={(sceneId) => {
+            dispatch({ type: "VISIT_SCENE", sceneId });
+            dispatch({ type: "GO_TO", screen: "explore" });
+          }}
           onBack={() => dispatch({ type: "GO_TO", screen: recommendationsBack() })}
         />
       );
@@ -207,17 +228,15 @@ export function KioskExperience({
           visitedHotspotIds={signals.openedHotspotIds}
           interestIds={signals.explicitInterestIds}
           highlightedSceneIds={session?.recommendations || persona ? areaIds : []}
-          threshold={threshold}
+          recommendationsAvailable={readiness.ready || session?.recommendations != null}
+          hotspotsRemaining={readiness.hotspotsRemaining}
           reducedMotion={reducedMotion}
           engagementMs={appConfig.kiosk.hotspotEngagementMs}
           onNavigate={(sceneId) => dispatch({ type: "VISIT_SCENE", sceneId })}
           onOpenHotspot={(hotspotId) => dispatch({ type: "OPEN_HOTSPOT", hotspotId })}
           onEngageHotspot={engageHotspot}
           onToggleInterest={(solutionId) => dispatch({ type: "TOGGLE_INTEREST", solutionId })}
-          onViewRecommendations={() => {
-            commitRecommendations();
-            dispatch({ type: "GO_TO", screen: "recommendations" });
-          }}
+          onViewRecommendations={showRecommendations}
           onExit={() => (persona ? dispatch({ type: "GO_TO", screen: "next-steps" }) : goToWelcome())}
         />
       );
@@ -234,6 +253,18 @@ export function KioskExperience({
       key={state.resetCount}
     >
       {screen}
+      <ConversionPrompt
+        visible={prompt.visible}
+        onAccept={() => {
+          prompt.hide();
+          dispatch({ type: "CONVERSION_PROMPT", outcome: "accepted" });
+          showRecommendations();
+        }}
+        onDismiss={() => {
+          prompt.hide();
+          dispatch({ type: "CONVERSION_PROMPT", outcome: "dismissed" });
+        }}
+      />
       <InactivityWarning
         open={idleTimer.warningOpen}
         secondsRemaining={idleTimer.secondsRemaining}

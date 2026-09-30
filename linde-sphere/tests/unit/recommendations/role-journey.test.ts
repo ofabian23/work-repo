@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { visibleContent } from "@/domain/content";
 import { recommend } from "@/domain/recommendations/engine";
-import { RecommendationResultSchema } from "@/domain/recommendations/recommendation-result";
+import { RecommendationResultSchema, primaryItems } from "@/domain/recommendations/recommendation-result";
 import { EMPTY_SIGNALS } from "@/domain/session/visitor-session";
 import { loadSeedBundle } from "../../helpers/schema";
 
@@ -58,7 +58,7 @@ describe.each(JOURNEYS)("role journey: $personaId", (j) => {
   it("produces preliminary recommendations from the role alone, explained by the role", () => {
     const r = RecommendationResultSchema.parse(recommend({ ...EMPTY_SIGNALS, personaId: j.personaId }, demo));
     expect(r.items[0]!.solutionId).toBe(j.personaOnlyTop);
-    for (const item of r.items) {
+    for (const item of primaryItems(r)) {
       expect(item.isFallback).toBe(false);
       expect(item.matchedSignals).toContainEqual(
         expect.objectContaining({ signalType: "personas", signalId: j.personaId, kind: "direct" }),
@@ -72,7 +72,7 @@ describe.each(JOURNEYS)("role journey: $personaId", (j) => {
     const r = RecommendationResultSchema.parse(
       recommend({ ...EMPTY_SIGNALS, personaId: j.personaId, challengeIds: [j.challengeId] }, demo),
     );
-    expect(r.items.map((i) => i.solutionId)).toEqual(j.withChallenge);
+    expect(primaryItems(r).map((i) => i.solutionId)).toEqual(j.withChallenge);
     const top = r.items[0]!;
     expect(top.whyThisAppeared.es).toContain(`«${j.challengeLabel}»`);
     expect(top.whyThisAppeared.es).toContain(`«${j.label}»`);

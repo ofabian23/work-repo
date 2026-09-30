@@ -107,7 +107,8 @@ linde-sphere/
 │  ├─ manifest.json · personas.json · challenges.json · facility-types.json               ✅
 │  ├─ scenes/<scene-id>.json      # 8 scenes with layers + hotspots                        ✅
 │  ├─ solutions.json · digital-assets.json · recommendation-rules.json · consent.json     ✅
-│  └─ settings.json · report.json · sales-contacts.json   (Phases 3–8)
+│  ├─ engine-settings.json        # engine weights/caps, result sizes, relevance, readiness ✅
+│  └─ report.json · sales-contacts.json   (Phases 7–8)
 ├─ config/lead-scoring.json       # C3, server-only (Phase 3)
 ├─ prisma/ · prisma.config.ts     (Phase 7)
 ├─ public/assets/
@@ -140,7 +141,7 @@ linde-sphere/
 │  ├─ types/{i18n,health}.ts                                                                ✅
 │  ├─ styles/{tokens,globals}.css                                                          ✅
 │  ├─ domain/                     # content/, session/, leads/, report/, email/                 ✅
-│  │  ├─ recommendations/         # engine.ts, explanations.ts, engine-config.ts, result schema ✅
+│  │  ├─ recommendations/         # engine, explanations, recommendation-readiness, result schema ✅
 │  │  └─ review/content-review.ts # sales-review CSV rows + generated Markdown                 ✅
 │  ├─ server/
 │  │  ├─ env.ts · health.ts · database-probe.ts                                             ✅
@@ -388,26 +389,26 @@ only. They make no offering claim, and the project owner approves them.
 | `Hotspot` (in scene)                               | `id` (globally unique), `type: navigation \| solution \| information`, `x`/`y` 0–100 (center, % of art box), optional `width`/`height` (% hit area, must stay inside), `label`, `accessibleLabel`, `visualImportance: primary \| secondary \| tertiary`, `recommendationSignals {challengeIds[], solutionIds[]}`, `validationStatus`, plus by type: `targetSceneId` · `targetSolutionIds[]` · `panel {title, body, bullets[]}` |
 | `Solution` (`solutions.json`)                      | `id`, `slug`, `title`, `summary`, `nextStep`, `relatedChallengeIds[]`, `relatedSceneIds[]`, `digitalAssetIds[]`, `isFallback`, **governance**                                                                                                                                                                                                                                                                                  |
 | `DigitalAsset` (`digital-assets.json`)             | `id`, `title`, `description`, `type: brochure \| video \| web-page \| guide \| checklist`, `access: {kind:"url", url(https)} \| {kind:"local-file", path}`, `languages[]`, **governance**                                                                                                                                                                                                                                      |
-| `RecommendationRule` (`recommendation-rules.json`) | see §7.3                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `RecommendationRule` (`recommendation-rules.json`) | see §7.10                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `ConsentTextSet` (`consent.json`)                  | `version`, `reportDelivery`, `salesFollowUp`, `privacyNotice` (localized), `validationStatus`, `internalNotes`                                                                                                                                                                                                                                                                                                                 |
+| `EngineSettings` (`engine-settings.json`)          | `scoring` (caps, bonus, affinity, implied divisor), `results` (primary/secondary), `relevance` (high/medium), `readiness` thresholds; whole numbers only; see §7.4                                                                                                                                                                                                                                                             |
 | `ContentManifest` (`manifest.json`)                | `contentVersion` (semver), `defaultLanguage`, `updatedAt`                                                                                                                                                                                                                                                                                                                                                                      |
 
-Planned content (later phases): `settings.json` (engine tuning), `report.json`
-(CTA, disclaimer), `sales-contacts.json`. Branding and idle timings live in `src/lib/config/` (ADR-036).
+Planned content (later phases): `report.json` (CTA, disclaimer), `sales-contacts.json`. Branding and idle timings live in `src/lib/config/` (ADR-036).
 
 ### 6.3 Runtime schemas (not content)
 
-| Schema                 | File                                              | Purpose                                                                                                                                        |
-| ---------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SessionSignals`       | `domain/session/visitor-session.ts`               | Anonymous C1 signals; unique ids; ≤ 3 challenges; engaged ⊆ opened hotspots                                                                    |
-| `VisitorSession`       | same                                              | UUID, timestamps, language, entry path, content mode/version, outcome, signals                                                                 |
-| `SessionEvent`         | `domain/session/session-event.ts`                 | `{seq, type, targetId}` only: fixed event types, kebab-case ids with a letter (no free text, digits-only strings or timestamps); ≤ 200/session |
-| `RecommendationResult` | `domain/recommendations/recommendation-result.ts` | 1–5 ranked items with matched signals, bilingual explanation, next step, `pendingValidation`; never pending in production; fallback only alone |
-| `LeadSubmission`       | `domain/leads/lead-submission.ts`                 | Kiosk → server payload: minimum contact fields, separate consents (report consent required), consent version, signals (not recommendations)    |
-| `LeadCreatedResponse`  | same                                              | `{ leadId, emailQueued }` only — no score                                                                                                      |
-| `ConsentRecord`        | `domain/leads/consent-record.ts`                  | One record per consent type with exact text shown, version, language, timestamp                                                                |
-| `ReportPayload`        | `domain/report/report-payload.ts`                 | Resolved report data in one language; strict (no score); https-only resources; notice required if pending                                      |
-| `EmailDeliveryEvent`   | `domain/email/email-delivery-event.ts`            | Outbox lifecycle event; no recipient/body; sanitized error text (no email addresses)                                                           |
+| Schema                 | File                                              | Purpose                                                                                                                                                                                                                                                                 |
+| ---------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SessionSignals`       | `domain/session/visitor-session.ts`               | Anonymous C1 signals; unique ids; ≤ 3 challenges; engaged ⊆ opened hotspots                                                                                                                                                                                             |
+| `VisitorSession`       | same                                              | UUID, timestamps, language, entry path, content mode/version, outcome, signals                                                                                                                                                                                          |
+| `SessionEvent`         | `domain/session/session-event.ts`                 | `{seq, type, targetId}` only: fixed event types, kebab-case ids with a letter (no free text, digits-only strings or timestamps); ≤ 200/session                                                                                                                          |
+| `RecommendationResult` | `domain/recommendations/recommendation-result.ts` | 1–6 ranked items (≤ 3 `primary`, then ≤ 3 `secondary`), whole-number score, `relevanceLevel`, matched signals, bilingual explanation, `sceneId`, approved assets, next step, `validationStatus` + `pendingValidation`; never pending in production; fallback only alone |
+| `LeadSubmission`       | `domain/leads/lead-submission.ts`                 | Kiosk → server payload: minimum contact fields, separate consents (report consent required), consent version, signals (not recommendations)                                                                                                                             |
+| `LeadCreatedResponse`  | same                                              | `{ leadId, emailQueued }` only — no score                                                                                                                                                                                                                               |
+| `ConsentRecord`        | `domain/leads/consent-record.ts`                  | One record per consent type with exact text shown, version, language, timestamp                                                                                                                                                                                         |
+| `ReportPayload`        | `domain/report/report-payload.ts`                 | Resolved report data in one language; strict (no score); https-only resources; notice required if pending                                                                                                                                                               |
+| `EmailDeliveryEvent`   | `domain/email/email-delivery-event.ts`            | Outbox lifecycle event; no recipient/body; sanitized error text (no email addresses)                                                                                                                                                                                    |
 
 ### 6.4 Validation pipeline
 
@@ -447,48 +448,189 @@ ignored when `NODE_ENV=production`.
 
 ## 7. Recommendation engine
 
-Implemented in `src/domain/recommendations/` (`engine.ts`, `explanations.ts`, `engine-config.ts`), ADR-041.
+Implemented in `src/domain/recommendations/`: `engine.ts`, `explanations.ts` and
+`recommendation-readiness.ts`. The tuning lives in `content/engine-settings.json` (ADR-041, ADR-050).
 
-### 7.1 Properties
+### 7.1 In one paragraph
 
-- **Pure and isomorphic:** `recommend(signals, publicContent, { maxResults }) → RecommendationResult | null`.
-  No I/O, no clock, no randomness. The kiosk uses it for live display; the server recomputes it (ADR-025).
-- **Deterministic:** stable ordering with explicit tie-breakers, independent of the order in which signals
-  were collected. Sorting uses locale-independent comparisons.
-- **Explainable:** every item lists its `matchedSignals` (`signalType`, `signalId`, `kind`, `weight`) and a
-  plain-language **"Why this appeared"** sentence in ES and EN.
-- **Versioned:** `ENGINE_VERSION` (`1.0.0`) and `contentVersion` travel with every result.
-- Returns `null` only when nothing, not even the fallback, is visible (e.g., production mode before
-  validation).
+Every solution category has one **rule** in `content/recommendation-rules.json`. A rule lists the visitor
+signals that make its category relevant, each with a **whole-number weight** from 1 to 10: roles,
+challenges, organization type, scenes, hotspots and explicit interests. The engine adds up the weights of
+the signals the visitor actually has, keeps the categories that reach their minimum, and sorts them. It
+then explains each one in plain words from the same matched signals. It never guesses and never uses
+randomness or the clock: the same visitor choices always give the same recommendations, in the same order,
+with the same reasons.
 
-### 7.2 Signals
+### 7.2 Properties
 
-`SessionSignals` (schema in `domain/session/visitor-session.ts`):
+- **Pure:** `recommend(signals, publicContent, { primary?, secondary? }) → RecommendationResult | null`.
+  The kiosk shows it live; the server recomputes the same result when a lead is submitted (ADR-025).
+- **Whole numbers only:** weights, caps, bonuses and thresholds are integers, validated by the content schema,
+  so scores are exact and never depend on rounding.
+- **Deterministic:** the result does not depend on the order in which signals were collected, and ties
+  are broken by fixed rules (§7.5).
+- **Explainable:** each item lists its `matchedSignals` (type, id, kind and points) and carries a
+  **"Por qué aparece / Why this appeared"** sentence in Spanish and English.
+- **Honest about content:** only content visible in the current mode can be recommended (§7.6), and anything
+  not validated carries the pending-validation state.
+- **Versioned:** `ENGINE_VERSION` (`2.0.0`) and `contentVersion` travel with every result.
+- The **lead score** (Phase 7) is a separate, server-only calculation. It is never part of this result or
+  the visitor UI. The recommendation `score` itself is never displayed either; visitors see relevance in
+  words.
 
-```ts
-type SessionSignals = {
-  personaId: string | null;
-  challengeIds: string[]; // unique, ordered by selection, max 3 (MAX_SELECTED_CHALLENGES)
-  facilityTypeId: string | null;
-  visitedSceneIds: string[]; // unique, in order
-  openedHotspotIds: string[]; // unique
-  engagedHotspotIds: string[]; // subset of opened; panel open ≥ threshold (bucketed, not raw ms)
-  explicitInterestIds: string[]; // solution ids added via "Add to my interests"
-};
-```
+### 7.3 Inputs
 
-Unknown or hidden ids are ignored. Raw timestamps are never used; dwell is reduced to "engaged" (ADR-023).
+`SessionSignals` (`domain/session/visitor-session.ts`), all anonymous:
 
-### 7.3 Rules (`content/recommendation-rules.json`)
+| Input                 | Example                       | Notes                                                             |
+| --------------------- | ----------------------------- | ----------------------------------------------------------------- |
+| `personaId`           | `procurement-supply`          | One primary role, or the "several areas" persona (never weighted) |
+| `challengeIds`        | `["cylinder-inventory"]`      | Up to 3, in the order chosen                                      |
+| `facilityTypeId`      | `acute-hospital`              | Optional                                                          |
+| `visitedSceneIds`     | `["campus", "gas-plant"]`     | Each scene once                                                   |
+| `openedHotspotIds`    | `["gas-plant-bulk-tank"]`     | Each hotspot once, however often it was tapped                    |
+| `engagedHotspotIds`   | `["gas-plant-bulk-tank"]`     | Panel kept open ≥ 6 s; only counts if the hotspot was opened      |
+| `explicitInterestIds` | `["bulk-centralized-supply"]` | "Añadir a mis intereses"                                          |
 
-Rules are data, one per non-fallback solution (ADR-028):
+### 7.4 Settings (`content/engine-settings.json`)
+
+| Setting                           | Seed | Meaning                                                                                     |
+| --------------------------------- | ---- | ------------------------------------------------------------------------------------------- |
+| `scoring.sceneCap`                | 3    | Most points visited scenes can add to one category                                          |
+| `scoring.hotspotCap`              | 8    | Most points opened hotspots (with their engagement bonus) can add to one category           |
+| `scoring.engagedHotspotBonus`     | 1    | Extra point for a contributing hotspot whose panel stayed open                              |
+| `scoring.hotspotAffinityWeight`   | 2    | Points when an opened hotspot lists the category but the rule does not weight it directly   |
+| `scoring.impliedChallengeDivisor` | 2    | A challenge suggested by what the visitor opened counts as weight ÷ 2, rounded down (min 1) |
+| `scoring.impliedChallengeCap`     | 3    | Most points implied challenges can add                                                      |
+| `results.primary` / `.secondary`  | 3/3  | Top recommendations, then "También podría interesarle"                                      |
+| `relevance.high` / `.medium`      | 9/5  | Score thresholds for "Muy relevante" / "Relevante" (below: "Posiblemente relevante")        |
+| `readiness.*`                     | §7.8 | When recommendations are ready                                                              |
+
+The caps are what **stop repeated clicks and long browsing from inflating a recommendation**. A hotspot
+counts once no matter how often it is opened, and all hotspots together can add at most 8 points to a
+category. Explicit choices (role, challenges, interests) therefore always stay decisive.
+
+### 7.5 The algorithm, step by step
+
+1. **Clean the input.** Unknown or hidden ids and duplicates are dropped. Engagement only counts for
+   hotspots that were opened.
+2. **Check exclusions first.** A rule can list signals that rule its category out. For example,
+   `homecare-organization` excludes bulk supply and infrastructure assessment. An excluded category is
+   removed before any scoring, so it can never take a place in the ranking.
+3. **Add up the points.** For each remaining rule, add the weight of:
+   - the role;
+   - each chosen challenge;
+   - the organization type;
+   - visited scenes, up to the scene cap;
+   - opened hotspots, up to the hotspot cap. A hotspot adds its direct weight, or the affinity points when
+     it only lists the category, plus the engagement bonus when its panel stayed open;
+   - challenges implied by opened hotspots that the visitor did not choose, at half weight rounded down,
+     up to the implied cap;
+   - explicit interests.
+4. **Keep what qualifies.** A category needs at least the rule's `minimumScore` (seed: 3, so one primary
+   role, challenge or hotspot is enough, but a secondary signal alone is not).
+5. **Sort, always the same way:**
+   1. Higher score first.
+   2. On a tie, the category driven more by **explicit choices** (chosen challenges and interests) first.
+   3. Then the rule's `priority` (1–100).
+   4. Then the solution id, alphabetically, so there is never an unresolved tie.
+6. **Split** into up to 3 **primary** and up to 3 **secondary** recommendations.
+7. **Describe each one:**
+   - **Relevance label:** "Muy relevante" (score ≥ 9), "Relevante" (≥ 5) or "Posiblemente relevante". It is
+     never a percentage.
+   - **Why this appeared:** the matched signals are grouped (interest, challenge, role, hotspot, scene,
+     organization, related to what was explored). The strongest groups are named, at most 3 groups with up
+     to 2 quoted labels each. For example: _"Aparece porque: eligió «Manejar cilindros e inventario»;
+     seleccionó «Compras y cadena de suministro» como su área."_ Challenges implied by exploration are
+     phrased as _"lo que exploró se relaciona con…"_, never as the visitor's choice.
+   - **When it may be relevant:** the rule's sentence. Placeholders such as `{challenges}` are filled with
+     the visitor's labels.
+   - **Relevant scene:** where the visitor met it (the strongest opened hotspot's scene, then the
+     strongest visited scene), otherwise the category's main area. It powers "Verlo en el hospital".
+   - **Approved assets:** only `validated` digital assets. Placeholder or unreviewed resources are never
+     offered.
+   - **Suggested next action:** the solution's next step.
+   - **Validation status:** for internal use. The UI shows only the pending-validation badge.
+8. **Nothing qualifies?** The engine returns the fallback, "talk with a specialist", with an honest
+   explanation: no specific match was found yet.
+
+### 7.6 Demo versus production
+
+| Status        | Demo mode                              | Production mode |
+| ------------- | -------------------------------------- | --------------- |
+| `validated`   | Recommended                            | Recommended     |
+| `assumed`     | Recommended, with "pending validation" | Never           |
+| `placeholder` | Never (only in a local preview)        | Never           |
+| `unavailable` | Never                                  | Never           |
+
+The kiosk receives content already filtered by `visibleContent(bundle, mode)`. The engine checks each
+solution's status again, so content that slipped through unfiltered is still not recommended. In
+production with nothing validated, `recommend` returns `null` and the UI shows its empty state.
+
+### 7.7 Worked example
+
+A procurement visitor who chose "Manejar cilindros e inventario":
+
+| Rank | Category                          | Points                   | Relevance              | Relevant scene |
+| ---- | --------------------------------- | ------------------------ | ---------------------- | -------------- |
+| 1    | Cylinder and inventory management | role 4 + challenge 5 = 9 | Muy relevante          | Patient care   |
+| 2    | Bulk or centralized supply        | role 3 + challenge 2 = 5 | Relevante              | Gas plant      |
+| 3    | Medical gas supply planning       | role 4 = 4               | Posiblemente relevante | Gas plant      |
+
+No other category reaches its minimum of 3, so there are no secondary recommendations here.
+
+The first card reads: _"Aparece porque: eligió «Manejar cilindros e inventario»; seleccionó «Compras y
+cadena de suministro» como su área."_ `CONTENT_VALIDATION.md` §11.10 lists what each role, challenge and
+hotspot alone produces (regenerated by `npm run content:export`).
+
+### 7.8 Readiness (`RecommendationReadiness`)
+
+Recommendations are **ready** as soon as any one of these is true (`engine-settings.json` → `readiness`).
+Visitors never have to complete every route:
+
+| Condition                                             | Seed |
+| ----------------------------------------------------- | ---- |
+| A role plus at least N challenges                     | 1    |
+| At least N challenges                                 | 2    |
+| Meaningful interaction in at least N different scenes | 2    |
+| At least N different meaningful hotspots              | 3    |
+
+A **meaningful interaction** is opening an information or solution hotspot, which means the visitor looked
+at content. Navigation hotspots only move between scenes, and repeated opens count once.
+`RecommendationReadiness.assess(signals, content)` returns the conditions met, the progress and the
+hotspots still needed (for the explorer's progress line).
+
+Readiness makes "Ver mis recomendaciones" appear in the explorer and allows the conversion prompt. The role
+journey's own "Ver recomendaciones preliminares" option stays available (the visitor asked for it), and a
+visitor who has already seen recommendations can always return to them.
+
+### 7.9 Conversion prompt
+
+Once recommendations are ready, a non-modal prompt says _"Encontramos oportunidades relevantes para sus
+prioridades"_, with "Ver recomendaciones" and "Seguir explorando". `conversion-policy.ts` (pure) decides
+when it may appear; `use-conversion-prompt.ts` gathers the inputs and schedules the next check. It is
+never shown:
+
+- while any dialog is open (hotspot panel, privacy, accessibility, reset, inactivity);
+- while a form field has focus (data entry);
+- within 2.5 s of a scene change, or within 1.5 s of a dialog closing or data entry ending;
+- more than once per 2 minutes;
+- outside the explorer (and the future path B), so never on forms, results or the attract loop.
+
+It never takes focus (screen readers hear it through a polite live region) and hides itself after 15 s.
+Showing, accepting and dismissing it are recorded as anonymous session events. Timings are in
+`app-config.ts` → `kiosk.conversionPrompt`.
+
+### 7.10 Rule format (`content/recommendation-rules.json`)
+
+One rule per non-fallback solution (ADR-028). Weights are whole numbers from 1 to 10, and keys must be
+existing ids:
 
 ```jsonc
 {
   "id": "rule-backup-emergency-supply",
   "solutionId": "backup-emergency-supply",
   "weights": {
-    // 0 < weight ≤ 10, keys must reference existing ids
     "personas": { "government-system": 4, "executive": 3 },
     "challenges": { "emergency-preparedness": 5, "supply-continuity": 3 },
     "facilityTypes": { "public-health-system": 2 },
@@ -496,10 +638,10 @@ Rules are data, one per non-fallback solution (ADR-028):
     "hotspots": { "gas-plant-backup": 4, "emergency-surge-readiness": 3 },
     "explicitInterests": { "backup-emergency-supply": 6 }, // keyed by solution id
   },
-  "minimumScore": 3, // must be reachable (checked, cap-aware)
+  "minimumScore": 3, // whole number; must be reachable with the configured caps (checked)
   "exclusions": [], // e.g. { "signalType": "facilityTypes", "ids": ["homecare-organization"], "reason": "…" }
   "explanationTemplate": {
-    // "relevance" sentence shown with the recommendation; placeholders optional
+    // "When it may be relevant" sentence; placeholders optional
     "es": "Relevante para organizaciones que revisan o actualizan su plan de contingencia.",
     "en": "Relevant for organizations reviewing or updating their contingency plans.",
   },
@@ -510,56 +652,20 @@ Rules are data, one per non-fallback solution (ADR-028):
 }
 ```
 
-Weighting convention in the seed rules: a primary persona 3–5, a primary challenge 4–5, secondary signals
-1–3, a primary hotspot 3–4, explicit interest 6, and `minimumScore` 3. So a single primary persona,
-challenge or hotspot is enough (persona-only, challenge-only and exploration-only journeys all work), but
-a secondary signal alone is not.
+Seed weighting convention:
+
+| Signal            | Weight |
+| ----------------- | ------ |
+| Primary role      | 3–5    |
+| Primary challenge | 4–5    |
+| Secondary signal  | 1–3    |
+| Primary hotspot   | 3–4    |
+| Explicit interest | 6      |
+| `minimumScore`    | 3      |
 
 Allowed placeholders: `{persona}`, `{challenges}`, `{facilityType}`, `{scenes}`, `{hotspots}`,
-`{interests}`, `{solution}`. ES and EN must use the same set. They render the visitor's matched labels
-(joined with "y"/"and"). If any placeholder has no match, `fallbackExplanation` is used.
-
-### 7.4 Scoring algorithm
-
-Constants in `engine-config.ts`:
-
-| Constant                    | Value | Meaning                                                                           |
-| --------------------------- | ----- | --------------------------------------------------------------------------------- |
-| `DEFAULT_MAX_RESULTS`       | 3     | Items returned (schema max 5)                                                     |
-| `SCENE_CAP`                 | 3     | Max total contribution of visited scenes per solution                             |
-| `HOTSPOT_CAP`               | 8     | Max total contribution of hotspots (direct + affinity + engaged)                  |
-| `HOTSPOT_SOLUTION_AFFINITY` | 2     | An opened hotspot listing the solution in its signals, when not weighted directly |
-| `ENGAGED_HOTSPOT_BONUS`     | 1     | Per contributing hotspot whose panel stayed open past the threshold               |
-| `IMPLIED_CHALLENGE_FACTOR`  | 0.5   | Weight fraction for challenges implied by opened hotspots (not selected)          |
-| `IMPLIED_CHALLENGE_CAP`     | 3     | Max total implied-challenge contribution                                          |
-
-1. Use `visibleContent(bundle, mode)`, so hidden solutions, rules and references never score.
-2. Normalize signals: drop unknown or hidden ids and duplicates.
-3. Skip a rule if any exclusion matches (persona, selected challenges, facility, visited scenes, opened
-   hotspots, explicit interests).
-4. Score: persona + selected challenges + facility type + capped scenes + capped hotspots (direct weight,
-   otherwise affinity, plus engaged bonus) + capped implied challenges + explicit interests. Each
-   contribution is a `MatchedSignal` with `kind` = `direct` | `implied-challenge` | `hotspot-affinity` |
-   `engaged-bonus`.
-5. Discard rules below `minimumScore`.
-6. Sort: score ↓ → explicit score (direct challenges + interests) ↓ → rule `priority` ↓ → `solutionId` ↑.
-7. Take `maxResults`.
-8. **Why this appeared:** group matches (interest, challenge, persona, hotspot, scene, facility, implied),
-   rank the groups by weight and render the top 3 with up to 2 quoted labels each. For example:
-   _"Aparece porque eligió «Prepararse para emergencias»."_ or _"This appeared because: you opened “Storage
-   tank”; you explored “Medical-gas plant”; what you explored relates to “Improve supply continuity”."_
-9. **Relevance:** render the rule's `explanationTemplate`.
-10. If nothing qualifies, return the fallback solution with a neutral explanation ("a specialist can help
-    you explore options").
-
-Numeric scores are **not displayed** to visitors. `CONTENT_VALIDATION.md` §11.10 lists what each persona,
-challenge and hotspot alone would produce, regenerated by `npm run content:export`.
-
-### 7.5 Minimum information and prompt
-
-- `hasMinimumInfo = personaId || challengeIds.length ≥ 1 || openedHotspotIds.length ≥ 3 || explicitInterestIds.length ≥ 1` (`RECOMMENDATION_THRESHOLD`, `domain/recommendations/threshold.ts`, ADR-049)
-- Contextual prompt: shown once when `hasMinimumInfo` and (`visitedSceneIds.length ≥ 1` or on arrival at
-  preliminary recommendations), dismissible.
+`{interests}`, `{solution}`. Spanish and English must use the same set. If any placeholder has no match,
+`fallbackExplanation` is used.
 
 ---
 
@@ -840,9 +946,9 @@ Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebG
   - The explorer reopens on the last scene visited in the session.
 - **Relevant areas:** after the role journey, navigation hotspots that lead to the recommendations' areas get
   an accent badge, an always-visible label and "Relevante para usted" in their accessible name.
-- **Recommendation threshold (`domain/recommendations/threshold.ts`):** "Ver mis recomendaciones" appears
-  once any condition in `RECOMMENDATION_THRESHOLD` is met: a role, ≥ 1 challenge, ≥ 3 opened hotspots or
-  ≥ 1 explicit interest. Before that, a live progress line counts the hotspots still needed.
+- **Readiness (§7.8):** "Ver mis recomendaciones" appears once `RecommendationReadiness` says recommendations
+  are ready, or when the visitor has already seen them. Before that, a live progress line counts the
+  meaningful hotspots still needed.
 - **Calibration (`/dev/scenes`):** a developer tool (English only). Tapping the art shows normalized x/y (to
   0.1 %) over a 10 % grid with every authored hotspot center, and "Copy coordinates" copies `"x": …, "y": …`.
   Over plain HTTP, where the Clipboard API is unavailable, it falls back to select-and-copy.

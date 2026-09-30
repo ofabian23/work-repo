@@ -1,34 +1,37 @@
+import type { EngineSettings } from "../content/engine-settings";
 import type { LocalizedText } from "../content/primitives";
 import { extractPlaceholders } from "../content/primitives";
 import type { RecommendationRule, SignalType } from "../content/recommendation-rule";
 import type { Hotspot } from "../content/scene";
-import type { PublicContentBundle, PublicRecommendationRule, PublicSolution } from "../content/visibility";
+import {
+  isVisibleStatus,
+  type PublicContentBundle,
+  type PublicRecommendationRule,
+  type PublicSolution,
+} from "../content/visibility";
 import type { SessionSignals } from "../session/visitor-session";
-import {
-  DEFAULT_MAX_RESULTS,
-  ENGAGED_HOTSPOT_BONUS,
-  ENGINE_VERSION,
-  HOTSPOT_CAP,
-  HOTSPOT_SOLUTION_AFFINITY,
-  IMPLIED_CHALLENGE_CAP,
-  IMPLIED_CHALLENGE_FACTOR,
-  SCENE_CAP,
-} from "./engine-config";
+import { ENGINE_VERSION } from "./engine-config";
 import { FALLBACK_WHY, buildWhyThisAppeared, type LabelIndex } from "./explanations";
-import {
-  MAX_RECOMMENDATIONS,
-  type MatchedSignal,
-  type RecommendationItem,
-  type RecommendationResult,
+import type {
+  MatchedSignal,
+  RecommendationItem,
+  RecommendationResult,
+  RelevanceLevel,
 } from "./recommendation-result";
 
 /**
- * Deterministic, explainable recommendation engine (ADR-008, ADR-041).
- * Pure function: no I/O, no clock, no randomness. The same signals and content always produce the
- * same ordered result. Used by the kiosk for live display and by the server for recomputation.
+ * Deterministic, explainable recommendation engine (ADR-008, ADR-041, ADR-050).
+ *
+ * Pure function: no I/O, no clock, no randomness, whole-number arithmetic only. The same signals and
+ * content always produce the same ordered result, so the kiosk (live display) and the server
+ * (recomputation at lead time) agree. The algorithm is described step by step in ARCHITECTURE.md §7.
  */
 
-export type RecommendOptions = { maxResults?: number };
+export type RecommendOptions = {
+  /** Override the result sizes from engine-settings.json (e.g. coverage reports use primary only). */
+  primary?: number;
+  secondary?: number;
+};
 
 type NormalizedSignals = {
   personaId: string | null;
@@ -48,28 +51,42 @@ type Candidate = {
   matches: MatchedSignal[];
 };
 
-const round = (n: number) => Math.round(n * 100) / 100;
-const sum = (matches: MatchedSignal[]) => round(matches.reduce((total, m) => total + m.weight, 0));
+type Index = LabelIndex & {
+  hotspots: Map<string, Hotspot>;
+  hotspotScene: Map<string, string>;
+  rootSceneId: string | null;
+  approvedAssetIds: Set<string>;
+};
 
-/** Keeps the strongest matches until the cap is reached (the last one may be partially counted). */
+const sum = (matches: MatchedSignal[]) => matches.reduce((total, m) => total + m.weight, 0);
+const byId = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * Keeps the strongest matches until the cap is reached; the last one may count partially. This is what
+ * stops repeated or numerous exploration signals from inflating a recommendation indefinitely.
+ */
 function applyCap(matches: MatchedSignal[], cap: number): MatchedSignal[] {
-  const sorted = [...matches].sort(
-    (a, b) => b.weight - a.weight || (a.signalId < b.signalId ? -1 : a.signalId > b.signalId ? 1 : 0),
-  );
+  const sorted = [...matches].sort((a, b) => b.weight - a.weight || byId(a.signalId, b.signalId));
   const kept: MatchedSignal[] = [];
   let remaining = cap;
   for (const m of sorted) {
     if (remaining <= 0) break;
-    const weight = round(Math.min(m.weight, remaining));
+    const weight = Math.min(m.weight, remaining);
     kept.push({ ...m, weight });
-    remaining = round(remaining - weight);
+    remaining -= weight;
   }
   return kept;
 }
 
-function buildIndex(content: PublicContentBundle): LabelIndex & { hotspots: Map<string, Hotspot> } {
+function buildIndex(content: PublicContentBundle): Index {
   const hotspots = new Map<string, Hotspot>();
-  for (const scene of content.scenes) for (const h of scene.hotspots) hotspots.set(h.id, h);
+  const hotspotScene = new Map<string, string>();
+  for (const scene of content.scenes) {
+    for (const h of scene.hotspots) {
+      hotspots.set(h.id, h);
+      hotspotScene.set(h.id, scene.id);
+    }
+  }
   return {
     personas: new Map(content.personas.map((p) => [p.id, p.label])),
     challenges: new Map(content.challenges.map((c) => [c.id, c.label])),
@@ -78,11 +95,19 @@ function buildIndex(content: PublicContentBundle): LabelIndex & { hotspots: Map<
     hotspotLabels: new Map([...hotspots].map(([id, h]) => [id, h.label])),
     solutions: new Map(content.solutions.map((s) => [s.id, s.title])),
     hotspots,
+    hotspotScene,
+    rootSceneId: content.scenes.find((s) => s.parentSceneId === null)?.id ?? null,
+    approvedAssetIds: new Set(
+      content.digitalAssets.filter((a) => a.validationStatus === "validated").map((a) => a.id),
+    ),
   };
 }
 
-/** Drops unknown or hidden ids and duplicates, preserving the visitor's order. */
-function normalize(signals: SessionSignals, idx: ReturnType<typeof buildIndex>): NormalizedSignals {
+/**
+ * Step 1: clean the input. Unknown or hidden ids and duplicates are dropped (a hotspot opened ten times
+ * counts once), the visitor's order is kept, and engagement only counts for opened hotspots.
+ */
+function normalize(signals: SessionSignals, idx: Index): NormalizedSignals {
   const keep = (ids: string[], known: Map<string, unknown>) =>
     [...new Set(ids)].filter((id) => known.has(id));
   const opened = keep(signals.openedHotspotIds, idx.hotspots);
@@ -98,6 +123,7 @@ function normalize(signals: SessionSignals, idx: ReturnType<typeof buildIndex>):
   };
 }
 
+/** Step 2: exclusions are checked before any scoring; an excluded solution never competes. */
 function isExcluded(rule: PublicRecommendationRule, s: NormalizedSignals): boolean {
   const visitor: Record<SignalType, string[]> = {
     personas: s.personaId ? [s.personaId] : [],
@@ -110,7 +136,8 @@ function isExcluded(rule: PublicRecommendationRule, s: NormalizedSignals): boole
   return rule.exclusions.some((ex) => ex.ids.some((id) => visitor[ex.signalType].includes(id)));
 }
 
-function scoreRule(rule: PublicRecommendationRule, s: NormalizedSignals): MatchedSignal[] {
+/** Step 3: add up the rule's whole-number weights for every signal the visitor has. */
+function scoreRule(rule: PublicRecommendationRule, s: NormalizedSignals, scoring: EngineSettings["scoring"]) {
   const w = rule.weights;
   const direct = (signalType: SignalType, id: string): MatchedSignal[] => {
     const weight = w[signalType][id];
@@ -124,7 +151,7 @@ function scoreRule(rule: PublicRecommendationRule, s: NormalizedSignals): Matche
   matches.push(
     ...applyCap(
       s.visitedSceneIds.flatMap((id) => direct("scenes", id)),
-      SCENE_CAP,
+      scoring.sceneCap,
     ),
   );
 
@@ -133,27 +160,28 @@ function scoreRule(rule: PublicRecommendationRule, s: NormalizedSignals): Matche
     const directWeight = w.hotspots[h.id];
     const contribution: MatchedSignal | null = directWeight
       ? { signalType: "hotspots", signalId: h.id, kind: "direct", weight: directWeight }
-      : h.recommendationSignals.solutionIds.includes(rule.solutionId)
+      : h.recommendationSignals.solutionIds.includes(rule.solutionId) && scoring.hotspotAffinityWeight > 0
         ? {
             signalType: "hotspots",
             signalId: h.id,
             kind: "hotspot-affinity",
-            weight: HOTSPOT_SOLUTION_AFFINITY,
+            weight: scoring.hotspotAffinityWeight,
           }
         : null;
     if (!contribution) continue;
     hotspotMatches.push(contribution);
-    if (s.engagedHotspotIds.has(h.id)) {
+    if (s.engagedHotspotIds.has(h.id) && scoring.engagedHotspotBonus > 0) {
       hotspotMatches.push({
         signalType: "hotspots",
         signalId: h.id,
         kind: "engaged-bonus",
-        weight: ENGAGED_HOTSPOT_BONUS,
+        weight: scoring.engagedHotspotBonus,
       });
     }
   }
-  matches.push(...applyCap(hotspotMatches, HOTSPOT_CAP));
+  matches.push(...applyCap(hotspotMatches, scoring.hotspotCap));
 
+  // Challenges suggested by what the visitor opened, when they did not choose them explicitly.
   const selected = new Set(s.challengeIds);
   const implied = [...new Set(s.openedHotspots.flatMap((h) => h.recommendationSignals.challengeIds))]
     .filter((id) => !selected.has(id) && w.challenges[id])
@@ -161,9 +189,9 @@ function scoreRule(rule: PublicRecommendationRule, s: NormalizedSignals): Matche
       signalType: "challenges",
       signalId: id,
       kind: "implied-challenge",
-      weight: round(w.challenges[id]! * IMPLIED_CHALLENGE_FACTOR),
+      weight: Math.max(1, Math.floor(w.challenges[id]! / scoring.impliedChallengeDivisor)),
     }));
-  matches.push(...applyCap(implied, IMPLIED_CHALLENGE_CAP));
+  matches.push(...applyCap(implied, scoring.impliedChallengeCap));
 
   for (const id of s.explicitInterestIds) matches.push(...direct("explicitInterests", id));
   return matches;
@@ -207,21 +235,82 @@ function renderRelevance(
   return { es: render("es"), en: render("en") };
 }
 
+/** Relevance in words, from the score and the thresholds in engine-settings.json. */
+export function relevanceLevel(score: number, settings: EngineSettings["relevance"]): RelevanceLevel {
+  if (score >= settings.high) return "high";
+  if (score >= settings.medium) return "medium";
+  return "possible";
+}
+
+/**
+ * The scene that best shows a recommendation: where the visitor met it (strongest opened hotspot, then
+ * strongest visited scene), otherwise the solution's first related area (the campus only as a last resort).
+ */
+function relevantScene(matches: MatchedSignal[], solution: PublicSolution, idx: Index): string | null {
+  const strongest = (kind: SignalType) =>
+    matches
+      .filter((m) => m.signalType === kind && m.kind !== "engaged-bonus")
+      .sort((a, b) => b.weight - a.weight || byId(a.signalId, b.signalId))[0]?.signalId;
+  const hotspot = strongest("hotspots");
+  if (hotspot && idx.hotspotScene.has(hotspot)) return idx.hotspotScene.get(hotspot)!;
+  const scene = strongest("scenes");
+  if (scene) return scene;
+  const related = solution.relatedSceneIds.filter((id) => idx.scenes.has(id));
+  return related.find((id) => id !== idx.rootSceneId) ?? related[0] ?? null;
+}
+
+function toItem(
+  solution: PublicSolution,
+  rank: number,
+  tier: RecommendationItem["tier"],
+  idx: Index,
+  settings: EngineSettings,
+  scored?: Candidate,
+): RecommendationItem {
+  const matches = scored?.matches ?? [];
+  const score = scored?.score ?? 0;
+  return {
+    solutionId: solution.id,
+    ruleId: scored?.rule.id ?? null,
+    rank,
+    tier,
+    score,
+    relevanceLevel: scored ? relevanceLevel(score, settings.relevance) : "possible",
+    matchedSignals: matches,
+    whyThisAppeared: scored ? buildWhyThisAppeared(matches, idx) : FALLBACK_WHY,
+    relevance: scored ? renderRelevance(scored.rule, matches, solution, idx) : solution.summary,
+    sceneId: relevantScene(matches, solution, idx),
+    relatedSceneIds: solution.relatedSceneIds.filter((id) => idx.scenes.has(id)),
+    digitalAssetIds: solution.digitalAssetIds.filter((id) => idx.approvedAssetIds.has(id)),
+    nextStep: solution.nextStep,
+    validationStatus: solution.validationStatus,
+    pendingValidation: solution.validationStatus !== "validated",
+    isFallback: !scored,
+  };
+}
+
 export function recommend(
   signals: SessionSignals,
   content: PublicContentBundle,
   options: RecommendOptions = {},
 ): RecommendationResult | null {
-  const maxResults = Math.min(Math.max(options.maxResults ?? DEFAULT_MAX_RESULTS, 1), MAX_RECOMMENDATIONS);
+  const settings = content.settings;
+  const primaryCount = Math.min(Math.max(options.primary ?? settings.results.primary, 1), 3);
+  const secondaryCount = Math.min(Math.max(options.secondary ?? settings.results.secondary, 0), 3);
   const idx = buildIndex(content);
   const s = normalize(signals, idx);
-  const solutions = new Map(content.solutions.map((sol) => [sol.id, sol]));
+  // Defensive: only solutions visible in this mode compete (unavailable never; assumed only in demo).
+  const solutions = new Map(
+    content.solutions
+      .filter((sol) => isVisibleStatus(sol.validationStatus, content.mode))
+      .map((sol) => [sol.id, sol]),
+  );
 
   const candidates: Candidate[] = [];
   for (const rule of content.recommendationRules) {
     const solution = solutions.get(rule.solutionId);
     if (!solution || solution.isFallback || isExcluded(rule, s)) continue;
-    const matches = scoreRule(rule, s);
+    const matches = scoreRule(rule, s, settings.scoring);
     const score = sum(matches);
     if (matches.length === 0 || score < rule.minimumScore) continue;
     const explicitScore = sum(
@@ -232,12 +321,13 @@ export function recommend(
     candidates.push({ rule, solution, score, explicitScore, matches });
   }
 
+  // Step 4: deterministic order — score, then explicit choices, then rule priority, then solution id.
   candidates.sort(
     (a, b) =>
       b.score - a.score ||
       b.explicitScore - a.explicitScore ||
       b.rule.priority - a.rule.priority ||
-      (a.solution.id < b.solution.id ? -1 : a.solution.id > b.solution.id ? 1 : 0),
+      byId(a.solution.id, b.solution.id),
   );
 
   const base = {
@@ -247,38 +337,13 @@ export function recommend(
   };
 
   if (candidates.length === 0) {
-    const fallback = content.solutions.find((sol) => sol.isFallback);
+    const fallback = [...solutions.values()].find((sol) => sol.isFallback);
     if (!fallback) return null;
-    const item: RecommendationItem = {
-      solutionId: fallback.id,
-      ruleId: null,
-      rank: 1,
-      score: 0,
-      matchedSignals: [],
-      whyThisAppeared: FALLBACK_WHY,
-      relevance: fallback.summary,
-      relatedSceneIds: fallback.relatedSceneIds,
-      digitalAssetIds: fallback.digitalAssetIds,
-      nextStep: fallback.nextStep,
-      pendingValidation: fallback.validationStatus !== "validated",
-      isFallback: true,
-    };
-    return { ...base, items: [item] };
+    return { ...base, items: [toItem(fallback, 1, "primary", idx, settings)] };
   }
 
-  const items = candidates.slice(0, maxResults).map<RecommendationItem>((c, i) => ({
-    solutionId: c.solution.id,
-    ruleId: c.rule.id,
-    rank: i + 1,
-    score: c.score,
-    matchedSignals: c.matches,
-    whyThisAppeared: buildWhyThisAppeared(c.matches, idx),
-    relevance: renderRelevance(c.rule, c.matches, c.solution, idx),
-    relatedSceneIds: c.solution.relatedSceneIds,
-    digitalAssetIds: c.solution.digitalAssetIds,
-    nextStep: c.solution.nextStep,
-    pendingValidation: c.solution.validationStatus !== "validated",
-    isFallback: false,
-  }));
+  const items = candidates
+    .slice(0, primaryCount + secondaryCount)
+    .map((c, i) => toItem(c.solution, i + 1, i < primaryCount ? "primary" : "secondary", idx, settings, c));
   return { ...base, items };
 }

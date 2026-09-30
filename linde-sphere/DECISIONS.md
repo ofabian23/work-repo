@@ -395,7 +395,7 @@ entry here — architecture is never changed silently.
 
 ## ADR-041 — Recommendation engine implemented with code-level tuning constants
 
-- **Date:** 2026-09-30 · **Status:** Accepted (amends the planned `content/settings.json`)
+- **Date:** 2026-09-30 · **Status:** Superseded by ADR-050 for the tuning constants (now in `content/engine-settings.json`)
 - **Context:** The convention content seed must prove that persona-only, challenge-only, persona + challenge,
   exploration-only and blended journeys produce relevant results. That needs the engine now (Phase 3 work).
 - **Decision:** `src/domain/recommendations/engine.ts` is a pure function over `PublicContentBundle`. Rule
@@ -587,3 +587,56 @@ entry here — architecture is never changed silently.
   - Hotspots may move slightly on phones to avoid overlap; the E2E tests bound this to 1.5 marker
     diameters.
   - Transition smoothness on the real Android kiosk is still to be measured (Phase 10).
+
+## ADR-050 — Engine v2: data-file tuning, tiered explainable output, readiness service, conversion prompt
+
+- **Date:** 2026-09-30 · **Status:** Accepted (supersedes ADR-041's code constants and ADR-049's threshold)
+- **Context:** The engine must use whole-number weights from data files, exclude content by status and mode,
+  resist repeated interactions, break ties deterministically and return tiered, explainable output.
+  "Ready" must follow explicit conditions, and a conversion prompt must never interrupt the visitor.
+- **Decision:**
+  - **Settings file:** tuning moves to `content/engine-settings.json`, validated by `EngineSettingsSchema` as
+    part of the content bundle and passed to the kiosk with the public content. It holds:
+    - scene and hotspot caps, the engagement bonus, the affinity weight, the implied-challenge divisor and
+      its cap;
+    - primary and secondary result sizes;
+    - relevance thresholds;
+    - readiness thresholds.
+
+    All values are whole numbers. Rule weights (1–10) and `minimumScore` are now integer-only in the schema.
+    Implied challenges count as ⌊weight ÷ divisor⌋, with a minimum of 1, so no fractional score can occur.
+
+  - **Engine v2 (`ENGINE_VERSION` 2.0.0):**
+    1. Normalize (dedupe and drop hidden ids).
+    2. Apply exclusions before scoring.
+    3. Skip, defensively, any solution not visible in the result's mode.
+    4. Score with caps.
+    5. Sort by score, then explicit score, then priority, then id.
+
+    The output is ≤ 3 `primary` items then ≤ 3 `secondary` items. Each item carries a `relevanceLevel`
+    (high, medium or possible: words, never a percentage), the reason, `sceneId`, validated
+    `digitalAssetIds` only, the next step and `validationStatus` for internal use. The lead score stays a
+    separate, server-only concern.
+
+  - **`RecommendationReadiness.assess()`:** ready when any of these holds: a role plus ≥ 1 challenge, ≥ 2
+    challenges, meaningful interaction in ≥ 2 distinct scenes, or ≥ 3 unique meaningful hotspots.
+    - Meaningful means an information or solution panel was opened; navigation is not meaningful.
+    - Readiness gates the explorer's "Ver mis recomendaciones" (also shown once the visitor has already seen
+      recommendations) and the prompt.
+    - The role journey's explicit "Ver recomendaciones preliminares" option stays, because the visitor asked
+      for it.
+  - **Conversion prompt:** a pure `conversionPromptDecision` plus a hook.
+    - It is blocked by any open `<dialog>` (MutationObserver), by a focused form field, for 2.5 s after a
+      scene change and 1.5 s after an interruption, and for 2 minutes after it was last shown.
+    - It is allowed only on the explorer (and future path B) screens.
+    - It never takes focus. Showing, accepting and dismissing it are recorded as anonymous events.
+    - Timings live in `app-config.ts`.
+  - **Recommendations screen:** it shows the relevance chip, a "También podría interesarle" section, approved
+    resources, and "Verlo en el hospital", which opens the explorer at the relevant scene.
+- **Consequences:**
+  - Sales or marketing can retune the engine by editing one validated data file, then running
+    `npm run content:export` to refresh the coverage tables.
+  - Persona-only visitors are no longer "ready" in the explorer until they add a challenge or explore
+    meaningfully, but they can still open preliminary recommendations from the role journey.
+  - The recommendation snapshot's shape changed (tiers and extra fields). No stored data existed yet
+    (Phase 7), so no migration is needed.

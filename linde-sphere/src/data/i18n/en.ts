@@ -100,6 +100,20 @@ export const en: Messages = {
     refine: "Refine challenges",
     explore: "Explore areas",
     empty: "No recommendations are available yet.",
+    secondaryTitle: "You may also be interested in",
+    viewScene: "See it in the hospital: {scene}",
+    resources: "Resources",
+    relevance: {
+      high: "Highly relevant",
+      medium: "Relevant",
+      possible: "Possibly relevant",
+    },
+  },
+  conversion: {
+    label: "Suggestion",
+    message: "We found opportunities relevant to your priorities.",
+    accept: "View recommendations",
+    dismiss: "Keep exploring",
   },
   refine: {
     title: "Refine by challenges",

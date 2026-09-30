@@ -8,6 +8,7 @@ import {
   type ContentIssue,
   type IssueSeverity,
 } from "../../domain/content/bundle";
+import { EngineSettingsSchema } from "../../domain/content/engine-settings";
 import { DigitalAssetSchema, SolutionSchema } from "../../domain/content/offering";
 import { RecommendationRuleSchema } from "../../domain/content/recommendation-rule";
 import { SceneSchema } from "../../domain/content/scene";
@@ -53,6 +54,7 @@ const SINGLE_FILES: { collection: Collection; file: string; schema: z.ZodType }[
     schema: RecommendationRuleSchema.array(),
   },
   { collection: "consent", file: "consent.json", schema: ConsentTextSetSchema },
+  { collection: "settings", file: "engine-settings.json", schema: EngineSettingsSchema },
 ];
 const SCENES_DIR = "scenes";
 

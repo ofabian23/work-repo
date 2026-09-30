@@ -9,7 +9,6 @@ import { SceneBreadcrumb } from "@/components/navigation/scene-breadcrumb";
 import { Sheet } from "@/components/overlay/dialog";
 import type { Hotspot, Scene } from "@/domain/content/scene";
 import type { PublicContentBundle } from "@/domain/content/visibility";
-import type { ThresholdProgress } from "@/domain/recommendations/threshold";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { NO_TRANSITION, SceneViewer, type SceneTransition } from "./scene-viewer";
 import { transitionBetween } from "./scene-navigation";
@@ -17,7 +16,7 @@ import { transitionBetween } from "./scene-navigation";
 /**
  * Hospital explorer (path C, and "Explore relevant areas" from the role journey). Breadcrumbs and "Volver"
  * move up the scene tree; navigation hotspots move between scenes; information and solution hotspots open
- * a bottom sheet. "Ver mis recomendaciones" appears once the recommendation threshold is met.
+ * a bottom sheet. "Ver mis recomendaciones" appears once recommendations are ready (RecommendationReadiness).
  */
 export function ExplorerScreen({
   content,
@@ -25,7 +24,8 @@ export function ExplorerScreen({
   visitedHotspotIds,
   interestIds,
   highlightedSceneIds,
-  threshold,
+  recommendationsAvailable,
+  hotspotsRemaining,
   reducedMotion,
   engagementMs,
   onNavigate,
@@ -40,7 +40,10 @@ export function ExplorerScreen({
   visitedHotspotIds: string[];
   interestIds: string[];
   highlightedSceneIds: string[];
-  threshold: ThresholdProgress;
+  /** Ready (RecommendationReadiness) or already shown to this visitor. */
+  recommendationsAvailable: boolean;
+  /** Meaningful hotspots still needed, for the progress line. */
+  hotspotsRemaining: number;
   reducedMotion: boolean;
   engagementMs: number;
   onNavigate: (sceneId: string) => void;
@@ -87,7 +90,7 @@ export function ExplorerScreen({
     const s = scenesById.get(id);
     return s ? [{ id, label: localize(s.title) }] : [];
   });
-  const remaining = Math.max(threshold.requiredHotspots - threshold.openedHotspots, 0);
+  const remaining = hotspotsRemaining;
 
   return (
     <section data-testid="explorer-screen" data-scene={scene.id} className="flex flex-1 flex-col">
@@ -144,15 +147,15 @@ export function ExplorerScreen({
         <p
           aria-live="polite"
           data-testid="explorer-progress"
-          className={threshold.met ? "sr-only" : "text-label text-ink-muted mr-auto font-medium"}
+          className={recommendationsAvailable ? "sr-only" : "text-label text-ink-muted mr-auto font-medium"}
         >
-          {threshold.met
+          {recommendationsAvailable
             ? t("explorer.ready")
             : remaining === 1
               ? t("explorer.progressOne")
               : t("explorer.progressMany", { remaining })}
         </p>
-        {threshold.met && (
+        {recommendationsAvailable && (
           <PrimaryAction
             data-testid="view-my-recommendations"
             icon={<SparkIcon />}

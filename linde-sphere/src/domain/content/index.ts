@@ -4,5 +4,6 @@ export * from "./scene";
 export * from "./offering";
 export * from "./recommendation-rule";
 export * from "./settings";
+export * from "./engine-settings";
 export * from "./bundle";
 export * from "./visibility";

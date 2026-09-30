@@ -29,6 +29,10 @@ export const SESSION_EVENT_TYPES = [
   "recommendations-calculated",
   /** targetId: a NEXT_STEP option id. */
   "next-step-chosen",
+  /** The contextual conversion prompt ("We found opportunities…") was shown, accepted or dismissed. */
+  "conversion-prompt-shown",
+  "conversion-prompt-accepted",
+  "conversion-prompt-dismissed",
 ] as const;
 export const SessionEventTypeSchema = z.enum(SESSION_EVENT_TYPES);
 export type SessionEventType = z.infer<typeof SessionEventTypeSchema>;

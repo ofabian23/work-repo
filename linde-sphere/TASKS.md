@@ -59,12 +59,20 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 
 ## Phase 3 — Recommendation engine and lead scoring (pure logic)
 
-- [x] Engine tuning constants in `src/domain/recommendations/engine-config.ts` (replaces the planned `content/settings.json`, ADR-041)
+- [x] Engine tuning in `content/engine-settings.json`: whole-number caps, bonus, affinity, implied divisor, result sizes, relevance and readiness thresholds (ADR-050, supersedes ADR-041's code constants)
 - [x] Signal normalization (unknown/hidden ids, duplicates), per-type caps, implied challenges, hotspot affinity, engaged bonus
 - [x] `recommend()` with weights, exclusions, thresholds, tie-breakers, top-N, fallback; output validated against `RecommendationResultSchema`
 - [x] "Why this appeared" generation (ES/EN, quoted labels) + relevance template rendering with placeholder fallback
 - [x] Unit tests: five journey types, full persona/challenge/hotspot coverage, determinism and order independence, exclusions, thresholds, tie-breaks, caps, fallback, production mode
-- [x] `hasMinimumInfo` (`recommendationThreshold`, Phase 6) · [ ] contextual prompt selector (Phase 5)
+- [x] Engine v2 (ADR-050): integer weights enforced by schema, exclusions before ranking, defensive mode/status
+      filtering, 3 primary + ≤ 3 secondary, relevance label in words, relevant scene, approved assets only,
+      next action, internal validation status; lead score never part of the result
+- [x] `RecommendationReadiness` service (role + challenge · 2 challenges · 2 distinct scenes · N unique
+      meaningful hotspots) replacing the Phase 6 threshold
+- [x] Contextual conversion prompt ("Encontramos oportunidades…") with a pure scheduling policy: never while a
+      dialog is open, during data entry, right after a scene change, or more than once per interval
+- [x] Unit tests: deterministic scoring, exclusions, duplicate interactions, readiness, demo vs production
+      filtering, explanation generation, tie-breaking, prompt policy; component + E2E tests for the prompt
 - [ ] `lead-scoring.ts` (server-only) + `config/lead-scoring.json` + tests
 - **Done when:** lead scoring is implemented and tested; the engine suite already passes with no I/O in `src/domain`.
 
@@ -96,7 +104,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] Path screens are honest placeholders ("se completa en la próxima fase") → replaced in Phases 5–6
 - [ ] Anonymous session summary via `sendBeacon` on reset → Phase 7 (needs `/api/sessions`)
 - [ ] Fullscreen request on first touch → Phase 10 (kiosk hardening; Fully Kiosk Browser already runs fullscreen)
-- [x] `hasMinimumInfo` → delivered in Phase 6 · [ ] contextual prompt → Phase 5
+- [x] Readiness and contextual prompt → delivered with engine v2 (ADR-050)
 - **Done when:** the shell runs at 1080×1920 and reset guarantees are verified by E2E. ✅
 
 ## Phase 5 — Entry paths and recommendations UI
@@ -113,7 +121,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       executive leadership (unit), the same four journeys rendered end to end in jsdom (integration) and in
       Playwright at kiosk, laptop and phone sizes (E2E), plus several-areas, "Algo más", English and layout fit
 - [ ] Optional facility type step (not in this prompt; engine already supports `facilityTypeId`)
-- [ ] Persistent "View my recommendations" action + contextual prompt (once per session)
+- [x] Persistent "View my recommendations" (explorer, once ready) + contextual prompt (once per interval, ADR-050)
 - [ ] Path B ordering (challenges → role) and path C "tailor" step
 - [ ] Value screen ("We found opportunities…" + what the report includes)
 - [~] E2E: quick path to recommendations in both languages (path A done; path B pending)

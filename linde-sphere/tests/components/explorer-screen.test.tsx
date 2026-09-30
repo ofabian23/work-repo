@@ -73,7 +73,7 @@ describe("hospital explorer in the kiosk", () => {
     expect(session().signals.engagedHotspotIds).toEqual(["campus-expansion"]);
   });
 
-  it("shows “Ver mis recomendaciones” after three hotspots and returns to the same scene", () => {
+  it("shows “Ver mis recomendaciones” once recommendations are ready and returns to the same scene", () => {
     renderKiosk();
     openExplorer();
     expect(screen.getByTestId("explorer-progress")).toHaveTextContent("Abra 3 puntos más");
@@ -81,7 +81,12 @@ describe("hospital explorer in the kiosk", () => {
     fireEvent.click(screen.getByTestId("hotspot-campus-expansion"));
     fireEvent.click(screen.getByTestId("hotspot-campus-supply-network"));
     expect(screen.getByTestId("explorer-progress")).toHaveTextContent("Abra 1 punto más");
+    // Moving between scenes is not a meaningful interaction on its own…
     fireEvent.click(screen.getByTestId("hotspot-campus-to-gas-plant"));
+    expect(screen.queryByTestId("view-my-recommendations")).toBeNull();
+    // …but looking at content in a second scene is (two distinct scenes).
+    fireEvent.click(screen.getByTestId("hotspot-gas-plant-bulk-tank"));
+    fireEvent.click(within(screen.getByTestId("hotspot-sheet")).getByRole("button", { name: "Cerrar" }));
     expect(screen.getByTestId("explorer-progress")).toHaveTextContent("Ya puede ver sus recomendaciones.");
 
     fireEvent.click(screen.getByTestId("view-my-recommendations"));

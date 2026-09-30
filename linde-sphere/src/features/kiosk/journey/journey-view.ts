@@ -1,7 +1,7 @@
 import type { LocalizedText } from "@/domain/content/primitives";
 import type { Persona } from "@/domain/content/taxonomy";
 import type { PublicContentBundle } from "@/domain/content/visibility";
-import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
+import { primaryItems, type RecommendationResult } from "@/domain/recommendations/recommendation-result";
 
 /** At most this many challenges are suggested after choosing a role (quick to scan on the kiosk). */
 export const MAX_SUGGESTED_CHALLENGES = 4;
@@ -45,7 +45,10 @@ export function relevantSceneIds(
 ): string[] {
   const areas = new Set(content.scenes.filter((s) => s.parentSceneId !== null).map((s) => s.id));
   const ids = new Set<string>();
-  for (const item of result?.items ?? []) {
+  // Each primary recommendation's relevant scene first, then its other related areas.
+  const items = primaryItems(result);
+  for (const item of items) if (item.sceneId && areas.has(item.sceneId)) ids.add(item.sceneId);
+  for (const item of items) {
     for (const id of item.relatedSceneIds) if (areas.has(id)) ids.add(id);
   }
   return [...ids].slice(0, max);

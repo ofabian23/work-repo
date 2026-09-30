@@ -102,6 +102,20 @@ export const es = {
     refine: "Refinar retos",
     explore: "Explorar áreas",
     empty: "Todavía no hay recomendaciones disponibles.",
+    secondaryTitle: "También podría interesarle",
+    viewScene: "Verlo en el hospital: {scene}",
+    resources: "Recursos",
+    relevance: {
+      high: "Muy relevante",
+      medium: "Relevante",
+      possible: "Posiblemente relevante",
+    },
+  },
+  conversion: {
+    label: "Sugerencia",
+    message: "Encontramos oportunidades relevantes para sus prioridades.",
+    accept: "Ver recomendaciones",
+    dismiss: "Seguir explorando",
   },
   refine: {
     title: "Refinar por retos",

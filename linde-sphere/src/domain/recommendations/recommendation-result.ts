@@ -1,9 +1,27 @@
 import { z } from "zod";
-import { ContentModeSchema, IdSchema, LocalizedTextSchema } from "../content/primitives";
+import {
+  ContentModeSchema,
+  IdSchema,
+  LocalizedTextSchema,
+  ValidationStatusSchema,
+} from "../content/primitives";
 import { SignalTypeSchema } from "../content/recommendation-rule";
 import { uniqueIds } from "../session/visitor-session";
 
-export const MAX_RECOMMENDATIONS = 5;
+/** Up to three primary recommendations, then up to three secondary ones (ADR-050). */
+export const MAX_PRIMARY_RECOMMENDATIONS = 3;
+export const MAX_SECONDARY_RECOMMENDATIONS = 3;
+export const MAX_RECOMMENDATIONS = MAX_PRIMARY_RECOMMENDATIONS + MAX_SECONDARY_RECOMMENDATIONS;
+
+export const RecommendationTierSchema = z.enum(["primary", "secondary"]);
+export type RecommendationTier = z.infer<typeof RecommendationTierSchema>;
+
+/**
+ * How relevant a recommendation is, in words: never a number or a fabricated percentage. Derived from
+ * the score with the thresholds in engine-settings.json.
+ */
+export const RelevanceLevelSchema = z.enum(["high", "medium", "possible"]);
+export type RelevanceLevel = z.infer<typeof RelevanceLevelSchema>;
 
 /** One matched signal that contributed to a recommendation — the basis of "why it appeared". */
 export const MatchKindSchema = z.enum([
@@ -32,8 +50,10 @@ export const RecommendationItemSchema = z
     /** Null only for the fallback recommendation, which has no rule. */
     ruleId: IdSchema.nullable(),
     rank: z.number().int().min(1).max(MAX_RECOMMENDATIONS),
-    /** Relevance score used for ordering. Never displayed to visitors; unrelated to lead scoring. */
-    score: z.number().min(0),
+    tier: RecommendationTierSchema,
+    /** Relevance score used for ordering (whole number). Never displayed; unrelated to lead scoring. */
+    score: z.number().int().min(0),
+    relevanceLevel: RelevanceLevelSchema,
     matchedSignals: z.array(MatchedSignalSchema).max(40),
     /**
      * Plain-language "Why this appeared", generated from the visitor's matched signals.
@@ -42,9 +62,14 @@ export const RecommendationItemSchema = z
     whyThisAppeared: LocalizedTextSchema,
     /** Rule-specific sentence on when this category tends to matter (no claims). */
     relevance: LocalizedTextSchema,
+    /** The scene that best shows this recommendation (where the visitor met it, or its main area). */
+    sceneId: IdSchema.nullable(),
     relatedSceneIds: uniqueIds(8),
+    /** Approved (validated) digital assets only; placeholder or unreviewed resources are never offered. */
     digitalAssetIds: uniqueIds(8),
     nextStep: LocalizedTextSchema,
+    /** Validation status of the solution, for internal use (reports to sales, audits). */
+    validationStatus: ValidationStatusSchema,
     /** True when the solution is not validated; the UI must show the pending-validation indicator. */
     pendingValidation: z.boolean(),
     isFallback: z.boolean(),
@@ -58,6 +83,13 @@ export const RecommendationItemSchema = z
         code: "custom",
         path: ["ruleId"],
         message: "A rule-based recommendation requires ruleId",
+      });
+    }
+    if (item.pendingValidation !== (item.validationStatus !== "validated")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pendingValidation"],
+        message: "pendingValidation must be true exactly when the solution is not validated",
       });
     }
     if (!item.isFallback && item.matchedSignals.length === 0) {
@@ -90,6 +122,29 @@ export const RecommendationResultSchema = z
         });
       }
     });
+    const primary = result.items.filter((i) => i.tier === "primary").length;
+    const firstSecondary = result.items.findIndex((i) => i.tier === "secondary");
+    if (primary === 0 || primary > MAX_PRIMARY_RECOMMENDATIONS) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["items"],
+        message: `Expected 1–${MAX_PRIMARY_RECOMMENDATIONS} primary items`,
+      });
+    }
+    if (result.items.length - primary > MAX_SECONDARY_RECOMMENDATIONS) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["items"],
+        message: `At most ${MAX_SECONDARY_RECOMMENDATIONS} secondary items`,
+      });
+    }
+    if (firstSecondary !== -1 && result.items.slice(firstSecondary).some((i) => i.tier === "primary")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["items"],
+        message: "Primary items must come before secondary items",
+      });
+    }
     const ids = result.items.map((i) => i.solutionId);
     if (new Set(ids).size !== ids.length) {
       ctx.addIssue({ code: "custom", path: ["items"], message: "A solution may appear only once" });
@@ -103,3 +158,8 @@ export const RecommendationResultSchema = z
     }
   });
 export type RecommendationResult = z.infer<typeof RecommendationResultSchema>;
+
+export const primaryItems = (result: RecommendationResult | null) =>
+  (result?.items ?? []).filter((i) => i.tier === "primary");
+export const secondaryItems = (result: RecommendationResult | null) =>
+  (result?.items ?? []).filter((i) => i.tier === "secondary");

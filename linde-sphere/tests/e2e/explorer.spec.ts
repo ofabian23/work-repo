@@ -205,6 +205,31 @@ test.describe("hospital explorer", () => {
     await expect(page.getByTestId("explorer-screen")).toHaveAttribute("data-scene", "emergency");
   });
 
+  test("the conversion prompt appears after readiness without interrupting, and leads to recommendations", async ({
+    page,
+  }) => {
+    await openExplorer(page);
+    await page.getByTestId("hotspot-campus-expansion").click();
+    await page.keyboard.press("Escape");
+    await page.getByTestId("hotspot-campus-to-gas-plant").click();
+    await waitForLayout(page, "gas-plant");
+    await page.getByTestId("hotspot-gas-plant-bulk-tank").click();
+    // Ready now (two scenes), but a panel is open: no prompt.
+    await page.waitForTimeout(3_000);
+    await expect(page.getByTestId("conversion-prompt")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+    const prompt = page.getByTestId("conversion-prompt");
+    await expect(prompt).toContainText("Encontramos oportunidades relevantes para sus prioridades.");
+    // It does not steal focus from the hotspot the visitor just used.
+    await expect(page.getByTestId("hotspot-gas-plant-bulk-tank")).toBeFocused();
+    await expectTouchTargets(page);
+    await page.getByTestId("conversion-prompt-accept").click();
+    await expect(page.getByTestId("recommendations-screen")).toBeVisible();
+    await expect(
+      page.getByTestId("recommendations-screen").getByTestId("relevance-label").first(),
+    ).toBeVisible();
+  });
+
   test("scene changes animate, and switch instantly with reduced motion", async ({ page }) => {
     await openExplorer(page);
     await page.getByTestId("hotspot-campus-to-icu").click();

@@ -87,16 +87,20 @@ const item = (rank = 1, solutionId = "clinical-gases") => ({
   solutionId,
   ruleId: `rule-${solutionId}`,
   rank,
+  tier: rank <= 3 ? "primary" : "secondary",
   score: 9,
+  relevanceLevel: "high",
   matchedSignals: [{ signalType: "challenges", signalId: "supply-continuity", kind: "direct", weight: 5 }],
   whyThisAppeared: localized(
     "Aparece porque eligió «Mejorar la continuidad del suministro».",
     "This appeared because you chose “Improve supply continuity”.",
   ),
   relevance: localized("Puede ser útil cuando cambia la demanda.", "Can be useful when demand changes."),
+  sceneId: "icu",
   relatedSceneIds: ["icu"],
   digitalAssetIds: [],
   nextStep: localized("Hable con un especialista.", "Talk to a specialist."),
+  validationStatus: "assumed",
   pendingValidation: true,
   isFallback: false,
 });
@@ -106,12 +110,13 @@ const fallbackItem = () => ({
   solutionId: "talk-to-specialist",
   ruleId: null,
   score: 0,
+  relevanceLevel: "possible",
   matchedSignals: [],
   isFallback: true,
 });
 
 const result = () => ({
-  engineVersion: "1.0.0",
+  engineVersion: "2.0.0",
   contentVersion: "0.1.0",
   contentMode: "demo",
   items: [item(1), item(2, "supply-monitoring")],
@@ -173,9 +178,39 @@ describe("RecommendationResultSchema", () => {
       "items[0].ruleId",
     );
   });
-  it("requires at least one and at most five items", () => {
+  it("requires at least one and at most six items", () => {
     expectInvalid(RecommendationResultSchema, { ...result(), items: [] }, "items");
     const six = ["a1", "b1", "c1", "d1", "e1", "f1"].map((id, i) => item(i + 1, id));
-    expectInvalid(RecommendationResultSchema, { ...result(), items: six }, "items");
+    expectValid(RecommendationResultSchema, { ...result(), items: six });
+    expectInvalid(RecommendationResultSchema, { ...result(), items: [...six, item(7, "g1")] }, "items");
+  });
+  it("allows at most three primary items, all before the secondary ones", () => {
+    const four = ["a1", "b1", "c1", "d1"].map((id, i) => ({ ...item(i + 1, id), tier: "primary" }));
+    expectInvalid(RecommendationResultSchema, { ...result(), items: four }, "items", "primary");
+    const mixed = [
+      item(1, "a1"),
+      { ...item(2, "b1"), tier: "secondary" },
+      { ...item(3, "c1"), tier: "primary" },
+    ];
+    expectInvalid(RecommendationResultSchema, { ...result(), items: mixed }, "items", "before");
+  });
+  it("keeps pendingValidation consistent with the validation status", () => {
+    expectInvalid(
+      RecommendationResultSchema,
+      { ...result(), items: [{ ...item(), validationStatus: "validated" }] },
+      "items[0].pendingValidation",
+    );
+  });
+  it("expresses relevance in words and whole-number scores only", () => {
+    expectInvalid(
+      RecommendationResultSchema,
+      { ...result(), items: [{ ...item(), relevanceLevel: "87%" }] },
+      "items[0].relevanceLevel",
+    );
+    expectInvalid(
+      RecommendationResultSchema,
+      { ...result(), items: [{ ...item(), score: 8.5 }] },
+      "items[0].score",
+    );
   });
 });

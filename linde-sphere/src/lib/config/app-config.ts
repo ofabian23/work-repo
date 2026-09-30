@@ -1,5 +1,4 @@
 import { LANGUAGES, MAX_SELECTED_CHALLENGES, type Language } from "@/domain/content/primitives";
-import { MAX_RECOMMENDATIONS } from "@/domain/recommendations/recommendation-result";
 
 /**
  * Centralized, client-safe application configuration. Never put secrets or environment-dependent
@@ -17,6 +16,19 @@ export const appConfig = {
     tailoringTransitionMs: 1_800,
     /** A hotspot panel kept open this long counts as "engaged" (a stronger, anonymous signal). */
     hotspotEngagementMs: 6_000,
+    /** Contextual conversion prompt shown once recommendations are ready (ADR-050). */
+    conversionPrompt: {
+      /** Never shown again within this interval after it was last shown. */
+      minIntervalMs: 120_000,
+      /** Quiet time after a scene change before the prompt may appear. */
+      afterSceneChangeMs: 2_500,
+      /** Quiet time after a dialog closes or a form field loses focus. */
+      afterInterruptionMs: 1_500,
+      /** The prompt hides itself after this long if the visitor does not respond. */
+      visibleMs: 15_000,
+      /** Screens where the prompt may appear (never on forms, results or the attract loop). */
+      screens: ["explore", "challenges"] as readonly string[],
+    },
     /** Primary design target: portrait touchscreen. */
     designViewport: { width: 1080, height: 1920 },
     /** WCAG 2.2 minimum; primary actions use the larger size. */
@@ -34,7 +46,6 @@ export const appConfig = {
   },
   recommendations: {
     maxSelectedChallenges: MAX_SELECTED_CHALLENGES,
-    maxResults: MAX_RECOMMENDATIONS,
   },
   routes: {
     home: "/",

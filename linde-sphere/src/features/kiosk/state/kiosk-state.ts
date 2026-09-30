@@ -98,6 +98,7 @@ export type KioskAction =
   | { type: "SELECT_PERSONA"; personaId: string | null }
   | { type: "TOGGLE_CHALLENGE"; challengeId: string; max: number }
   | { type: "TOGGLE_OTHER_CHALLENGE" }
+  | { type: "CONVERSION_PROMPT"; outcome: "shown" | "accepted" | "dismissed" }
   | { type: "SELECT_FACILITY"; facilityTypeId: string | null }
   | { type: "VISIT_SCENE"; sceneId: string }
   | { type: "OPEN_HOTSPOT"; hotspotId: string }
@@ -227,6 +228,8 @@ function reduce(state: KioskState, action: KioskAction): KioskState {
         ),
       };
     }
+    case "CONVERSION_PROMPT":
+      return { ...state, session: withEvent(state.session, `conversion-prompt-${action.outcome}`) };
     case "SELECT_FACILITY":
       return updateSignals(
         state,

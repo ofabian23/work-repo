@@ -190,7 +190,10 @@ function titleOf(bundle: ContentBundle, solutionId: string): string {
 }
 
 function coverage(bundle: ContentBundle, signals: Partial<SessionSignals>): string {
-  const result = recommend({ ...EMPTY_SIGNALS, ...signals }, visibleContent(bundle, "demo"));
+  // Coverage tables list the primary recommendations only.
+  const result = recommend({ ...EMPTY_SIGNALS, ...signals }, visibleContent(bundle, "demo"), {
+    secondary: 0,
+  });
   if (!result) return "—";
   return result.items.map((i) => titleOf(bundle, i.solutionId)).join(" → ");
 }

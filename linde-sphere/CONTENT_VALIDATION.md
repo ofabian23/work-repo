@@ -121,6 +121,11 @@ prohibited-claim scan). Cross-record checks run only once every file passes its 
 Production readiness requires validated personas, challenges, scenes, a validated fallback solution, at
 least one validated rule for a validated solution, and validated consent text.
 
+`content/engine-settings.json` holds the engine's whole-number caps and bonuses, the result sizes, the
+relevance thresholds ("Muy relevante" ≥ 9, "Relevante" ≥ 5) and the readiness thresholds (ARCHITECTURE §7.4).
+It is configuration approved by the project owner, not a claim, so it has no validation status. After
+changing it, run `npm run content:export` so the coverage tables below stay current.
+
 The check also warns when a scene lacks a navigation, information or solution hotspot, or when two hotspots
 are closer than 8 % of the art box. The seed content currently produces no warnings (v0.4.0).
 

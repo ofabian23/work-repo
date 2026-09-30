@@ -6,6 +6,7 @@ import {
   maxAchievableScore,
   type SignalType,
 } from "./recommendation-rule";
+import { EngineSettingsSchema } from "./engine-settings";
 import { SceneSchema } from "./scene";
 import { ConsentTextSetSchema, ContentManifestSchema } from "./settings";
 import { ChallengeSchema, FacilityTypeSchema, PersonaSchema } from "./taxonomy";
@@ -22,9 +23,10 @@ export const ContentBundleSchema = z.strictObject({
   digitalAssets: z.array(DigitalAssetSchema),
   recommendationRules: z.array(RecommendationRuleSchema),
   consent: ConsentTextSetSchema,
+  settings: EngineSettingsSchema,
 });
 export type ContentBundle = z.infer<typeof ContentBundleSchema>;
-export type ContentCollection = Exclude<keyof ContentBundle, "manifest" | "consent">;
+export type ContentCollection = Exclude<keyof ContentBundle, "manifest" | "consent" | "settings">;
 
 export type IssueSeverity = "error" | "warning";
 export type ContentIssue = {
@@ -390,7 +392,7 @@ export function checkContentBundle(bundle: ContentBundle): ContentIssue[] {
       ),
     );
 
-    const max = maxAchievableScore(rule);
+    const max = maxAchievableScore(rule, bundle.settings.scoring);
     if (max < rule.minimumScore) {
       add({
         severity: "error",

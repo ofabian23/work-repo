@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { visibleContent, type PublicContentBundle } from "@/domain/content";
-import { recommend } from "@/domain/recommendations/engine";
+import { recommend, type RecommendOptions } from "@/domain/recommendations/engine";
 import {
   RecommendationResultSchema,
+  primaryItems,
+  secondaryItems,
   type RecommendationResult,
 } from "@/domain/recommendations/recommendation-result";
 import { EMPTY_SIGNALS, type SessionSignals } from "@/domain/session/visitor-session";
@@ -11,14 +13,21 @@ import { clone, loadSeedBundle } from "../../helpers/schema";
 const seed = loadSeedBundle();
 const demo = visibleContent(seed, "demo");
 
-function run(signals: Partial<SessionSignals>, content: PublicContentBundle = demo, maxResults?: number) {
-  const result = recommend({ ...EMPTY_SIGNALS, ...signals }, content, { maxResults });
+function run(
+  signals: Partial<SessionSignals>,
+  content: PublicContentBundle = demo,
+  options?: RecommendOptions,
+) {
+  const result = recommend({ ...EMPTY_SIGNALS, ...signals }, content, options);
   expect(result).not.toBeNull();
   // Every engine output must satisfy the runtime contract.
   RecommendationResultSchema.parse(result);
   return result as RecommendationResult;
 }
-const ids = (r: RecommendationResult) => r.items.map((i) => i.solutionId);
+/** Primary recommendations (the top three). */
+const ids = (r: RecommendationResult) => primaryItems(r).map((i) => i.solutionId);
+/** Primary and secondary recommendations. */
+const allIds = (r: RecommendationResult) => r.items.map((i) => i.solutionId);
 
 describe("recommendation journeys (seed content, demo mode)", () => {
   it("persona only: procurement sees supply planning, cylinders and bulk supply", () => {
@@ -179,27 +188,21 @@ describe("determinism and rules", () => {
   });
 
   it("applies exclusion rules (homecare organizations do not see bulk or infrastructure categories)", () => {
-    const r = run(
-      {
-        challengeIds: ["supply-continuity", "aging-infrastructure", "facility-expansion"],
-        facilityTypeId: "homecare-organization",
-      },
-      demo,
-      5,
-    );
-    expect(ids(r)).not.toContain("bulk-centralized-supply");
-    expect(ids(r)).not.toContain("infrastructure-assessment");
-    const withoutFacility = run(
-      { challengeIds: ["supply-continuity", "aging-infrastructure", "facility-expansion"] },
-      demo,
-      5,
-    );
-    expect(ids(withoutFacility)).toContain("infrastructure-assessment");
+    const r = run({
+      challengeIds: ["supply-continuity", "aging-infrastructure", "facility-expansion"],
+      facilityTypeId: "homecare-organization",
+    });
+    expect(allIds(r)).not.toContain("bulk-centralized-supply");
+    expect(allIds(r)).not.toContain("infrastructure-assessment");
+    const withoutFacility = run({
+      challengeIds: ["supply-continuity", "aging-infrastructure", "facility-expansion"],
+    });
+    expect(allIds(withoutFacility)).toContain("infrastructure-assessment");
   });
 
   it("does not recommend below the minimum threshold (a secondary persona alone is not enough)", () => {
     // Executive weights bulk supply at 2, below its threshold of 3.
-    expect(ids(run({ personaId: "executive" }, demo, 5))).not.toContain("bulk-centralized-supply");
+    expect(allIds(run({ personaId: "executive" }))).not.toContain("bulk-centralized-supply");
   });
 
   it("breaks ties by explicit score, then rule priority, then id", () => {
@@ -220,9 +223,21 @@ describe("determinism and rules", () => {
     expect(ids(r)[0]).toBe("ambulatory-homecare-support");
   });
 
-  it("respects maxResults and the schema limit of five", () => {
-    expect(run(blended, demo, 1).items).toHaveLength(1);
-    expect(run(blended, demo, 99).items.length).toBeLessThanOrEqual(5);
+  it("returns up to three primary and three secondary recommendations, primary first", () => {
+    const r = run(blended);
+    expect(primaryItems(r)).toHaveLength(3);
+    expect(secondaryItems(r).length).toBeGreaterThan(0);
+    expect(secondaryItems(r).length).toBeLessThanOrEqual(3);
+    expect(r.items.map((i) => i.tier)).toEqual(r.items.map((_, i) => (i < 3 ? "primary" : "secondary")));
+    expect(r.items.map((i) => i.rank)).toEqual(r.items.map((_, i) => i + 1));
+  });
+
+  it("result sizes follow the settings and can be overridden", () => {
+    expect(run(blended, demo, { primary: 1, secondary: 0 }).items).toHaveLength(1);
+    expect(run(blended, demo, { primary: 99, secondary: 99 }).items.length).toBeLessThanOrEqual(6);
+    const settings = clone(demo);
+    settings.settings.results = { primary: 2, secondary: 1 };
+    expect(run(blended, settings).items.map((i) => i.tier)).toEqual(["primary", "primary", "secondary"]);
   });
 
   it("ignores unknown or hidden ids", () => {

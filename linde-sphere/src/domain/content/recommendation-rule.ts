@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  ENGAGED_HOTSPOT_BONUS,
-  HOTSPOT_CAP,
-  IMPLIED_CHALLENGE_CAP,
-  SCENE_CAP,
-} from "../recommendations/engine-config";
+import type { ScoringSettings } from "./engine-settings";
 import {
   IdSchema,
   LocalizedTextSchema,
@@ -33,8 +28,15 @@ export type SignalType = z.infer<typeof SignalTypeSchema>;
 
 export const MAX_SIGNAL_WEIGHT = 10;
 
-/** Weight of one matched signal. Positive only; negative intent is expressed with exclusions. */
-export const SignalWeightSchema = z.number().positive().max(MAX_SIGNAL_WEIGHT);
+/**
+ * Weight of one matched signal: a whole number from 1 to 10 (ADR-050). Positive only; negative intent is
+ * expressed with exclusions.
+ */
+export const SignalWeightSchema = z
+  .number()
+  .int({ error: "Weights must be whole numbers" })
+  .min(1)
+  .max(MAX_SIGNAL_WEIGHT);
 
 /** Map of signal id → weight, e.g. `{ "supply-continuity": 5 }`. */
 const WeightMapSchema = z.record(IdSchema, SignalWeightSchema);
@@ -103,7 +105,7 @@ export const RecommendationRuleSchema = z
     solutionId: IdSchema,
     weights: SignalWeightsSchema,
     /** The solution is recommended only when its total score reaches this threshold. */
-    minimumScore: z.number().positive().max(100),
+    minimumScore: z.number().int({ error: "minimumScore must be a whole number" }).min(1).max(100),
     exclusions: z.array(ExclusionRuleSchema).max(10),
     /**
      * Visitor-facing sentence. Placeholders ({challenges}, {scenes}, …) render the visitor's matched
@@ -160,17 +162,17 @@ const sumTop = (values: number[], n: number) =>
  * (used by cross-checks to catch unreachable thresholds). Persona and facility type are single-choice;
  * challenges are limited by the selection cap, scenes and hotspots by the engine caps.
  */
-export function maxAchievableScore(rule: RecommendationRule): number {
+export function maxAchievableScore(rule: RecommendationRule, scoring: ScoringSettings): number {
   const w = rule.weights;
   const hotspotWeights = Object.values(w.hotspots);
-  const hotspotMax = hotspotWeights.reduce((a, b) => a + b + ENGAGED_HOTSPOT_BONUS, 0);
+  const hotspotMax = hotspotWeights.reduce((a, b) => a + b + scoring.engagedHotspotBonus, 0);
   return (
     sumTop(Object.values(w.personas), 1) +
     sumTop(Object.values(w.facilityTypes), 1) +
     sumTop(Object.values(w.challenges), MAX_SELECTED_CHALLENGES) +
-    (Object.keys(w.challenges).length > MAX_SELECTED_CHALLENGES ? IMPLIED_CHALLENGE_CAP : 0) +
-    Math.min(sumTop(Object.values(w.scenes), Infinity), SCENE_CAP) +
-    Math.min(hotspotMax, HOTSPOT_CAP) +
+    (Object.keys(w.challenges).length > MAX_SELECTED_CHALLENGES ? scoring.impliedChallengeCap : 0) +
+    Math.min(sumTop(Object.values(w.scenes), Infinity), scoring.sceneCap) +
+    Math.min(hotspotMax, scoring.hotspotCap) +
     sumTop(Object.values(w.explicitInterests), Infinity)
   );
 }

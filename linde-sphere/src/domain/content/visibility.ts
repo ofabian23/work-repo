@@ -1,4 +1,5 @@
 import type { ContentBundle } from "./bundle";
+import type { EngineSettings } from "./engine-settings";
 import type { DigitalAsset, Solution } from "./offering";
 import type { ContentMode, ValidationStatus } from "./primitives";
 import { SIGNAL_TYPES, type RecommendationRule, type SignalWeights } from "./recommendation-rule";
@@ -60,6 +61,8 @@ export type PublicContentBundle = {
   digitalAssets: PublicDigitalAsset[];
   recommendationRules: PublicRecommendationRule[];
   consent: PublicConsentTextSet;
+  /** Engine and readiness settings (configuration, passed through unchanged). */
+  settings: EngineSettings;
 };
 
 function stripSolution(solution: Solution): PublicSolution {
@@ -187,5 +190,6 @@ export function visibleContent(
     digitalAssets: assets.map(stripGovernance),
     recommendationRules,
     consent,
+    settings: bundle.settings,
   };
 }
