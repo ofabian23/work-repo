@@ -38,7 +38,7 @@ test.describe("attract and welcome experience", () => {
   for (const [path, screen, title, back] of [
     ["role", "persona-screen", "¿En qué área trabaja?", "persona-back"],
     ["challenge", "path-screen-challenge", "Necesito…", "back-to-welcome"],
-    ["explore", "path-screen-explore", "Explorar el hospital", "back-to-welcome"],
+    ["explore", "explorer-screen", "Campus hospitalario", "explorer-back"],
   ] as const) {
     test(`entry path '${path}' opens and returns to the welcome screen`, async ({ page }) => {
       await page.getByTestId("attract-start").click();

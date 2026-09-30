@@ -24,7 +24,7 @@
       "id": "or-gas-outlets",
       "type": "information",
       "x": 50,
-      "y": 26,
+      "y": 28,
       "label": {
         "es": "Salidas de gases",
         "en": "Gas outlets"
@@ -63,8 +63,8 @@
     {
       "id": "or-infrastructure",
       "type": "solution",
-      "x": 30,
-      "y": 66,
+      "x": 26,
+      "y": 34.5,
       "label": {
         "es": "Infraestructura de gases",
         "en": "Gas infrastructure"
@@ -80,6 +80,27 @@
       },
       "validationStatus": "assumed",
       "targetSolutionIds": ["infrastructure-assessment", "preventive-service-maintenance"]
+    },
+    {
+      "id": "operating-room-to-icu",
+      "type": "navigation",
+      "x": 89.5,
+      "y": 45.5,
+      "label": {
+        "es": "Hacia la UCI",
+        "en": "To the ICU"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la unidad de cuidado intensivo",
+        "en": "Go to the intensive care unit"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "icu"
     }
   ],
   "parentSceneId": "campus",

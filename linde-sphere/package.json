@@ -17,7 +17,8 @@
     "dev:network": "next dev -H 0.0.0.0",
     "start:network": "next start -H 0.0.0.0",
     "test:e2e": "playwright test",
-    "content:export": "tsx scripts/content-export.ts"
+    "content:export": "tsx scripts/content-export.ts",
+    "art:placeholders": "tsx scripts/placeholder-art.ts"
   },
   "dependencies": {
     "next": "16.3.7",

@@ -126,7 +126,10 @@ test.describe("role-based journey", () => {
       "This appeared because",
     );
     await page.getByTestId("recommendations-explore").click();
-    await expect(page.getByTestId("relevant-areas")).toBeVisible();
+    // The explorer opens on the campus with the areas behind the recommendations highlighted.
+    await expect(page.getByTestId("explorer-screen")).toHaveAttribute("data-scene", "campus");
+    await expect(page.getByTestId("hotspot-campus-to-gas-plant")).toHaveAttribute("data-highlighted", "true");
+    await expect(page.getByTestId("hotspot-campus-to-gas-plant")).toHaveAccessibleName(/Relevant to you/);
   });
 
   test("screens fit the portrait kiosk and look right", async ({ page }, testInfo) => {

@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
-/** Second server on the same production build with the dev component gallery explicitly enabled. */
+/** Second server on the same production build with the dev tools (gallery, calibration) explicitly enabled. */
 export const GALLERY_PORT = PORT + 1;
 
 /**
@@ -52,7 +52,7 @@ export default defineConfig({
       // Starts after the first server is ready (it reuses the same build).
       command: `npx next start -H localhost -p ${GALLERY_PORT}`,
       url: `http://localhost:${GALLERY_PORT}/api/health`,
-      env: { ENABLE_COMPONENT_GALLERY: "true" },
+      env: { ENABLE_COMPONENT_GALLERY: "true", ENABLE_SCENE_CALIBRATION: "true" },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },

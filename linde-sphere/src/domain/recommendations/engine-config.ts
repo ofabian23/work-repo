@@ -33,3 +33,20 @@ export const IMPLIED_CHALLENGE_CAP = 3;
 /** Reason groups rendered in the "Why this appeared" sentence, and labels per group. */
 export const MAX_REASON_GROUPS = 3;
 export const MAX_LABELS_PER_REASON = 2;
+
+/**
+ * When "View my recommendations" becomes available (PROJECT_BRIEF §7 rule 3, ADR-049). Any one condition is
+ * enough. A role alone counts because the role journey already shows preliminary recommendations (ADR-048).
+ */
+export type RecommendationThreshold = {
+  personaSuffices: boolean;
+  minChallenges: number;
+  minOpenedHotspots: number;
+  minExplicitInterests: number;
+};
+export const RECOMMENDATION_THRESHOLD: RecommendationThreshold = {
+  personaSuffices: true,
+  minChallenges: 1,
+  minOpenedHotspots: 3,
+  minExplicitInterests: 1,
+};

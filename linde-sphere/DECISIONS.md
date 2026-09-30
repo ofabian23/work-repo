@@ -546,3 +546,44 @@ entry here — architecture is never changed silently.
   - Events are not yet part of `VisitorSession`. Phase 7 decides whether the anonymous summary includes them.
   - Path B and the explorer reuse `ChallengePicker`, `ScreenFrame` and the next-steps pattern.
   - The optional facility-type step is still to do.
+
+## ADR-049 — 2D illustrated scene engine, generated placeholder art and recommendation threshold
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Context:** The explorer must feel spatial on a portrait kiosk, laptop and phone. It must stay 2D (no
+  Three.js, Babylon.js, WebGL or free camera), keep hotspots aligned with the art at every size, work with
+  reduced motion, and be easy to re-calibrate when approved art arrives.
+- **Decision:**
+  - **Art box:** one canonical box, `SCENE_ART` (1200 × 1500), for every layer.
+    - Hotspot `x`/`y` are percentages of it.
+    - The viewer fits the box with container-query units and `overflow: clip`.
+  - **Hotspot layout:** a pure function lays hotspots out for the measured size.
+    - It keeps authored points when there's room, pushes overlapping markers apart deterministically, and
+      chooses label placement and alignment.
+    - Small boxes (< 36 rem) use compact markers (≥ 48 px) and show labels on touch or focus only.
+  - **Scene transitions:** zoom-in into a child, zoom-out to an ancestor, pan between siblings.
+    - They use CSS keyframes on `transform` and `opacity` (560 ms) with a temporary inert outgoing layer.
+    - With reduced motion the scene swaps instantly.
+    - The Motion library is not needed.
+  - **Placeholder art:** generated from code (`scripts/placeholder-art.ts`) rather than hand-drawn files.
+    - Each drawing registers its hotspot anchors, and `--sync-content` writes them into content, so art and
+      hotspots cannot drift apart.
+  - **Content rules:**
+    - The content check warns about scenes missing a hotspot type and about hotspots closer than 8 %.
+    - Seven hotspots were added so every scene has all three types (content v0.4.0).
+  - **Recommendation threshold:** "Ver mis recomendaciones" uses a configurable `RECOMMENDATION_THRESHOLD`.
+    - It is met by any of: a role, ≥ 1 challenge, ≥ 3 opened hotspots or ≥ 1 explicit interest.
+    - This refines the brief's default (role + ≥ 1 challenge) because the role journey already shows
+      preliminary recommendations from the role alone (ADR-048).
+  - **Session:** it stores `currentSceneId`, which lets the explorer reopen where the visitor left it.
+    `scene-visited` is recorded on every entry, and the signal lists each scene once.
+  - **Back navigation:** `previousScreen` gives shared screens a sensible "Volver". The explorer's "Volver"
+    goes up the scene tree.
+  - **Calibration:** a developer page at `/dev/scenes` with its own flag, `ENABLE_SCENE_CALIBRATION`. It is
+    404 in production unless enabled, enforced by both the proxy and the page. It is never linked from the
+    visitor UI.
+- **Consequences:**
+  - Replacing art means drawing on the same box and re-checking coordinates with `/dev/scenes`.
+  - Hotspots may move slightly on phones to avoid overlap; the E2E tests bound this to 1.5 marker
+    diameters.
+  - Transition smoothness on the real Android kiosk is still to be measured (Phase 10).

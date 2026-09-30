@@ -15,6 +15,8 @@ export const appConfig = {
     attractRotationMs: 4_500,
     /** "We are tailoring the experience…" transition shown after the role journey. */
     tailoringTransitionMs: 1_800,
+    /** A hotspot panel kept open this long counts as "engaged" (a stronger, anonymous signal). */
+    hotspotEngagementMs: 6_000,
     /** Primary design target: portrait touchscreen. */
     designViewport: { width: 1080, height: 1920 },
     /** WCAG 2.2 minimum; primary actions use the larger size. */

@@ -23,8 +23,8 @@
     {
       "id": "icu-bedside-supply",
       "type": "information",
-      "x": 28,
-      "y": 44,
+      "x": 63,
+      "y": 30.5,
       "label": {
         "es": "Oxígeno junto a la cama",
         "en": "Bedside oxygen"
@@ -63,8 +63,8 @@
     {
       "id": "icu-clinical-oxygen",
       "type": "solution",
-      "x": 64,
-      "y": 64,
+      "x": 73,
+      "y": 49.5,
       "label": {
         "es": "Oxígeno clínico",
         "en": "Clinical oxygen"
@@ -84,8 +84,8 @@
     {
       "id": "icu-monitoring",
       "type": "solution",
-      "x": 74,
-      "y": 30,
+      "x": 88,
+      "y": 34,
       "label": {
         "es": "Monitoreo del suministro",
         "en": "Supply monitoring"
@@ -101,6 +101,27 @@
       },
       "validationStatus": "assumed",
       "targetSolutionIds": ["monitoring-telemetry"]
+    },
+    {
+      "id": "icu-to-operating-room",
+      "type": "navigation",
+      "x": 10.5,
+      "y": 45.5,
+      "label": {
+        "es": "Hacia sala de operaciones",
+        "en": "To the operating room"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la sala de operaciones",
+        "en": "Go to the operating room"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "operating-room"
     }
   ],
   "parentSceneId": "campus",

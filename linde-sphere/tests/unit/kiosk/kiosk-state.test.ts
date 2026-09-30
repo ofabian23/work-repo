@@ -44,6 +44,7 @@ describe("starting a session", () => {
     expect(Object.keys(session).sort()).toEqual(
       [
         "accessibility",
+        "currentSceneId",
         "entryPath",
         "events",
         "id",

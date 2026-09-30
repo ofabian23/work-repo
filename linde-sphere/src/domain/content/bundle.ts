@@ -282,6 +282,37 @@ export function checkContentBundle(bundle: ContentBundle): ContentIssue[] {
     }
   }
 
+  // Every scene should offer a way onward, something to learn and a solution category (explorer UX).
+  const HOTSPOT_TYPES = ["navigation", "information", "solution"] as const;
+  for (const s of bundle.scenes) {
+    for (const type of HOTSPOT_TYPES) {
+      if (!s.hotspots.some((h) => h.type === type)) {
+        add({
+          severity: "warning",
+          collection: "scenes",
+          recordId: s.id,
+          path: "hotspots",
+          message: `Scene has no ${type} hotspot (each scene should have at least one of each type)`,
+        });
+      }
+    }
+    // Centers closer than this (in % of the art box) crowd each other; the viewer nudges them apart.
+    const MIN_HOTSPOT_DISTANCE = 8;
+    s.hotspots.forEach((h, i) => {
+      for (const other of s.hotspots.slice(i + 1)) {
+        if (Math.hypot(h.x - other.x, (h.y - other.y) * 1.25) < MIN_HOTSPOT_DISTANCE) {
+          add({
+            severity: "warning",
+            collection: "scenes",
+            recordId: s.id,
+            path: `hotspots.${h.id}`,
+            message: `Hotspots '${h.id}' and '${other.id}' are very close; move them at least ${MIN_HOTSPOT_DISTANCE}% apart`,
+          });
+        }
+      }
+    });
+  }
+
   // ---- Solutions and assets --------------------------------------------------------------
   const fallbacks = bundle.solutions.filter((s) => s.isFallback);
   if (fallbacks.length !== 1) {

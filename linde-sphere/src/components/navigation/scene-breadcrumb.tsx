@@ -9,9 +9,12 @@ export type BreadcrumbItem = { id: string; label: string };
 export function SceneBreadcrumb({
   items,
   onNavigate,
+  currentVisuallyHidden = false,
 }: {
   items: BreadcrumbItem[];
   onNavigate: (sceneId: string) => void;
+  /** When the page heading already shows the current scene, keep it for assistive tech only. */
+  currentVisuallyHidden?: boolean;
 }) {
   const { t } = useLanguage();
   return (
@@ -22,7 +25,10 @@ export function SceneBreadcrumb({
           return (
             <li key={item.id} className="flex items-center gap-2">
               {isCurrent ? (
-                <span aria-current="page" className="text-lead text-ink px-2 font-bold">
+                <span
+                  aria-current="page"
+                  className={currentVisuallyHidden ? "sr-only" : "text-lead text-ink px-2 font-bold"}
+                >
                   {item.label}
                 </span>
               ) : (

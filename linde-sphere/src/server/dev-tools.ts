@@ -10,3 +10,23 @@ export function isComponentGalleryEnabled(
 ): boolean {
   return env.NODE_ENV !== "production" || env.ENABLE_COMPONENT_GALLERY;
 }
+
+/**
+ * Scene coordinate calibration (/dev/scenes, ADR-049) follows the same rule as the gallery, with its own
+ * flag: always in development, in production only with ENABLE_SCENE_CALIBRATION=true.
+ */
+export function isSceneCalibrationEnabled(
+  env: Pick<ServerEnv, "NODE_ENV" | "ENABLE_SCENE_CALIBRATION">,
+): boolean {
+  return env.NODE_ENV !== "production" || env.ENABLE_SCENE_CALIBRATION;
+}
+
+/** Which development tool, if any, a /dev path belongs to, and whether it is enabled. */
+export function isDevToolPathEnabled(
+  pathname: string,
+  env: Pick<ServerEnv, "NODE_ENV" | "ENABLE_COMPONENT_GALLERY" | "ENABLE_SCENE_CALIBRATION">,
+): boolean {
+  if (pathname === "/dev/scenes" || pathname.startsWith("/dev/scenes/"))
+    return isSceneCalibrationEnabled(env);
+  return isComponentGalleryEnabled(env);
+}

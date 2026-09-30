@@ -12,8 +12,8 @@
   "background": {
     "src": "/assets/scenes/placeholder/patient-care-background.svg",
     "alt": {
-      "es": "Ilustración isométrica de un piso de hospitalización con habitaciones y estación de enfermería.",
-      "en": "Isometric illustration of an inpatient floor with rooms and a nursing station."
+      "es": "Ilustración isométrica de una sala de hospitalización con camas, almacenamiento de cilindros y un área de alta.",
+      "en": "Isometric illustration of a patient ward with beds, cylinder storage and a discharge area."
     },
     "depth": 0,
     "assetStatus": "placeholder"
@@ -23,8 +23,8 @@
     {
       "id": "patient-care-cylinders",
       "type": "information",
-      "x": 26,
-      "y": 40,
+      "x": 77.5,
+      "y": 42,
       "label": {
         "es": "Manejo de cilindros",
         "en": "Cylinder handling"
@@ -63,8 +63,8 @@
     {
       "id": "patient-care-inventory",
       "type": "solution",
-      "x": 70,
-      "y": 36,
+      "x": 89.5,
+      "y": 42.5,
       "label": {
         "es": "Inventario de cilindros",
         "en": "Cylinder inventory"
@@ -84,8 +84,8 @@
     {
       "id": "patient-care-discharge",
       "type": "solution",
-      "x": 52,
-      "y": 72,
+      "x": 48.5,
+      "y": 64,
       "label": {
         "es": "Del hospital al hogar",
         "en": "Hospital to home"
@@ -101,6 +101,27 @@
       },
       "validationStatus": "assumed",
       "targetSolutionIds": ["ambulatory-homecare-support"]
+    },
+    {
+      "id": "patient-care-to-emergency",
+      "type": "navigation",
+      "x": 58,
+      "y": 31,
+      "label": {
+        "es": "Hacia emergencias",
+        "en": "To the emergency department"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la sala de emergencias",
+        "en": "Go to the emergency department"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "emergency"
     }
   ],
   "parentSceneId": "campus",

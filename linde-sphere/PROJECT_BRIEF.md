@@ -166,7 +166,7 @@ Opening hotspots and visiting scenes are recommendation signals.
 
 1. A useful **preliminary recommendation** is available right after role + challenges are selected.
 2. Exploration **improves and refines** recommendations.
-3. A persistent but unobtrusive **"Ver mis recomendaciones / View my recommendations"** action appears once minimum information is collected (default: role + ≥ 1 challenge, **or** ≥ 3 hotspot interactions on the explore path — configurable).
+3. A persistent but unobtrusive **"Ver mis recomendaciones / View my recommendations"** action appears once minimum information is collected (default: role + ≥ 1 challenge, **or** ≥ 3 hotspot interactions on the explore path — configurable; refined in ADR-049 to any of: a role, ≥ 1 challenge, ≥ 3 opened hotspots or ≥ 1 explicit interest).
 4. After meaningful interaction, a contextual prompt appears once per session:
    _"Encontramos oportunidades relevantes para sus prioridades." / "We found opportunities relevant to your priorities."_
 5. The visitor is never forced to explore every area.

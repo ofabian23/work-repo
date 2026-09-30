@@ -40,6 +40,8 @@ const ServerEnvSchema = z
     ADMIN_ENABLED: booleanFlag,
     /** Dev-only component gallery at /dev/components; in production it is disabled unless this is true. */
     ENABLE_COMPONENT_GALLERY: booleanFlag,
+    /** Dev-only scene coordinate calibration at /dev/scenes; in production it is disabled unless this is true. */
+    ENABLE_SCENE_CALIBRATION: booleanFlag,
     ADMIN_USER: optional(z.string().min(3)),
     ADMIN_PASSWORD: optional(z.string().min(12, { error: "Must be at least 12 characters" })),
   })

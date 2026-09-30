@@ -107,8 +107,15 @@ export const en: Messages = {
     listLabel: "Challenges",
     continue: "View recommendations",
   },
-  explorePreview: {
-    relevantAreas: "Areas relevant to you",
+  explorer: {
+    back: "Back",
+    hint: "Touch the points to discover more.",
+    progressOne: "Open 1 more point to see your recommendations.",
+    progressMany: "Open {remaining} more points to see your recommendations.",
+    ready: "You can now see your recommendations.",
+    viewRecommendations: "View my recommendations",
+    relevant: "Relevant to you",
+    sceneLabel: "Illustration: {scene}",
   },
   accessibility: {
     button: "Accessibility",

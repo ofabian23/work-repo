@@ -70,6 +70,14 @@
   --animate-fade-in: fade-in 200ms var(--ease-standard);
   --animate-float: float 7s ease-in-out infinite;
   --animate-phrase-in: phrase-in 600ms var(--ease-emphasized);
+  /* Scene changes in the explorer (ADR-049): controlled zoom / pan illusions, never a free camera. */
+  --animate-scene-zoom-in-exit: scene-zoom-in-exit 560ms var(--ease-emphasized) both;
+  --animate-scene-zoom-in-enter: scene-zoom-in-enter 560ms var(--ease-emphasized) both;
+  --animate-scene-zoom-out-exit: scene-zoom-out-exit 560ms var(--ease-emphasized) both;
+  --animate-scene-zoom-out-enter: scene-zoom-out-enter 560ms var(--ease-emphasized) both;
+  --animate-scene-pan-exit: scene-pan-exit 560ms var(--ease-emphasized) both;
+  --animate-scene-pan-enter: scene-pan-enter 560ms var(--ease-emphasized) both;
+  --animate-layer-settle: layer-settle 700ms var(--ease-emphasized) both;
 
   @keyframes pulse-ring {
     0% {
@@ -109,6 +117,48 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+  @keyframes scene-zoom-in-exit {
+    to {
+      opacity: 0;
+      transform: scale(1.8);
+    }
+  }
+  @keyframes scene-zoom-in-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.86);
+    }
+  }
+  @keyframes scene-zoom-out-exit {
+    to {
+      opacity: 0;
+      transform: scale(0.72);
+    }
+  }
+  @keyframes scene-zoom-out-enter {
+    from {
+      opacity: 0;
+      transform: scale(1.35);
+    }
+  }
+  @keyframes scene-pan-exit {
+    to {
+      opacity: 0;
+      transform: translateX(calc(var(--pan-direction, 1) * -12%));
+    }
+  }
+  @keyframes scene-pan-enter {
+    from {
+      opacity: 0;
+      transform: translateX(calc(var(--pan-direction, 1) * 12%));
+    }
+  }
+  /* Foreground layers settle into place slightly later than the background (depth illusion). */
+  @keyframes layer-settle {
+    from {
+      transform: translateY(calc(var(--layer-depth, 0) * 5%));
     }
   }
   @keyframes fade-in {

@@ -109,8 +109,15 @@ export const es = {
     listLabel: "Retos",
     continue: "Ver recomendaciones",
   },
-  explorePreview: {
-    relevantAreas: "Áreas relevantes para usted",
+  explorer: {
+    back: "Volver",
+    hint: "Toque los puntos para descubrir más.",
+    progressOne: "Abra 1 punto más para ver sus recomendaciones.",
+    progressMany: "Abra {remaining} puntos más para ver sus recomendaciones.",
+    ready: "Ya puede ver sus recomendaciones.",
+    viewRecommendations: "Ver mis recomendaciones",
+    relevant: "Relevante para usted",
+    sceneLabel: "Ilustración: {scene}",
   },
   accessibility: {
     button: "Accesibilidad",

@@ -13,13 +13,12 @@ const hasError = (bundle: ContentBundle, fragment: string) =>
 describe("seed content", () => {
   const seed = loadSeedBundle();
 
-  it("loads with no errors (warnings about missing placeholder art are allowed)", () => {
+  it("loads with no errors and no warnings (all placeholder art exists, every scene is complete)", () => {
     const result = loadContentFromDirectory(CONTENT_DIR, {
       projectRoot: PROJECT_ROOT,
       publicDir: path.join(PROJECT_ROOT, "public"),
     });
-    expect(result.issues.filter((i) => i.severity === "error")).toEqual([]);
-    for (const w of result.issues) expect(w.message).toMatch(/Placeholder image not found/);
+    expect(result.issues).toEqual([]);
   });
 
   it("contains the ten initial personas plus the several-areas option", () => {
@@ -37,6 +36,13 @@ describe("seed content", () => {
       "multiple-areas",
     ]);
     expect(seed.personas.filter((p) => p.scope === "multiple").map((p) => p.id)).toEqual(["multiple-areas"]);
+  });
+
+  it("every scene has at least one navigation, information and solution hotspot", () => {
+    for (const scene of seed.scenes) {
+      const types = new Set(scene.hotspots.map((h) => h.type));
+      expect([...types].sort(), scene.id).toEqual(["information", "navigation", "solution"]);
+    }
   });
 
   it("contains the eight initial scenes with the campus as the single root", () => {

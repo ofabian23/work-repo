@@ -23,8 +23,8 @@
     {
       "id": "utilities-manifold-room",
       "type": "information",
-      "x": 28,
-      "y": 30,
+      "x": 50,
+      "y": 29.5,
       "label": {
         "es": "Cuarto de manifolds",
         "en": "Manifold room"
@@ -63,8 +63,8 @@
     {
       "id": "utilities-alarm-panel",
       "type": "information",
-      "x": 72,
-      "y": 26,
+      "x": 87,
+      "y": 38.5,
       "label": {
         "es": "Panel de alarmas",
         "en": "Alarm panel"
@@ -103,8 +103,8 @@
     {
       "id": "utilities-maintenance",
       "type": "solution",
-      "x": 46,
-      "y": 58,
+      "x": 52,
+      "y": 51.5,
       "label": {
         "es": "Mantenimiento planificado",
         "en": "Planned maintenance"
@@ -124,8 +124,8 @@
     {
       "id": "utilities-safety-training",
       "type": "solution",
-      "x": 70,
-      "y": 80,
+      "x": 27.5,
+      "y": 51.5,
       "label": {
         "es": "Capacitación en seguridad",
         "en": "Safety training"
@@ -141,6 +141,27 @@
       },
       "validationStatus": "assumed",
       "targetSolutionIds": ["training-operational-readiness"]
+    },
+    {
+      "id": "utilities-to-gas-plant",
+      "type": "navigation",
+      "x": 21.5,
+      "y": 40.5,
+      "label": {
+        "es": "Hacia la planta de gases",
+        "en": "To the gas plant"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la planta de gases medicinales",
+        "en": "Go to the medical gas plant"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "gas-plant"
     }
   ],
   "parentSceneId": "campus",

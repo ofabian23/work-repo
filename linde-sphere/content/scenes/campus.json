@@ -22,8 +22,8 @@
     {
       "src": "/assets/scenes/placeholder/campus-foreground.svg",
       "alt": {
-        "es": "Árboles y vehículos en primer plano.",
-        "en": "Trees and vehicles in the foreground."
+        "es": "Árboles en primer plano.",
+        "en": "Trees in the foreground."
       },
       "depth": 0.4,
       "assetStatus": "placeholder"
@@ -33,8 +33,8 @@
     {
       "id": "campus-to-emergency",
       "type": "navigation",
-      "x": 26,
-      "y": 30,
+      "x": 26.5,
+      "y": 29,
       "label": {
         "es": "Sala de emergencias",
         "en": "Emergency department"
@@ -54,8 +54,8 @@
     {
       "id": "campus-to-icu",
       "type": "navigation",
-      "x": 72,
-      "y": 24,
+      "x": 71,
+      "y": 15,
       "label": {
         "es": "Unidad de cuidado intensivo",
         "en": "Intensive care unit"
@@ -75,8 +75,8 @@
     {
       "id": "campus-to-operating-room",
       "type": "navigation",
-      "x": 50,
-      "y": 42,
+      "x": 51.5,
+      "y": 30.5,
       "label": {
         "es": "Sala de operaciones",
         "en": "Operating room"
@@ -96,8 +96,8 @@
     {
       "id": "campus-to-patient-care",
       "type": "navigation",
-      "x": 28,
-      "y": 56,
+      "x": 13,
+      "y": 39.5,
       "label": {
         "es": "Área de cuidado al paciente",
         "en": "Patient-care area"
@@ -117,8 +117,8 @@
     {
       "id": "campus-to-laboratory",
       "type": "navigation",
-      "x": 72,
-      "y": 52,
+      "x": 83.5,
+      "y": 45.5,
       "label": {
         "es": "Laboratorio",
         "en": "Laboratory"
@@ -138,8 +138,8 @@
     {
       "id": "campus-to-gas-plant",
       "type": "navigation",
-      "x": 22,
-      "y": 80,
+      "x": 11.5,
+      "y": 58.5,
       "label": {
         "es": "Planta de gases medicinales",
         "en": "Medical-gas plant"
@@ -159,8 +159,8 @@
     {
       "id": "campus-to-utilities",
       "type": "navigation",
-      "x": 72,
-      "y": 78,
+      "x": 63,
+      "y": 66.5,
       "label": {
         "es": "Área de utilidades e infraestructura",
         "en": "Utility and infrastructure area"
@@ -180,8 +180,8 @@
     {
       "id": "campus-expansion",
       "type": "information",
-      "x": 50,
-      "y": 66,
+      "x": 53,
+      "y": 63.5,
       "label": {
         "es": "Nuevas áreas",
         "en": "New areas"
@@ -216,6 +216,27 @@
           }
         ]
       }
+    },
+    {
+      "id": "campus-supply-network",
+      "type": "solution",
+      "x": 26,
+      "y": 57,
+      "label": {
+        "es": "Red de suministro",
+        "en": "Supply network"
+      },
+      "accessibleLabel": {
+        "es": "Solución: planificación del suministro de gases medicinales para el campus",
+        "en": "Solution: medical gas supply planning for the campus"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["supply-continuity", "facility-expansion"],
+        "solutionIds": ["medical-gas-supply-planning"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["medical-gas-supply-planning", "bulk-centralized-supply"]
     }
   ],
   "parentSceneId": null,

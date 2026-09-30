@@ -64,7 +64,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] `recommend()` with weights, exclusions, thresholds, tie-breakers, top-N, fallback; output validated against `RecommendationResultSchema`
 - [x] "Why this appeared" generation (ES/EN, quoted labels) + relevance template rendering with placeholder fallback
 - [x] Unit tests: five journey types, full persona/challenge/hotspot coverage, determinism and order independence, exclusions, thresholds, tie-breaks, caps, fallback, production mode
-- [ ] `hasMinimumInfo` / prompt selectors (Phase 5, with the recommendations UI)
+- [x] `hasMinimumInfo` (`recommendationThreshold`, Phase 6) · [ ] contextual prompt selector (Phase 5)
 - [ ] `lead-scoring.ts` (server-only) + `config/lead-scoring.json` + tests
 - **Done when:** lead scoring is implemented and tested; the engine suite already passes with no I/O in `src/domain`.
 
@@ -96,7 +96,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] Path screens are honest placeholders ("se completa en la próxima fase") → replaced in Phases 5–6
 - [ ] Anonymous session summary via `sendBeacon` on reset → Phase 7 (needs `/api/sessions`)
 - [ ] Fullscreen request on first touch → Phase 10 (kiosk hardening; Fully Kiosk Browser already runs fullscreen)
-- [ ] `hasMinimumInfo` / prompt selectors → Phase 5
+- [x] `hasMinimumInfo` → delivered in Phase 6 · [ ] contextual prompt → Phase 5
 - **Done when:** the shell runs at 1080×1920 and reset guarantees are verified by E2E. ✅
 
 ## Phase 5 — Entry paths and recommendations UI
@@ -119,15 +119,28 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [~] E2E: quick path to recommendations in both languages (path A done; path B pending)
 - **Done when:** AC-03, AC-04, AC-06, AC-07, AC-13, AC-15 pass.
 
-## Phase 6 — Hospital Explorer
+## Phase 6 — Hospital Explorer (scene and hotspot engine) ✅
 
-- [ ] Original placeholder SVG isometric art for 8 environments (`assetStatus: placeholder`)
-- [ ] Scene renderer (layered art box, normalized hotspot layer)
-- [ ] Hotspot kinds: navigate (zoom transition), inform (bottom-sheet panel), recommend (solutions + "Add to my interests")
-- [ ] Parallax/ambient motion; reduced-motion fallbacks
-- [ ] Signals: visited scenes, opened/engaged hotspots, explicit interests → live recommendation refinement
-- [ ] Campus hub navigation + back-to-campus control; recommendations reachable from every scene
-- [ ] E2E: discovery path changes recommendations; explore-only path reaches minimum info
+- [x] Original placeholder SVG art for the 8 environments + 2 foreground layers, generated from code on a
+      shared 1200 × 1500 art box (`npm run art:placeholders`, `--sync-content` writes hotspot anchors) (ADR-049)
+- [x] Every scene has ≥ 1 navigation, information and solution hotspot (content-check warning + seed test);
+      7 hotspots added (content v0.4.0)
+- [x] `SceneViewer`: fixed-ratio art box fitted to any viewport, background + foreground layers, hotspots by
+      percentage, overlap avoidance and label placement for the measured size, compact markers on small screens
+- [x] Hotspot kinds: navigation (zoom-in / zoom-out / pan illusion), information (bottom sheet), solution
+      (solutions + "Añadir a mis intereses"); labels always for main and wayfinding hotspots, on touch/focus for the rest
+- [x] Reduced motion (system setting or visitor option): instant scene swap, no pulse or settle motion
+- [x] Signals and events: scene entries, opened and engaged (panel open ≥ 6 s) hotspots, explicit interests
+- [x] Breadcrumbs, "Volver" (up one level; leaves the explorer from the campus), relevant areas highlighted
+      after the role journey
+- [x] "Ver mis recomendaciones" once the threshold is met (role, ≥ 1 challenge, ≥ 3 hotspots or ≥ 1 interest),
+      with progress text before that
+- [x] Developer calibration at `/dev/scenes` (tap → normalized x/y, copy), 404 in production unless
+      `ENABLE_SCENE_CALIBRATION=true` (proxy + page)
+- [x] Tests: layout/transition/threshold/gating units, viewer and explorer components, E2E responsive
+      positioning and overlap for all 8 scenes at kiosk/laptop/phone, navigation, panels, threshold, reduced
+      motion, calibration
+- [ ] Throttled-CPU transition check on the actual Android kiosk (Phase 10)
 - **Done when:** AC-05, AC-10, AC-11 pass; transitions are smooth in a throttled-CPU Playwright run.
 
 ## Phase 7 — Lead capture and persistence

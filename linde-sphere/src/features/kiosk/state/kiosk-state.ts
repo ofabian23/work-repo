@@ -53,6 +53,8 @@ export type ActiveSession = {
   recommendations: RecommendationResult | null;
   /** Anonymous, ordered interaction events (ADR-048). */
   events: SessionEvent[];
+  /** Scene shown in the hospital explorer (null until the explorer is first opened). */
+  currentSceneId: string | null;
   accessibility: AccessibilityPreferences;
 };
 
@@ -62,6 +64,8 @@ export type KioskState = {
   /** Increments on every reset so screens remount in their initial visual state. */
   resetCount: number;
   lastResetReason: ResetReason | null;
+  /** The screen shown before the current one (for "Volver" on shared screens such as recommendations). */
+  previousScreen: KioskScreen | null;
 };
 
 export const INITIAL_KIOSK_STATE: KioskState = {
@@ -69,6 +73,7 @@ export const INITIAL_KIOSK_STATE: KioskState = {
   session: null,
   resetCount: 0,
   lastResetReason: null,
+  previousScreen: null,
 };
 
 export const PATH_SCREENS: Record<EntryPath, KioskScreen> = {
@@ -135,6 +140,13 @@ function withEvent(session: ActiveSession, type: SessionEventType, targetId: str
 }
 
 export function kioskReducer(state: KioskState, action: KioskAction): KioskState {
+  const next = reduce(state, action);
+  // Remember where the visitor came from whenever the screen changes within a session.
+  if (next.session && next.screen !== state.screen) return { ...next, previousScreen: state.screen };
+  return next;
+}
+
+function reduce(state: KioskState, action: KioskAction): KioskState {
   switch (action.type) {
     case "START_SESSION":
       // A new session only starts from the attract screen with no active session.
@@ -150,6 +162,7 @@ export function kioskReducer(state: KioskState, action: KioskAction): KioskState
           otherChallengeSelected: false,
           recommendations: null,
           events: appendSessionEvent([], "session-started"),
+          currentSceneId: null,
           accessibility: { ...DEFAULT_ACCESSIBILITY },
         },
       };
@@ -221,15 +234,27 @@ export function kioskReducer(state: KioskState, action: KioskAction): KioskState
           s.facilityTypeId === action.facilityTypeId ? s : { ...s, facilityTypeId: action.facilityTypeId },
         (_, next) => (next.facilityTypeId ? ["facility-selected", next.facilityTypeId] : null),
       );
-    case "VISIT_SCENE":
-      return updateSignals(
-        state,
-        (s) =>
-          s.visitedSceneIds.includes(action.sceneId)
-            ? s
-            : { ...s, visitedSceneIds: appendUnique(s.visitedSceneIds, action.sceneId) },
-        () => ["scene-visited", action.sceneId],
-      );
+    case "VISIT_SCENE": {
+      // Entering a scene: it becomes the current one; the signal lists each scene once, while the event
+      // log records every entry (the visitor's path through the hospital).
+      const session = state.session;
+      if (session.currentSceneId === action.sceneId) return state;
+      return {
+        ...state,
+        session: withEvent(
+          {
+            ...session,
+            currentSceneId: action.sceneId,
+            signals: {
+              ...session.signals,
+              visitedSceneIds: appendUnique(session.signals.visitedSceneIds, action.sceneId),
+            },
+          },
+          "scene-visited",
+          action.sceneId,
+        ),
+      };
+    }
     case "OPEN_HOTSPOT":
       return updateSignals(
         state,

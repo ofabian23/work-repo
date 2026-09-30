@@ -192,12 +192,20 @@ describe("tailoring transition and next steps", () => {
     ]);
   });
 
-  it("exploring relevant areas lists the areas behind the recommendations and returns to the next steps", async () => {
+  it("exploring relevant areas opens the explorer with those areas highlighted, then returns to the next steps", async () => {
     renderJourney();
     const user = await walkRoleJourney("procurement-supply");
     await user.click(screen.getByTestId("next-explore-areas"));
-    expect(screen.getByTestId("relevant-areas")).toHaveTextContent("Planta de gases");
-    await user.click(screen.getByTestId("back-to-welcome"));
+    expect(screen.getByTestId("explorer-screen")).toHaveAttribute("data-scene", "campus");
+    const highlighted = screen
+      .getAllByRole("button")
+      .filter((b) => b.dataset.highlighted === "true")
+      .map((b) => b.dataset.testid);
+    expect(highlighted).toContain("hotspot-campus-to-gas-plant");
+    expect(screen.getByTestId("hotspot-campus-to-gas-plant")).toHaveAccessibleName(
+      "Ir a: Planta de gases medicinales · Relevante para usted",
+    );
+    await user.click(screen.getByTestId("explorer-back"));
     expect(screenId()).toBe("next-steps");
   });
 

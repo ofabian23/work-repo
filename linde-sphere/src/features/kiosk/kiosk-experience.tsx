@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { InactivityWarning } from "@/components/overlay/inactivity-warning";
 import type { PublicContentBundle } from "@/domain/content/visibility";
 import { recommend } from "@/domain/recommendations/engine";
+import { recommendationThreshold } from "@/domain/recommendations/threshold";
 import type { NextStep } from "@/domain/session/session-event";
-import { EMPTY_SIGNALS } from "@/domain/session/visitor-session";
+import { EMPTY_SIGNALS, type EntryPath } from "@/domain/session/visitor-session";
 import { appConfig } from "@/lib/config/app-config";
-import { useLanguage } from "@/lib/i18n/language-provider";
 import { useHydrated } from "@/lib/use-hydrated";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
+import { ExplorerScreen } from "../explorer/explorer-screen";
 import { labelsFor, relevantSceneIds, suggestedChallengeIds } from "./journey/journey-view";
 import { NextStepsScreen } from "./journey/next-steps-screen";
 import { PersonaScreen } from "./journey/persona-screen";
@@ -19,6 +21,7 @@ import { TailoringScreen } from "./journey/tailoring-screen";
 import { AttractScreen } from "./screens/attract-screen";
 import { PathScreen } from "./screens/path-screen";
 import { WelcomeScreen } from "./screens/welcome-screen";
+import type { JourneyScreen } from "./state/kiosk-state";
 import { useKioskSession } from "./state/kiosk-session-provider";
 import { useIdleTimer, type IdleConfig } from "./state/use-idle-timer";
 
@@ -38,7 +41,6 @@ export function KioskExperience({
   tailoringMs?: number;
 }) {
   const { state, dispatch, startSession, choosePath, goToWelcome, reset } = useKioskSession();
-  const { localize, t } = useLanguage();
   const ready = useHydrated();
   const session = state.session;
   const signals = session?.signals ?? EMPTY_SIGNALS;
@@ -63,6 +65,33 @@ export function KioskExperience({
     if (step === "view-recommendations") commitRecommendations();
     dispatch({ type: "CHOOSE_NEXT_STEP", step });
   };
+  const rootSceneId = content.scenes.find((s) => s.parentSceneId === null)?.id ?? null;
+  /** The explorer opens on the campus the first time; later it reopens where the visitor left it. */
+  const enterExplorer = () => {
+    if (!session?.currentSceneId && rootSceneId) dispatch({ type: "VISIT_SCENE", sceneId: rootSceneId });
+  };
+  const choose = (path: EntryPath) => {
+    choosePath(path);
+    if (path === "explore") enterExplorer();
+  };
+  const chooseStep = (step: NextStep) => {
+    chooseNextStep(step);
+    if (step === "explore-areas") enterExplorer();
+  };
+  const threshold = recommendationThreshold(signals);
+  // Stable identity: the explorer's engagement timer depends on it.
+  const engageHotspot = useCallback(
+    (hotspotId: string) => dispatch({ type: "ENGAGE_HOTSPOT", hotspotId }),
+    [dispatch],
+  );
+  const reducedMotion = useReducedMotion(session?.accessibility.reduceMotion ?? false);
+  // Shared screens return to where the visitor came from; after a refine, to the journey's hub.
+  const recommendationsBack = (): JourneyScreen =>
+    state.previousScreen === "explore" || state.previousScreen === "next-steps"
+      ? state.previousScreen
+      : persona
+        ? "next-steps"
+        : "explore";
   const toggleChallenge = (challengeId: string) =>
     dispatch({ type: "TOGGLE_CHALLENGE", challengeId, max: maxChallenges });
   const toggleOther = () => dispatch({ type: "TOGGLE_OTHER_CHALLENGE" });
@@ -87,7 +116,7 @@ export function KioskExperience({
       screen = <AttractScreen onStart={startSession} {...attractTimings} />;
       break;
     case "welcome":
-      screen = <WelcomeScreen onChoosePath={choosePath} privacyNotice={content.consent.privacyNotice} />;
+      screen = <WelcomeScreen onChoosePath={choose} privacyNotice={content.consent.privacyNotice} />;
       break;
     case "role":
       screen = (
@@ -134,7 +163,7 @@ export function KioskExperience({
           recommendationCount={preliminary?.items.length ?? 0}
           areaLabels={labelsFor(areaIds, content.scenes)}
           maxChallenges={maxChallenges}
-          onChoose={chooseNextStep}
+          onChoose={chooseStep}
           onChangeRole={() => dispatch({ type: "GO_TO", screen: "role" })}
         />
       );
@@ -144,9 +173,9 @@ export function KioskExperience({
         <RecommendationsScreen
           result={preliminary}
           content={content}
-          onRefine={() => chooseNextStep("refine-challenges")}
-          onExplore={() => chooseNextStep("explore-areas")}
-          onBack={() => dispatch({ type: "GO_TO", screen: "next-steps" })}
+          onRefine={() => chooseStep("refine-challenges")}
+          onExplore={() => chooseStep("explore-areas")}
+          onBack={() => dispatch({ type: "GO_TO", screen: recommendationsBack() })}
         />
       );
       break;
@@ -163,26 +192,36 @@ export function KioskExperience({
             commitRecommendations();
             dispatch({ type: "GO_TO", screen: "recommendations" });
           }}
-          onBack={() => dispatch({ type: "GO_TO", screen: "next-steps" })}
+          onBack={() => dispatch({ type: "GO_TO", screen: persona ? "next-steps" : "recommendations" })}
         />
       );
       break;
     case "challenges":
       screen = <PathScreen path="challenge" onBack={goToWelcome} />;
       break;
-    case "explore": {
-      // Once recommendations exist, it lists the areas behind them and returns to the next steps.
-      const fromRole = session?.recommendations != null;
-      screen = (
-        <PathScreen
-          path="explore"
-          relevantAreas={fromRole ? labelsFor(areaIds, content.scenes).map(localize) : []}
-          backLabel={fromRole ? t("journey.back") : undefined}
-          onBack={fromRole ? () => dispatch({ type: "GO_TO", screen: "next-steps" }) : goToWelcome}
+    case "explore":
+      screen = rootSceneId && (
+        <ExplorerScreen
+          content={content}
+          sceneId={session?.currentSceneId ?? rootSceneId}
+          visitedHotspotIds={signals.openedHotspotIds}
+          interestIds={signals.explicitInterestIds}
+          highlightedSceneIds={session?.recommendations || persona ? areaIds : []}
+          threshold={threshold}
+          reducedMotion={reducedMotion}
+          engagementMs={appConfig.kiosk.hotspotEngagementMs}
+          onNavigate={(sceneId) => dispatch({ type: "VISIT_SCENE", sceneId })}
+          onOpenHotspot={(hotspotId) => dispatch({ type: "OPEN_HOTSPOT", hotspotId })}
+          onEngageHotspot={engageHotspot}
+          onToggleInterest={(solutionId) => dispatch({ type: "TOGGLE_INTEREST", solutionId })}
+          onViewRecommendations={() => {
+            commitRecommendations();
+            dispatch({ type: "GO_TO", screen: "recommendations" });
+          }}
+          onExit={() => (persona ? dispatch({ type: "GO_TO", screen: "next-steps" }) : goToWelcome())}
         />
       );
       break;
-    }
   }
 
   return (

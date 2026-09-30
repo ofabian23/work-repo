@@ -88,6 +88,38 @@ describe("session events written by the reducer", () => {
     expect(SessionEventListSchema.safeParse(state.session!.events).success).toBe(true);
   });
 
+  it("records every scene entry, keeps the current scene and lists each visited scene once", () => {
+    const state = run([
+      start,
+      { type: "VISIT_SCENE", sceneId: "campus" },
+      { type: "VISIT_SCENE", sceneId: "icu" },
+      { type: "VISIT_SCENE", sceneId: "campus" },
+      { type: "OPEN_HOTSPOT", hotspotId: "campus-expansion" },
+      { type: "ENGAGE_HOTSPOT", hotspotId: "campus-expansion" },
+      { type: "TOGGLE_INTEREST", solutionId: "medical-gas-supply-planning" },
+    ]);
+    expect(state.session!.currentSceneId).toBe("campus");
+    expect(state.session!.signals.visitedSceneIds).toEqual(["campus", "icu"]);
+    expect(events(state).slice(1)).toEqual([
+      ["scene-visited", "campus"],
+      ["scene-visited", "icu"],
+      ["scene-visited", "campus"],
+      ["hotspot-opened", "campus-expansion"],
+      ["hotspot-engaged", "campus-expansion"],
+      ["interest-added", "medical-gas-supply-planning"],
+    ]);
+  });
+
+  it("remembers the previous screen for shared screens' back navigation", () => {
+    const state = run([
+      start,
+      { type: "CHOOSE_PATH", path: "explore" },
+      { type: "GO_TO", screen: "recommendations" },
+    ]);
+    expect(state.previousScreen).toBe("explore");
+    expect(run([{ type: "RESET", reason: "explicit" }], state).previousScreen).toBeNull();
+  });
+
   it("does not repeat an event when nothing changed", () => {
     const state = run([
       start,

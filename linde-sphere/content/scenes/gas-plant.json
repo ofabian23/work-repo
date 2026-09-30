@@ -22,8 +22,8 @@
     {
       "src": "/assets/scenes/placeholder/gas-plant-foreground.svg",
       "alt": {
-        "es": "Cerca y señalización en primer plano.",
-        "en": "Fence and signage in the foreground."
+        "es": "Cerca y árboles en primer plano.",
+        "en": "Fence and trees in the foreground."
       },
       "depth": 0.35,
       "assetStatus": "placeholder"
@@ -33,7 +33,7 @@
     {
       "id": "gas-plant-bulk-tank",
       "type": "solution",
-      "x": 40,
+      "x": 56.5,
       "y": 36,
       "width": 24,
       "height": 18,
@@ -56,8 +56,8 @@
     {
       "id": "gas-plant-backup",
       "type": "solution",
-      "x": 72,
-      "y": 64,
+      "x": 51.5,
+      "y": 58.5,
       "label": {
         "es": "Suministro de respaldo",
         "en": "Backup supply"
@@ -77,8 +77,8 @@
     {
       "id": "gas-plant-to-utilities",
       "type": "navigation",
-      "x": 18,
-      "y": 82,
+      "x": 52,
+      "y": 79,
       "label": {
         "es": "Área de utilidades e infraestructura",
         "en": "Utility and infrastructure area"
@@ -94,6 +94,46 @@
       },
       "validationStatus": "assumed",
       "targetSceneId": "utilities"
+    },
+    {
+      "id": "gas-plant-perimeter",
+      "type": "information",
+      "x": 20.5,
+      "y": 47.5,
+      "label": {
+        "es": "Zona restringida",
+        "en": "Restricted area"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre el perímetro de la planta de gases",
+        "en": "Information about the gas plant perimeter"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["patient-staff-safety", "compliance-readiness"],
+        "solutionIds": ["training-operational-readiness"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Perímetro de la planta",
+          "en": "Plant perimeter"
+        },
+        "body": {
+          "es": "El área de almacenamiento de gases suele tener acceso controlado, señalización visible y distancias de seguridad definidas por el equipo de instalaciones.",
+          "en": "Gas storage areas usually have controlled access, visible signage and safety distances defined by the facilities team."
+        },
+        "bullets": [
+          {
+            "es": "Acceso controlado",
+            "en": "Controlled access"
+          },
+          {
+            "es": "Señalización visible",
+            "en": "Visible signage"
+          }
+        ]
+      }
     }
   ],
   "parentSceneId": "campus",
