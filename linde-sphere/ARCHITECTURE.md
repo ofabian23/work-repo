@@ -811,13 +811,18 @@ Allowed placeholders: `{persona}`, `{challenges}`, `{facilityType}`, `{scenes}`,
 
 ---
 
-## 8. Lead scoring (internal, server-only)
+## 8. Lead scoring (internal, server-only) ✅
 
-- Module `src/server/lead-scoring.ts` begins with `import "server-only"`; config in
-  `config/lead-scoring.json` is imported only there, so it cannot be bundled into client code.
+Implemented in the final audit (ADR-061).
+
+- Module `src/server/leads/lead-scoring.ts` begins with `import "server-only"`. Its weights live in the
+  module (`LEAD_SCORING`, version `LEAD_SCORING_VERSION`, marked as assumptions pending sales
+  validation), so they cannot be bundled into client code. `security:bundle` also scans for them.
 - Inputs: persona (decision-influence weight), number of challenges, explicit interests, scenes/hotspots
   engaged, facility type, follow-up consent, free-mail domain flag.
-- Output: `{ score: 0–100, tier: "A" | "B" | "C", factors: [{ code, points }] }`, stored on `Lead`.
+- Output: `{ score: 0–100, tier: "A" | "B" | "C", factors: [{ code, points }], version }`, stored on
+  `Lead` (`leadScore`, `leadTier`, `leadScoreFactors`, `leadScoringVersion`, with database CHECKs on range
+  and tier).
 - **Never** returned by `/api/leads`, rendered in the kiosk, or included in the report. Visible only in
   admin views and CSV export. A test asserts the API response schema excludes these fields (AC-16).
 

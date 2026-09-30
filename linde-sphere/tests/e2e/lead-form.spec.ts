@@ -144,6 +144,19 @@ test.describe("lead form and consent", () => {
     await expect(page.getByTestId("lead-result")).toBeVisible();
   });
 
+  test("a very long work email wraps on the review step instead of widening the screen", async ({ page }) => {
+    await openForm(page);
+    const long = `maria.fernanda.rivera-oneill.${Date.now()}@hospitalmetropolitanodesanjuan.example.test`;
+    await fillContact(page, long);
+    await page.getByTestId("lead-continue").click();
+    await tapConsent(page, "consent-report");
+    await page.getByTestId("lead-continue").click();
+    await expect(page.getByTestId("review-email")).toHaveText(long);
+    await expectNoHorizontalOverflow(page);
+    const box = (await page.getByTestId("review-email").boundingBox())!;
+    expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  });
+
   test("when the email cannot be sent, the visitor is told the request was saved", async ({ page }) => {
     await page.route("**/api/leads/status/*", (route) =>
       route.fulfill({

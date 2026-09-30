@@ -50,15 +50,16 @@ patient-like field is ever added to the database schema or the submission.
 
 ### 1.3 Technical and derived data
 
-| Data                                                     | Purpose                                              |
-| -------------------------------------------------------- | ---------------------------------------------------- |
-| Request token (idempotency key) and payload fingerprint  | Prevent duplicate leads from double taps and retries |
-| SHA-256 hash of the status token                         | Let the kiosk check delivery status without identity |
-| Server-recomputed recommendations with relevance words   | Report content and sales context (never a score)     |
-| Rendered report (subject, HTML, text)                    | Retries send exactly what was promised               |
-| Email delivery status, attempts, timestamps, error codes | Delivery and retry; codes only, never provider text  |
-| Export timestamp (`exportedAt`)                          | Track which leads were handed to sales               |
-| Consent text version, content version                    | Traceability of what the visitor saw                 |
+| Data                                                                      | Purpose                                                                                                                                                                           |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Request token (idempotency key) and payload fingerprint                   | Prevent duplicate leads from double taps and retries                                                                                                                              |
+| SHA-256 hash of the status token                                          | Let the kiosk check delivery status without identity                                                                                                                              |
+| Server-recomputed recommendations with relevance words                    | Report content and sales context (never a score)                                                                                                                                  |
+| Rendered report (subject, HTML, text)                                     | Retries send exactly what was promised                                                                                                                                            |
+| Email delivery status, attempts, timestamps, error codes                  | Delivery and retry; codes only, never provider text                                                                                                                               |
+| Export timestamp (`exportedAt`)                                           | Track which leads were handed to sales                                                                                                                                            |
+| Consent text version, content version                                     | Traceability of what the visitor saw                                                                                                                                              |
+| Internal lead score (0–100), tier A/B/C, factor codes and weights version | Order sales follow-up; server and admin/CSV only, never shown to the visitor or in the report (AC-16). Weights are assumptions — **[Linde Privacy] [Linde Sales]** approval (A20) |
 
 **Not recorded:** IP addresses (not stored or logged by the application), device identifiers, cookies on
 visitor screens, analytics or tracking of any kind.
@@ -190,27 +191,28 @@ confirm:
 
 ## 9. Unresolved approvals
 
-| #   | Item                                                                                    | Owner                                 | Blocks                      |
-| --- | --------------------------------------------------------------------------------------- | ------------------------------------- | --------------------------- |
-| A1  | Final consent wording (ES/EN), privacy notice with controller and contact               | **[Linde Legal] [Linde Privacy]**     | Collecting real leads       |
-| A2  | Whether storing the consent version (not exact text) is sufficient                      | **[Linde Legal]**                     | Collecting real leads       |
-| A3  | Retention periods and deletion method for every row in §6; data-subject request process | **[Linde Privacy] [Linde Legal]**     | Post-event handling         |
-| A4  | Plain HTTP on an isolated hotspot vs. local HTTPS certificate                           | **[Linde Security] [Linde IT]**       | Event deployment            |
-| A5  | Laptop hardening: disk encryption, accounts, screen lock, custody                       | **[Linde IT]**                        | Event deployment            |
-| A6  | Kiosk browser lockdown configuration on the tablet                                      | **[Linde IT]**                        | Event deployment            |
-| A7  | SMTP relay, sender address, SPF/DKIM, dedicated account                                 | **[Linde IT]**                        | Real email delivery         |
-| A8  | MVP admin protection acceptable for the event; production authentication plan           | **[Linde Security]**                  | Enabling admin at the event |
-| A9  | Who may handle exports/backups; approved transfer channel to sales/CRM                  | **[Linde Privacy] [Linde IT]**        | Handing leads to sales      |
-| A10 | Follow-up only with consenting visitors (sales handling rule)                           | **[Linde Privacy] [Linde Legal]**     | Sales follow-up             |
-| A11 | Report copy, disclaimer and footer wording; sales contact details                       | **[Linde Marketing] [Linde Legal]**   | Production mode             |
-| A12 | "Linde Sphere" name and brand usage                                                     | **[Linde Marketing]**                 | Production mode             |
-| A13 | Validated Puerto Rico solution catalog and approved resources                           | **[Linde Marketing]** (with PR sales) | Production mode             |
-| A14 | Log capture and retention on the laptop                                                 | **[Linde IT] [Linde Privacy]**        | Event deployment            |
-| A15 | Security review of this MVP before any use beyond the convention                        | **[Linde Security]**                  | Any wider deployment        |
-| A16 | Network for the event: Windows Mobile Hotspot or venue network; which devices may join  | **[Linde IT] [Linde Security]**       | Event deployment            |
-| A17 | Inbound firewall rule for Node.js on the server port (profile, scope)                   | **[Linde IT] [Linde Security]**       | Kiosk reaching the laptop   |
-| A18 | Running the launch scripts: PowerShell execution policy or script signing               | **[Linde IT]**                        | Using the launch scripts    |
-| A19 | Laptop power, sleep and lid settings for event use; Node.js installation                | **[Linde IT]**                        | Event deployment            |
+| #   | Item                                                                                                                                                   | Owner                                        | Blocks                      |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- | --------------------------- |
+| A1  | Final consent wording (ES/EN), privacy notice with controller and contact                                                                              | **[Linde Legal] [Linde Privacy]**            | Collecting real leads       |
+| A2  | Whether storing the consent version (not exact text) is sufficient                                                                                     | **[Linde Legal]**                            | Collecting real leads       |
+| A3  | Retention periods and deletion method for every row in §6; data-subject request process                                                                | **[Linde Privacy] [Linde Legal]**            | Post-event handling         |
+| A4  | Plain HTTP on an isolated hotspot vs. local HTTPS certificate                                                                                          | **[Linde Security] [Linde IT]**              | Event deployment            |
+| A5  | Laptop hardening: disk encryption, accounts, screen lock, custody                                                                                      | **[Linde IT]**                               | Event deployment            |
+| A6  | Kiosk browser lockdown configuration on the tablet                                                                                                     | **[Linde IT]**                               | Event deployment            |
+| A7  | SMTP relay, sender address, SPF/DKIM, dedicated account                                                                                                | **[Linde IT]**                               | Real email delivery         |
+| A8  | MVP admin protection acceptable for the event; production authentication plan                                                                          | **[Linde Security]**                         | Enabling admin at the event |
+| A9  | Who may handle exports/backups; approved transfer channel to sales/CRM                                                                                 | **[Linde Privacy] [Linde IT]**               | Handing leads to sales      |
+| A10 | Follow-up only with consenting visitors (sales handling rule)                                                                                          | **[Linde Privacy] [Linde Legal]**            | Sales follow-up             |
+| A11 | Report copy, disclaimer and footer wording; sales contact details                                                                                      | **[Linde Marketing] [Linde Legal]**          | Production mode             |
+| A12 | "Linde Sphere" name and brand usage                                                                                                                    | **[Linde Marketing]**                        | Production mode             |
+| A13 | Validated Puerto Rico solution catalog and approved resources                                                                                          | **[Linde Marketing]** (with PR sales)        | Production mode             |
+| A14 | Log capture and retention on the laptop                                                                                                                | **[Linde IT] [Linde Privacy]**               | Event deployment            |
+| A15 | Security review of this MVP before any use beyond the convention                                                                                       | **[Linde Security]**                         | Any wider deployment        |
+| A16 | Network for the event: Windows Mobile Hotspot or venue network; which devices may join                                                                 | **[Linde IT] [Linde Security]**              | Event deployment            |
+| A17 | Inbound firewall rule for Node.js on the server port (profile, scope)                                                                                  | **[Linde IT] [Linde Security]**              | Kiosk reaching the laptop   |
+| A18 | Running the launch scripts: PowerShell execution policy or script signing                                                                              | **[Linde IT]**                               | Using the launch scripts    |
+| A19 | Laptop power, sleep and lid settings for event use; Node.js installation                                                                               | **[Linde IT]**                               | Event deployment            |
+| A20 | Internal lead scoring of business contacts: whether it is acceptable (profiling notice), and the weights (role, consent, engagement, personal mailbox) | **[Linde Privacy] [Linde Legal]** + PR sales | Using scores for follow-up  |
 
 ## 10. Residual risks (accepted for the MVP, pending review)
 

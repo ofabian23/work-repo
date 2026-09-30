@@ -114,6 +114,14 @@ model Lead {
   contentVersion     String
   /// Set by the local administration utility when the lead was exported (ADR-056). Never cleared.
   exportedAt         DateTime?
+  /// Internal commercial score 0–100 (server-only, never sent to the kiosk or the report; PROJECT_BRIEF M12).
+  leadScore          Int        @default(0)
+  /// A, B or C, derived from leadScore.
+  leadTier           String     @default("C")
+  /// JSON array of { code, points }: why the score is what it is.
+  leadScoreFactors   String     @default("[]")
+  /// Weights version used (assumed until sales validates them).
+  leadScoringVersion String     @default("none")
 
   session         VisitorSessionSummary @relation(fields: [sessionId], references: [sessionId])
   interests       LeadInterest[]

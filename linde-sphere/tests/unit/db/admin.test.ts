@@ -210,7 +210,9 @@ describe("admin exports", () => {
     expect([leads, marked]).toEqual([1, 1]);
     const [header, row] = csv.replace(/^﻿/, "").trimEnd().split("\r\n");
     expect(header).toBe(LEAD_CSV_COLUMNS.join(","));
+    expect(header).toContain("internal_score,internal_tier,score_factors"); // AC-34
     expect(row).toContain(b.id);
+    expect(row).toMatch(/,\d{1,3},[ABC],"?\[/); // score, tier, factors JSON
     expect(row).toContain(",'-Rivera,");
     expect(row).toContain(`"'+Hospital (Norte), Inc."`);
     expect(row).toContain("'+1 787 555 0100");

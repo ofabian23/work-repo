@@ -16,6 +16,9 @@ export type AdminLeadRow = {
   status: string;
   followUpConsent: boolean;
   exportedAt: Date | null;
+  /** Internal commercial score and tier (server-only; PROJECT_BRIEF M12). */
+  leadScore: number;
+  leadTier: string;
   delivery: { id: string; status: string; attempts: number; errorCode: string | null } | null;
 };
 
@@ -28,6 +31,8 @@ export type AdminLeadDetail = AdminLeadRow & {
   reportConsent: boolean;
   consentTextVersion: string;
   contentVersion: string;
+  leadScoreFactors: { code: string; points: number }[];
+  leadScoringVersion: string;
   interests: { category: string; value: string; relevance: string | null; sourceType: string }[];
   deliveries: {
     id: string;
@@ -106,6 +111,8 @@ export function createAdminRepository(db: Database) {
             status: true,
             followUpConsent: true,
             exportedAt: true,
+            leadScore: true,
+            leadTier: true,
             ...latestDelivery,
           },
         }),
@@ -151,6 +158,10 @@ export function createAdminRepository(db: Database) {
         consentTextVersion: lead.consentTextVersion,
         contentVersion: lead.contentVersion,
         exportedAt: lead.exportedAt,
+        leadScore: lead.leadScore,
+        leadTier: lead.leadTier,
+        leadScoreFactors: parseFactors(lead.leadScoreFactors),
+        leadScoringVersion: lead.leadScoringVersion,
         interests: lead.interests.map(({ category, value, relevance, sourceType }) => ({
           category,
           value,
@@ -209,3 +220,18 @@ export function createAdminRepository(db: Database) {
 }
 
 export type AdminRepository = ReturnType<typeof createAdminRepository>;
+
+/** Stored score factors (JSON written by the server itself); anything unexpected reads as none. */
+function parseFactors(json: string): { code: string; points: number }[] {
+  try {
+    const value: unknown = JSON.parse(json);
+    return Array.isArray(value)
+      ? value.filter(
+          (f): f is { code: string; points: number } =>
+            typeof f?.code === "string" && typeof f?.points === "number",
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}

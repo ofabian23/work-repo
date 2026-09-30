@@ -14,6 +14,8 @@ import { recommendationEvidence } from "@/domain/recommendations/recommendation-
 import type { SessionSignals } from "@/domain/session/visitor-session";
 import type { Logger } from "@/server/logging/logger";
 import { buildReportPayload } from "@/server/report/build-report-payload";
+import { RecommendationReadiness } from "@/domain/recommendations/recommendation-readiness";
+import { scoreLead } from "./lead-scoring";
 import { renderReport } from "@/server/report/render-report";
 import { sanitizeEmailError } from "./email-error";
 import {
@@ -250,6 +252,20 @@ function buildSubmission(
     }),
   );
 
+  // Internal commercial score (server-only): from the same known signals and the form answers.
+  const formChallenges = s.selectedInterestIds.filter((id) => challengeIds.has(id));
+  const formSolutions = s.selectedInterestIds.filter((id) => !challengeIds.has(id));
+  const score = scoreLead({
+    roleId: s.jobFunctionId,
+    challengeCount: new Set([...signals.challengeIds, ...formChallenges]).size,
+    explicitInterestCount: new Set([...signals.explicitInterestIds, ...formSolutions]).size,
+    meaningfulHotspots: RecommendationReadiness.meaningfulInteractions(signals, bundle.scenes).hotspotIds
+      .length,
+    facilityTypeKnown: signals.facilityTypeId !== null,
+    followUpConsent: s.consents.salesFollowUp,
+    email: s.email,
+  });
+
   const items = (kind: NewSessionItem["kind"], values: string[]) =>
     values.map((value, position) => ({ kind, value, position }));
 
@@ -272,6 +288,10 @@ function buildSubmission(
       requestFingerprint: ctx.fingerprint,
       statusTokenHash: hashStatusToken(deriveStatusToken(s.idempotencyKey, ctx.leadId)),
       contentVersion: bundle.manifest.contentVersion,
+      leadScore: score.score,
+      leadTier: score.tier,
+      leadScoreFactors: JSON.stringify(score.factors),
+      leadScoringVersion: score.version,
     },
     interests: [...interests.values()],
     session: {

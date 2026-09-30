@@ -85,7 +85,7 @@ export function CompletionScreen({
       <p
         role="status"
         data-testid="delivery-status"
-        className="text-lead text-ink-muted max-w-2xl text-pretty"
+        className="text-lead text-ink-muted max-w-2xl text-pretty [overflow-wrap:anywhere]"
       >
         {t(`leadForm.result.${delivery}Body`, { email: maskedEmail })}
       </p>

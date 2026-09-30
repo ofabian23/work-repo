@@ -1167,3 +1167,32 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
     are recorded (PRIVACY_REVIEW A1, A11, A13).
   - Answers are recorded by the project team in the content files. There is no in-browser editing or CSV
     import yet, so returned worksheets are applied by hand and checked by `content:check`.
+
+## ADR-061 — Lead scoring implemented to close an MVP acceptance gap; additive migration keeps constraints
+
+- **Date:** 2026-09-30 · **Status:** Accepted (implements ADR-009)
+- **Context:**
+  - The final audit found requirement M12 (internal lead scoring) and acceptance criterion AC-34 (internal
+    score in the CSV export) unmet: scoring had been deferred in Phase 7a.
+  - The rule for the audit is to add scope only to fix an acceptance failure, and this is one.
+- **Decision:**
+  - **Scoring:** a server-only `scoreLead()` (`src/server/leads/lead-scoring.ts`) computes a score from
+    signals the server already validates:
+    - role;
+    - distinct challenges and explicit interests, each capped;
+    - meaningful hotspots, capped;
+    - facility type known;
+    - follow-up consent;
+    - personal mailbox domain (negative).
+  - **Result:** a score 0–100, tier A ≥ 60, B ≥ 35, otherwise C, and a list of factor codes and points.
+    The weights are versioned (`0.1.0-assumed`) and are a project-team assumption pending sales validation.
+  - **Storage:** saved on `Lead` at submission, in the same transaction. Migration 4 is hand-written with
+    `ADD COLUMN`, because Prisma's generated table redefinition would have dropped the hand-added CHECK
+    constraints on `Lead`. It adds CHECKs for score range and tier; `prisma migrate diff` shows no drift.
+  - **Visibility:** shown in the admin lead list and detail and in the leads CSV (`internal_score`,
+    `internal_tier`, `score_factors`). Never in the kiosk API response or the report (tests), nor in the
+    client bundle (`security:bundle` marker).
+- **Consequences:**
+  - AC-16 and AC-34 are met.
+  - Scoring business contacts needs privacy/legal and sales approval before anyone relies on it
+    (PRIVACY_REVIEW A20).

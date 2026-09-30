@@ -41,6 +41,10 @@ export const LEAD_CSV_COLUMNS = [
   "explicit_interests",
   "form_interests",
   "recommended_solutions",
+  // Internal commercial score (PROJECT_BRIEF M12, AC-34): weights are assumptions pending sales validation.
+  "internal_score",
+  "internal_tier",
+  "score_factors",
 ] as const;
 
 export const INTEREST_CSV_COLUMNS = [
@@ -137,6 +141,9 @@ export function createAdminService({
               values(lead, ["explicit_interest"]),
               values(lead, ["form_selection"]),
               values(lead, ["recommendation"]),
+              lead.leadScore,
+              lead.leadTier,
+              lead.leadScoreFactors,
             ])
           : leads.flatMap((lead) =>
               lead.interests.map((i) => [

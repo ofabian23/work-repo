@@ -42,6 +42,12 @@ export type NewSubmission = {
     requestFingerprint: string;
     statusTokenHash: string;
     contentVersion: string;
+    /** Internal commercial score (server-only; admin and CSV export only). */
+    leadScore: number;
+    leadTier: "A" | "B" | "C";
+    /** JSON array of { code, points }. */
+    leadScoreFactors: string;
+    leadScoringVersion: string;
   };
   interests: NewLeadInterest[];
   session: {

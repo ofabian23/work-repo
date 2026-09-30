@@ -28,6 +28,10 @@ const MARKERS: { label: string; pattern: RegExp }[] = [
   { label: "SMTP library", pattern: /nodemailer/ },
   { label: "status-token secret derivation", pattern: /lead-status:v1:/ },
   { label: "server environment schema", pattern: /EMAIL_WORKER_INTERVAL_MS|ADMIN_SESSION_MINUTES/ },
+  {
+    label: "internal lead scoring (AC-16)",
+    pattern: /personal_email_domain|leadScoreFactors|leadScoringVersion/,
+  },
 ];
 const SECRET_VALUES = ["SMTP_PASS", "SMTP_USER", "ADMIN_PASSPHRASE_HASH"]
   .map((name) => ({ name, value: process.env[name]?.trim() }))

@@ -71,6 +71,15 @@ export default async function AdminLeadPage({
           {row("Idioma", lead.preferredLanguage === "es" ? "Español" : "English")}
           {row("Permiso para el resumen", lead.reportConsent ? "Sí" : "No")}
           {row("Permiso de seguimiento", lead.followUpConsent ? "Sí" : "No", "admin-lead-follow-up")}
+          {row(
+            "Puntaje interno (solo uso interno)",
+            `${lead.leadTier} · ${lead.leadScore}/100 — ${
+              lead.leadScoreFactors
+                .map((f) => `${f.code} ${f.points > 0 ? "+" : ""}${f.points}`)
+                .join(", ") || "sin factores"
+            } (pesos ${lead.leadScoringVersion}, pendientes de validación de ventas)`,
+            "admin-lead-score",
+          )}
           {row("Versión del consentimiento", lead.consentTextVersion)}
           {row("Estado", LEAD_STATUS_LABELS[lead.status] ?? lead.status)}
           {row("Recibido", formatDate(lead.createdAt))}

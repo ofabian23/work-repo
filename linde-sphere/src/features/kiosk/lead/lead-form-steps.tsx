@@ -296,7 +296,12 @@ export function ReviewStep({
   const row = (label: string, value: ReactNode, testId: string) => (
     <div className="flex flex-col gap-1 sm:flex-row sm:gap-6">
       <dt className="text-label text-ink-muted font-semibold sm:w-64 sm:shrink-0">{label}</dt>
-      <dd className="text-lead text-ink break-words" data-testid={testId} data-selectable>
+      {/* min-w-0 + overflow-wrap:anywhere: a long email address wraps instead of widening the page. */}
+      <dd
+        className="text-lead text-ink min-w-0 flex-1 [overflow-wrap:anywhere]"
+        data-testid={testId}
+        data-selectable
+      >
         {value}
       </dd>
     </div>

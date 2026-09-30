@@ -3,9 +3,11 @@
 Interactive healthcare discovery experience for a portrait touchscreen kiosk at a healthcare convention
 in Puerto Rico (internal codename _Mockup Vision_).
 
-**Status:** foundation, content model, convention seed content, recommendation engine, touchscreen design
-system and the kiosk shell (attract → welcome, session store, inactivity reset) are implemented (Phases 1–4).
-The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md](./TASKS.md).
+**Status:** MVP feature-complete. The three journeys, hospital explorer, recommendations, lead capture,
+report email with retries, session reset, local admin, sales validation and the Windows launch scripts are
+built and tested. All content is still a demonstrative assumption pending Puerto Rico validation.
+
+Release status, run instructions and open approvals are in [RELEASE_READINESS.md](./RELEASE_READINESS.md).
 
 ## Documentation
 
@@ -19,6 +21,7 @@ The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md
 | [PRIVACY_REVIEW.md](./PRIVACY_REVIEW.md)                             | Data, storage, transmission, consent, open approvals                 |
 | [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md)             | How the Puerto Rico sales team reviews and approves content          |
 | [CONVENTION_STARTUP_CHECKLIST.md](./CONVENTION_STARTUP_CHECKLIST.md) | Daily startup, test and shutdown checklist at the booth              |
+| [RELEASE_READINESS.md](./RELEASE_READINESS.md)                       | Final audit, run instructions, open approvals, go/no-go              |
 | [TESTING.md](./TESTING.md)                                           | How the app is tested; requirement-to-test map; what cannot run here |
 | [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md)                       | Physical-device test of the Android kiosk                            |
 
@@ -309,12 +312,12 @@ leads to `POST /api/leads`; the only other lead route returns a delivery status 
 
 - `npm run db:backup` writes a consistent copy to `data/backups/linde-sphere-<timestamp>.db` using SQLite's
   online backup, so it is safe while the kiosk is running. Use `-- --out <path>` to choose the file.
-- Do not copy `linde-sphere.db` by hand while the server runs: recent writes may still be in the
-  `-wal` file. Stop the server first, or use `db:backup`.
+- Do not copy `linde-sphere.db` by hand while the server runs: a copy taken mid-write can be inconsistent.
+  Stop the server first, or use `db:backup`.
 - Suggested event routine: back up at the end of each event day and before any update, to an
   **encrypted** USB drive or approved company storage. Keep at least the last two backups.
 - Restore: stop the server, replace `data/linde-sphere.db` with the backup file (delete any
-  `linde-sphere.db-wal` / `-shm` files next to it), run `npm run db:deploy`, then start the server.
+  `linde-sphere.db-journal` file next to it), run `npm run db:deploy`, then start the server.
 
 ### Export
 

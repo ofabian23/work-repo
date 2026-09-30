@@ -112,6 +112,7 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
               <th className="p-2">Organización</th>
               <th className="p-2">Área</th>
               <th className="p-2">Seguimiento</th>
+              <th className="p-2">Puntaje interno</th>
               <th className="p-2">Envío</th>
               <th className="p-2">Exportado</th>
             </tr>
@@ -128,6 +129,9 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
                 <td className="p-2">{lead.organization}</td>
                 <td className="p-2">{lead.roleLabel}</td>
                 <td className="p-2">{lead.followUpConsent ? "Autorizado" : "No"}</td>
+                <td className="p-2 whitespace-nowrap" data-testid="lead-score">
+                  {lead.leadTier} · {lead.leadScore}
+                </td>
                 <td className="p-2" data-testid="lead-delivery">
                   {lead.delivery ? DELIVERY_LABELS[lead.delivery.status] : "—"}
                 </td>

@@ -198,7 +198,8 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       email failure, reset, cancel, correct, keyboard), 12 unit (model, client, masking, reducer), 5 E2E at three
       viewports against the real server
 - [ ] ConsentRecord rows (exact text shown + language) — with Phase 8 report storage
-- [ ] Lead scoring (server-only) and RecommendationSnapshot — not part of the 7a data model (ADR-052)
+- [x] Lead scoring (server-only), added in the final audit (ADR-061); RecommendationSnapshot is covered by the stored
+      recommendation interests and report
 - [ ] Per-IP rate limit on `/api/leads`
 - [ ] `POST /api/sessions` for anonymous summaries (table exists: VisitorSessionSummary)
 - **Done when:** AC-21 … AC-24 and AC-16 pass.
@@ -356,6 +357,16 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] Fixed: the admin lead-detail interests table widened the page at phone width (now a scroll region)
 - [ ] Not automatable here: successful real SMTP delivery, physical kiosk, Windows PowerShell 5.1
       (TESTING.md §5)
+
+## Phase 11 — Final product audit ✅
+
+- [x] All software checks run (see RELEASE_READINESS.md); manual inspection harness at kiosk, tablet and laptop
+      sizes, ES/EN, reduced motion, failed email, missing database, production and demo modes
+- [x] Fixed (high): long email addresses overflowed the review step on kiosk and tablet widths (now wrap; E2E
+      test)
+- [x] Fixed (MVP acceptance): internal lead scoring (M12, AC-34) implemented, server-only (ADR-061)
+- [x] Fixed (docs): README status was out of date
+- [x] RELEASE_READINESS.md with go/no-go checklist
 
 ## Phase 10 — Hardening, accessibility, deployment
 
