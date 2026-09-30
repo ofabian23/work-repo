@@ -179,13 +179,27 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       constraints, route handlers, logging/masking, error sanitizer, layer boundaries; E2E API spec
 - [ ] Verify install and migration on the Windows event laptop (better-sqlite3 prebuild) — ADR-010
 
-**7b — Form and flow (next)**
+**7b — Form and consent experience (ADR-053) ✅**
 
-- [ ] Lead form (fields per PROJECT_BRIEF §10), localized validation, autofill suppression; one request token per form
-- [ ] Configurable, versioned consent checkboxes (separate, unchecked by default); store ConsentRecord rows
+- [x] Lead form after recommendations: summary explainer → contact details → preferences and permissions
+      (role, language, interests prefilled from the session) → review with "Corregir mis datos" → sending → result
+- [x] Touch typing: email/tel keyboards, capitalization hints, `enterKeyHint`, Enter to advance, autofill and
+      spell-check off, five inputs per step
+- [x] Inline validation (blur, live correction, step check with summary and focus) using the server's Zod schemas;
+      server 422 mapped back to fields
+- [x] Two separate consents from `content/consent.json` with visible version and "pending legal review" notice;
+      report required, follow-up optional and unchecked by default
+- [x] Double-tap guard and one request token per distinct payload; progress states; retry after failure keeps
+      details and recommendation context
+- [x] Result screen with masked email: sent / saved-and-queued / saved-but-delayed (no technical details);
+      "Terminar" and auto reset after `confirmationResetMs`; explicit cancel with confirmation
+- [x] Longer idle allowance on the form (120 s + 20 s); anonymous `lead-form-*` / `lead-submitted` events
+- [x] Tests: 19 component (valid, invalid email, missing fields, separate consents, double tap, server error,
+      email failure, reset, cancel, correct, keyboard), 12 unit (model, client, masking, reducer), 5 E2E at three
+      viewports against the real server
+- [ ] ConsentRecord rows (exact text shown + language) — with Phase 8 report storage
 - [ ] Lead scoring (server-only) and RecommendationSnapshot — not part of the 7a data model (ADR-052)
 - [ ] Per-IP rate limit on `/api/leads`
-- [ ] Confirmation screen (no claim of delivery) + auto reset
 - [ ] `POST /api/sessions` for anonymous summaries (table exists: VisitorSessionSummary)
 - **Done when:** AC-21 … AC-24 and AC-16 pass.
 

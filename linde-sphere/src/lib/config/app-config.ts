@@ -47,6 +47,15 @@ export const appConfig = {
   recommendations: {
     maxSelectedChallenges: MAX_SELECTED_CHALLENGES,
   },
+  /** Lead form (ADR-053). */
+  leadForm: {
+    /** A submission that takes longer is treated as failed (safe to retry: same request token). */
+    requestTimeoutMs: 15_000,
+    /** After the lead is stored, the delivery state is checked this many times… */
+    statusPollAttempts: 3,
+    /** …this far apart, before the confirmation is shown. */
+    statusPollIntervalMs: 1_200,
+  },
   routes: {
     home: "/",
     health: "/api/health",

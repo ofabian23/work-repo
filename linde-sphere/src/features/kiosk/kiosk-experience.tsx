@@ -32,6 +32,8 @@ import { RoleChallengesScreen } from "./journey/role-challenges-screen";
 import { TailoringScreen } from "./journey/tailoring-screen";
 import { ChallengesPathScreen } from "./journey/challenges-path-screen";
 import { SummaryRequestScreen } from "./journey/summary-request-screen";
+import { createLeadApi, type LeadApi } from "./lead/lead-api";
+import { LeadFormScreen } from "./lead/lead-form-screen";
 import { AttractScreen } from "./screens/attract-screen";
 import { WelcomeScreen } from "./screens/welcome-screen";
 import type { JourneyScreen } from "./state/kiosk-state";
@@ -48,12 +50,22 @@ export function KioskExperience({
   attractTimings,
   tailoringMs = appConfig.kiosk.tailoringTransitionMs,
   conversionPrompt = appConfig.kiosk.conversionPrompt,
+  leadApi,
+  leadStatusPoll = {
+    attempts: appConfig.leadForm.statusPollAttempts,
+    intervalMs: appConfig.leadForm.statusPollIntervalMs,
+  },
+  confirmationResetMs = appConfig.kiosk.idle.confirmationResetMs,
 }: {
   content: PublicContentBundle;
-  idle?: IdleConfig;
+  idle?: IdleConfig & { leadFormWarningAfterMs?: number; leadFormCountdownMs?: number };
   attractTimings?: { rotationMs?: number; revertMs?: number };
   tailoringMs?: number;
   conversionPrompt?: ConversionPromptConfig & { screens: readonly string[] };
+  /** Injected in tests; the app uses the real /api/leads client. */
+  leadApi?: LeadApi;
+  leadStatusPoll?: { attempts: number; intervalMs: number };
+  confirmationResetMs?: number;
 }) {
   const { state, dispatch, startSession, choosePath, goToWelcome, reset } = useKioskSession();
   const { localize } = useLanguage();
@@ -137,10 +149,17 @@ export function KioskExperience({
   const toggleOther = () => dispatch({ type: "TOGGLE_OTHER_CHALLENGE" });
   const challengesById = (ids: string[]) =>
     ids.flatMap((id) => content.challenges.find((c) => c.id === id) ?? []);
+  const api = useMemo(
+    () => leadApi ?? createLeadApi({ timeoutMs: appConfig.leadForm.requestTimeoutMs }),
+    [leadApi],
+  );
+  const finishVisit = useCallback(() => reset("completed"), [reset]);
+  // Typing takes longer than tapping: the lead form gets a longer inactivity allowance.
+  const onLeadForm = state.screen === "lead-form";
   const idleTimer = useIdleTimer({
     enabled: state.session !== null,
-    warningAfterMs: idle.warningAfterMs,
-    countdownMs: idle.countdownMs,
+    warningAfterMs: onLeadForm ? (idle.leadFormWarningAfterMs ?? idle.warningAfterMs) : idle.warningAfterMs,
+    countdownMs: onLeadForm ? (idle.leadFormCountdownMs ?? idle.countdownMs) : idle.countdownMs,
     onTimeout: () => reset("timeout"),
   });
 
@@ -237,7 +256,27 @@ export function KioskExperience({
       );
       break;
     case "summary-request":
-      screen = <SummaryRequestScreen onBack={() => dispatch({ type: "GO_TO", screen: "recommendations" })} />;
+      screen = (
+        <SummaryRequestScreen
+          onContinue={() => dispatch({ type: "OPEN_LEAD_FORM" })}
+          onBack={() => dispatch({ type: "GO_TO", screen: "recommendations" })}
+        />
+      );
+      break;
+    case "lead-form":
+      screen = session && (
+        <LeadFormScreen
+          content={content}
+          session={{ sessionId: session.id, sessionStartedAt: session.startedAt, signals }}
+          recommendations={snapshot ?? displayed}
+          api={api}
+          statusPoll={leadStatusPoll}
+          confirmationResetMs={confirmationResetMs}
+          onSubmitted={() => dispatch({ type: "LEAD_SUBMITTED" })}
+          onCancel={() => dispatch({ type: "CANCEL_LEAD_FORM" })}
+          onFinish={finishVisit}
+        />
+      );
       break;
     case "refine-challenges":
       screen = (

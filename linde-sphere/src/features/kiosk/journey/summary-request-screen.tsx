@@ -1,8 +1,7 @@
 "use client";
 
-import { SecondaryAction } from "@/components/actions/action-button";
-import { StatusBanner } from "@/components/feedback/status-banner";
-import { CheckIcon, ShieldIcon } from "@/components/icons";
+import { PrimaryAction, SecondaryAction } from "@/components/actions/action-button";
+import { ArrowRightIcon, CheckIcon, ShieldIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { ScreenFrame } from "./screen-frame";
 
@@ -10,9 +9,9 @@ const ITEMS = ["priorities", "recommendations", "areas", "resources", "nextSteps
 
 /**
  * "Enviarme mi resumen personalizado": explains what the summary contains and how contact details and
- * consent are handled before any form appears (value first). The form itself is Phase 7.
+ * consent are handled before any form appears (value first), then opens the lead form (ADR-053).
  */
-export function SummaryRequestScreen({ onBack }: { onBack: () => void }) {
+export function SummaryRequestScreen({ onContinue, onBack }: { onContinue: () => void; onBack: () => void }) {
   const { t } = useLanguage();
   return (
     <ScreenFrame
@@ -20,9 +19,19 @@ export function SummaryRequestScreen({ onBack }: { onBack: () => void }) {
       title={t("summary.title")}
       subtitle={t("summary.intro")}
       actions={
-        <SecondaryAction data-testid="summary-back" onClick={onBack}>
-          {t("summary.back")}
-        </SecondaryAction>
+        <div className="flex w-full flex-col gap-3">
+          <PrimaryAction
+            fullWidth
+            data-testid="summary-continue"
+            icon={<ArrowRightIcon />}
+            onClick={onContinue}
+          >
+            {t("summary.continue")}
+          </PrimaryAction>
+          <SecondaryAction data-testid="summary-back" onClick={onBack}>
+            {t("summary.back")}
+          </SecondaryAction>
+        </div>
       }
     >
       <section className="flex flex-col gap-4">
@@ -40,7 +49,6 @@ export function SummaryRequestScreen({ onBack }: { onBack: () => void }) {
         <ShieldIcon className="text-primary mt-1" />
         {t("summary.privacy")}
       </p>
-      <StatusBanner tone="info" title={t("summary.comingNext")} />
     </ScreenFrame>
   );
 }

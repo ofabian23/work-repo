@@ -757,3 +757,50 @@ entry here — architecture is never changed silently.
     7.x patch.
   - Still open: per-IP rate limiting, the lead form, consent records, and verifying better-sqlite3 prebuilds
     on the Windows laptop.
+
+## ADR-053 — Lead form: three touch steps, local-only contact state, status-aware confirmation
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Context:** The lead capture UI must follow the recommendations. It must be optimized for touchscreen
+  typing, validate inline, keep two distinct consents with configurable versioned text, prevent double
+  submission and show progress. The lead must be stored before email is attempted, an email failure must be
+  explained without technical details, success must show a masked email, nothing may remain after reset,
+  and "Correct my information" and cancel must be available.
+- **Decision:**
+  - **Flow:** the summary explainer's "Completar mis datos" opens a `lead-form` screen with three steps:
+    contact details (five inputs, so the on-screen keyboard leaves them visible), preferences and permissions,
+    and review. Review offers "Corregir mis datos" (back to step 1, everything kept) and "Enviar mi resumen".
+    Cancel is always available; it asks for confirmation when contact data was typed and returns to the
+    recommendations with the session untouched.
+  - **Prefill:** the role comes from the session persona (required; a native select when missing), the
+    report language from the current UI language, and interests from chosen challenges, primary recommended
+    solutions and explicit interests (pre-selected, ≤ 15, removable).
+  - **Validation:** the client reuses the server's Zod field schemas (exported from `lead-submission.ts`) with
+    localized messages. Blur validates non-empty fields; a field with an error is re-checked as it changes;
+    "Continuar" validates the step, shows a summary and focuses the first invalid field. Server 422 issues map
+    back onto fields; the server stays authoritative.
+  - **Consents:** two `ConsentCheckbox` controls, both unchecked by default, using the text in
+    `content/consent.json`. The version is shown, and a "pending legal and privacy review" notice appears while
+    `validationStatus` is not `validated`. The report permission is required; the follow-up permission is
+    optional and independent.
+  - **Submission:** an in-flight ref plus replacing the button with the sending view prevent double requests.
+    The request token (v4 UUID) is reused for a retry of identical data and rotated when data changes or after
+    a 409. Requests time out after 15 s and are treated as failures, which is safe to retry.
+  - **Email outcome:** after the server stores the lead, the client polls the status endpoint up to 3 times,
+    1.2 s apart. It shows `sent`, `delayed` (failed or retrying: "saved, we will try again automatically") or
+    `queued` (still pending: "saved, we will send it shortly"). The email worker is Phase 8, so real
+    submissions currently end as `queued`.
+  - **Privacy:** contact values live only in `LeadFormScreen` state, never in the kiosk session store or
+    browser storage. They are cleared once the lead is stored and discarded on cancel, and every reset
+    unmounts the component and hard-reloads. The result shows `maskEmailForDisplay` (first one or two
+    characters, `•••`, full domain so typos are recognizable). The confirmation auto-resets after
+    `confirmationResetMs` (15 s) or on "Terminar". While the form is open, the inactivity allowance is the
+    configured 120 s + 20 s.
+  - **Events:** `lead-form-opened`, `lead-form-cancelled` and `lead-submitted` are added to the anonymous
+    session events, with no target and no personal data.
+- **Consequences:**
+  - The visitor never sees a delivery claim the server has not confirmed.
+  - A lost response followed by a retry never creates a second lead.
+  - The consent text shown is identified by its version only; storing the exact text and language per
+    consent (ConsentRecord) is part of Phase 8.
+  - The report language can differ from the UI language; the consent text is shown in the UI language.

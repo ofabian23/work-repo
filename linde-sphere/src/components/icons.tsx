@@ -42,6 +42,17 @@ export const ChevronRightIcon = (p: IconProps) => (
     <path d="M9 6l6 6-6 6" />
   </Icon>
 );
+export const ChevronDownIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 9l6 6 6-6" />
+  </Icon>
+);
+export const MailIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M3.5 6.5l8.5 6 8.5-6" />
+  </Icon>
+);
 export const InfoIcon = (p: IconProps) => (
   <Icon {...p}>
     <circle cx="12" cy="12" r="9" />

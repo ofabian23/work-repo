@@ -31,12 +31,18 @@ export function renderKiosk({
   attractTimings = { rotationMs: 1_000, revertMs: 5_000 },
   tailoringMs = 1_800,
   conversionPrompt,
+  leadApi,
+  leadStatusPoll = { attempts: 1, intervalMs: 0 },
+  confirmationResetMs,
 }: {
   content?: PublicContentBundle;
   idle?: { warningAfterMs: number; countdownMs: number };
   attractTimings?: { rotationMs: number; revertMs: number };
   tailoringMs?: number;
   conversionPrompt?: ComponentProps<typeof KioskExperience>["conversionPrompt"];
+  leadApi?: ComponentProps<typeof KioskExperience>["leadApi"];
+  leadStatusPoll?: { attempts: number; intervalMs: number };
+  confirmationResetMs?: number;
 } = {}) {
   const onHardReset = vi.fn();
   const utils = render(
@@ -52,6 +58,9 @@ export function renderKiosk({
             attractTimings={attractTimings}
             tailoringMs={tailoringMs}
             conversionPrompt={conversionPrompt}
+            leadApi={leadApi}
+            leadStatusPoll={leadStatusPoll}
+            confirmationResetMs={confirmationResetMs}
           />
         </AppShell>
         <SessionProbe />

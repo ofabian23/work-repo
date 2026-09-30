@@ -18,7 +18,8 @@ import {
 /**
  * Kiosk session state machine (pure, ADR-004/ADR-005/ADR-047/ADR-048).
  * Holds NO personal information: only an opaque id, anonymous signals and events, a recommendation
- * snapshot and per-visitor accessibility preferences. Contact details live only in the lead form (Phase 7).
+ * snapshot and per-visitor accessibility preferences. Contact details live only in the lead form component
+ * (ADR-053) and never enter this store.
  */
 
 export type KioskScreen =
@@ -36,8 +37,9 @@ export type KioskScreen =
   | "challenge-role"
   // Path C — explorer
   | "explore"
-  // Value first, then the summary request (the lead form follows in Phase 7)
-  | "summary-request";
+  // Value first, then the summary request and the lead form (ADR-053)
+  | "summary-request"
+  | "lead-form";
 
 /** Screens reachable with GO_TO once a session exists. */
 export type JourneyScreen = Exclude<KioskScreen, "attract">;
@@ -104,6 +106,9 @@ export type KioskAction =
   | { type: "TOGGLE_OTHER_CHALLENGE" }
   | { type: "CONVERSION_PROMPT"; outcome: "shown" | "accepted" | "dismissed" }
   | { type: "REQUEST_SUMMARY" }
+  | { type: "OPEN_LEAD_FORM" }
+  | { type: "CANCEL_LEAD_FORM" }
+  | { type: "LEAD_SUBMITTED" }
   | { type: "SELECT_FACILITY"; facilityTypeId: string | null }
   | { type: "VISIT_SCENE"; sceneId: string }
   | { type: "OPEN_HOTSPOT"; hotspotId: string }
@@ -235,6 +240,17 @@ function reduce(state: KioskState, action: KioskAction): KioskState {
     }
     case "REQUEST_SUMMARY":
       return { ...state, screen: "summary-request", session: withEvent(state.session, "summary-requested") };
+    case "OPEN_LEAD_FORM":
+      return { ...state, screen: "lead-form", session: withEvent(state.session, "lead-form-opened") };
+    case "CANCEL_LEAD_FORM":
+      // Back to the recommendations: the session (choices, recommendations) is untouched.
+      return {
+        ...state,
+        screen: "recommendations",
+        session: withEvent(state.session, "lead-form-cancelled"),
+      };
+    case "LEAD_SUBMITTED":
+      return { ...state, session: withEvent(state.session, "lead-submitted") };
     case "CONVERSION_PROMPT":
       return { ...state, session: withEvent(state.session, `conversion-prompt-${action.outcome}`) };
     case "SELECT_FACILITY":

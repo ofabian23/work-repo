@@ -7,14 +7,14 @@ import { SessionSignalsSchema, uniqueIds } from "../session/visitor-session";
  * No free-text fields beyond name, organization, email and phone (ADR-020). No lead score (ADR-009).
  */
 
-const personName = z
+export const PersonNameSchema = z
   .string()
   .trim()
   .min(1, { error: "Required" })
   .max(80)
   .regex(/^[\p{L}\p{M}' ’.-]+$/u, { error: "Use letters, spaces, apostrophes, periods or hyphens" });
 
-const organization = z
+export const OrganizationSchema = z
   .string()
   .trim()
   .min(2, { error: "Required" })
@@ -57,9 +57,9 @@ export const LeadSubmissionSchema = z.strictObject({
    * key (double tap, retry after network loss) returns the original result instead of a duplicate lead.
    */
   idempotencyKey: z.uuidv4(),
-  firstName: personName,
-  lastName: personName,
-  organization,
+  firstName: PersonNameSchema,
+  lastName: PersonNameSchema,
+  organization: OrganizationSchema,
   /** Persona id selected as the visitor's job role / function. */
   jobFunctionId: IdSchema,
   email: BusinessEmailSchema,

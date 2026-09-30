@@ -267,7 +267,41 @@ the session (`SET_RECOMMENDATIONS`, which also records a `recommendations-calcul
 continues to the transition, refines, or opens the recommendations, and only if it changed.
 
 Still planned: `hasMinimumInfo` and `shouldShowPrompt` (path B / explorer prompt, Phase 5–6). The lead draft
-(C2) will live only inside the lead form (Phase 7).
+(C2) lives only inside the lead form component (§5.2.2), never in this store.
+
+#### 5.2.2 Lead form (`src/features/kiosk/lead/`, ADR-053)
+
+```
+SUMMARY-REQUEST ─ Completar mis datos ─► LEAD-FORM
+  1 Sus datos (nombre, apellido, organización, correo de trabajo, teléfono opcional)
+  2 Preferencias y permisos (área, idioma del resumen, temas — prefilled from the session;
+    consent 1 "report" required · consent 2 "follow-up" optional; text + version from content/consent.json)
+  3 Revise sus datos ── Corregir mis datos ─► 1       Cancelar (confirm if typed) ─► RECOMMENDATIONS
+      └─ Enviar mi resumen ─► sending ("Guardando…", then "Preparando el envío…")
+            stored ─► status poll (3 × 1.2 s) ─► RESULT: sent · queued · delayed (masked email) ─► reset 15 s / Terminar
+            failed / timeout ─► back to 3 with "No pudimos guardar…" (details and recommendations kept) ─► retry
+            422 ─► field errors on the step that holds them · 409 ─► review with a new request token
+```
+
+- **Model (`lead-form-model.ts`, pure):** values, per-field validation with the server's Zod schemas
+  (`PersonNameSchema`, `OrganizationSchema`, `BusinessEmailSchema`, `PhoneSchema`), payload builder and
+  server-issue mapping. Inline validation runs on blur (non-empty fields), re-checks a field with an error
+  while it is corrected, and validates the whole step on "Continuar" (error summary + focus on the first
+  invalid field).
+- **Touch typing:** five inputs per step; `type`/`inputMode` email and tel, `autoCapitalize` words/none,
+  `enterKeyHint`, autofill and spell-check off. Enter moves to the next field, then continues. Role uses a
+  native select (system picker on Android); language and interests are large toggle chips.
+- **Double submission:** an in-flight ref blocks a second request; the sending view replaces the button.
+  One request token per distinct payload: a retry of the same data reuses it (a stored-but-unanswered request
+  is recognized by the server), corrected data gets a new one.
+- **Email outcome (`lead-api.ts`):** the lead is stored first (server transaction, ADR-052); the client then
+  reads `GET /api/leads/status/:token`. `sent` → "Enviamos su resumen"; `failed`/`retrying` → "Guardamos su
+  solicitud… lo intentaremos de nuevo automáticamente"; still pending → "Guardamos su solicitud… en breve".
+  No codes or provider text are ever shown.
+- **Privacy:** contact values exist only in `LeadFormScreen` state; they are cleared once stored, discarded on
+  cancel, and gone on every reset (component remount + hard reload). The result shows only
+  `maskEmailForDisplay` ("ma•••@dominio"). Session events: `lead-form-opened`, `lead-form-cancelled`,
+  `lead-submitted` (no target, no personal data).
 
 #### 5.2.1 Journeys (`src/features/kiosk/journey/`)
 
@@ -279,7 +313,7 @@ A  ROLE (1/2) ─► ROLE-CHALLENGES (≤ 4 + "Algo más", 2/2) ─► TAILORING
 B  CHALLENGES (all, ≤ 3, 1/2) ─► CHALLENGE-ROLE (optional, 2/2) ─► TAILORING ─► RECOMMENDATIONS
 C  EXPLORE ─(ready)─► "Ver mis recomendaciones" / tray / conversion prompt ─► RECOMMENDATIONS
 
-RECOMMENDATIONS ─┬─ Enviarme mi resumen personalizado ─► SUMMARY-REQUEST (lead form: Phase 7)
+RECOMMENDATIONS ─┬─ Enviarme mi resumen personalizado ─► SUMMARY-REQUEST ─► LEAD-FORM (§5.2.2)
                  ├─ Seguir explorando ─► EXPLORE (same scene, progress kept)
                  ├─ Revisar mis prioridades ─► REFINE-CHALLENGES (role shown, "Cambiar mi área")
                  └─ Empezar de nuevo ─► confirmation ─► reset
@@ -315,7 +349,7 @@ It shows value before any form, in this order:
 7. Up to 3 secondary items.
 
 Its one primary action is **"Enviarme mi resumen personalizado"**, which opens a value-first
-summary-request screen listing what the summary contains; the form is Phase 7. The secondary actions are
+summary-request screen listing what the summary contains, then the lead form (§5.2.2). The secondary actions are
 "Seguir explorando", "Revisar mis prioridades" and "Empezar de nuevo" (with confirmation). A copy test bans
 pressure, guarantee, clinical and "comprehensive" wording from all UI strings.
 
@@ -884,7 +918,7 @@ promised. Demo mode marks assumed offering items with the pending-validation not
 | Boundary           | Rule                                                                                                                          | Enforcement                                                                                                           |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Client persistence | No PII or session data in `localStorage`/`sessionStorage`/IndexedDB/cookies                                                   | Code review + E2E assertion after reset (AC-28)                                                                       |
-| Client memory      | Lead draft exists only while the form is mounted; hard reload on reset                                                        | Reset controller; E2E test                                                                                            |
+| Client memory      | Lead draft exists only while the form is mounted; cleared once stored; hard reload on reset                                   | `LeadFormScreen` local state; component + E2E tests assert no contact data after reset                                |
 | Browser history    | No history entries; reset uses `location.replace`                                                                             | Single-route design                                                                                                   |
 | Autofill           | Disabled/discouraged on lead form; kiosk Chrome autofill off                                                                  | Form attributes + runbook                                                                                             |
 | Commercial data    | Lead score/tier/factors never leave the server except admin/CSV                                                               | `server-only` imports; response schema test; bundle grep in CI                                                        |
