@@ -160,16 +160,33 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 
 ## Phase 7 — Lead capture and persistence
 
-- [ ] Prisma 7.10 + SQLite driver adapter; `prisma.config.ts`; schema for all models (ARCHITECTURE §9.3); first migration; verify install on Windows (ADR-010)
-- [ ] Replace the `node:sqlite` health probe with a Prisma `SELECT 1` (ADR-038)
-- [ ] `src/server/log.ts` PII-safe logger
+**7a — Storage (ADR-052) ✅**
 
-- [ ] Lead form (fields per PROJECT_BRIEF §10), localized validation, autofill suppression
-- [ ] Configurable, versioned consent checkboxes (separate, unchecked by default)
-- [ ] `POST /api/leads`: strict Zod schema, server recomputation, lead scoring, single transaction, idempotency key, rate limit
+- [x] Prisma 7.10.0 + `@prisma/adapter-better-sqlite3`; `prisma.config.ts`; schema: Lead, LeadInterest,
+      VisitorSessionSummary (+ normalized SessionSummaryItem), EmailDelivery; first migration with CHECK
+      constraints behind the enums; client generated to `src/generated/prisma` (git-ignored) on install/build/typecheck
+- [x] Health probe keeps `node:sqlite` but now requires every migration to be applied (ADR-038 amended)
+- [x] Masked logger `src/server/logging/logger.ts` (names, emails, phones, organization, tokens)
+- [x] Repository → service → HTTP layers; UI never touches Prisma (boundary test)
+- [x] `POST /api/leads`: strict Zod schema, email normalization, content checks (consent version, role,
+      interests), server recomputation, single transaction, idempotency by request token (replay 200, conflict
+      409, double-tap race → one lead), 16 KB limit, JSON only
+- [x] `GET /api/leads/status/:token` (opaque HMAC token, hash stored, 404 for unknown/malformed); no listing endpoint
+- [x] Email failures only update `EmailDelivery` (retrying/failed with sanitized code); lead always kept
+- [x] Safe seed (`db:seed`, synthetic `.test` data, refuses production, idempotent); `db:backup`, `db:export` (CSV
+      with formula-injection guard); README backup/export guidance; `LEAD_RETENTION_DAYS` placeholder
+- [x] Tests: service/repository on temp SQLite, real `prisma migrate deploy` + drift check, CHECK/FK/unique
+      constraints, route handlers, logging/masking, error sanitizer, layer boundaries; E2E API spec
+- [ ] Verify install and migration on the Windows event laptop (better-sqlite3 prebuild) — ADR-010
+
+**7b — Form and flow (next)**
+
+- [ ] Lead form (fields per PROJECT_BRIEF §10), localized validation, autofill suppression; one request token per form
+- [ ] Configurable, versioned consent checkboxes (separate, unchecked by default); store ConsentRecord rows
+- [ ] Lead scoring (server-only) and RecommendationSnapshot — not part of the 7a data model (ADR-052)
+- [ ] Per-IP rate limit on `/api/leads`
 - [ ] Confirmation screen (no claim of delivery) + auto reset
-- [ ] `POST /api/sessions` for anonymous summaries
-- [ ] Integration tests: transaction contents, response excludes score, idempotency, validation errors
+- [ ] `POST /api/sessions` for anonymous summaries (table exists: VisitorSessionSummary)
 - **Done when:** AC-21 … AC-24 and AC-16 pass.
 
 ## Phase 8 — Report and email delivery
@@ -183,7 +200,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 
 ## Phase 9 — Admin and data operations
 
-- [ ] CLI: `leads:export` (CSV, UTF-8 BOM), `outbox:retry`, `leads:purge`
+- [~] CLI: `db:export` (CSV, UTF-8 BOM) ✅ and `db:backup` ✅ (Phase 7a); `outbox:retry`, `leads:purge` (needs Q7)
 - [ ] Optional `/admin` (disabled by default, Basic auth, `noindex`): outbox status, retry, export, content readiness
 - [ ] `proxy.ts` guard + handler-level checks; audit log entries
 - [ ] Tests: admin disabled → 404; wrong credentials → 401; CSV columns and encoding

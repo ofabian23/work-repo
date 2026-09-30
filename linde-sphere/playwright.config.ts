@@ -2,6 +2,8 @@ import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
+/** E2E servers use their own database so test leads never mix with development data. */
+const E2E_DATABASE_URL = "file:./data/e2e.db";
 /** Second server on the same production build with the dev tools (gallery, calibration) explicitly enabled. */
 export const GALLERY_PORT = PORT + 1;
 
@@ -43,8 +45,9 @@ export default defineConfig({
   webServer: [
     {
       // Production build, bound to localhost only, gallery disabled (default production behavior).
-      command: `npm run build && npx next start -H localhost -p ${PORT}`,
+      command: `npm run db:deploy && npm run build && npx next start -H localhost -p ${PORT}`,
       url: `http://localhost:${PORT}/api/health`,
+      env: { DATABASE_URL: E2E_DATABASE_URL },
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
     },
@@ -52,7 +55,11 @@ export default defineConfig({
       // Starts after the first server is ready (it reuses the same build).
       command: `npx next start -H localhost -p ${GALLERY_PORT}`,
       url: `http://localhost:${GALLERY_PORT}/api/health`,
-      env: { ENABLE_COMPONENT_GALLERY: "true", ENABLE_SCENE_CALIBRATION: "true" },
+      env: {
+        DATABASE_URL: E2E_DATABASE_URL,
+        ENABLE_COMPONENT_GALLERY: "true",
+        ENABLE_SCENE_CALIBRATION: "true",
+      },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
     },

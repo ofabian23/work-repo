@@ -8,6 +8,7 @@ import { expectInvalid, expectValid } from "../../helpers/schema";
 
 const lead = () => ({
   sessionId: SESSION_ID,
+  sessionStartedAt: "2026-10-20T13:58:00Z",
   idempotencyKey: IDEMPOTENCY_KEY,
   firstName: "María José",
   lastName: "O'Neill-Rivera",
@@ -68,14 +69,29 @@ describe("LeadSubmissionSchema", () => {
     expectInvalid(LeadSubmissionSchema, { ...lead(), sessionId: "123" }, "sessionId");
     expectInvalid(LeadSubmissionSchema, { ...lead(), idempotencyKey: "abc" }, "idempotencyKey");
   });
+
+  it("requires a random (v4) request token, so the nil UUID cannot be used", () => {
+    const nil = "00000000-0000-0000-0000-000000000000";
+    expectInvalid(LeadSubmissionSchema, { ...lead(), idempotencyKey: nil }, "idempotencyKey");
+  });
+
+  it("rejects internationalized (non-ASCII) addresses", () => {
+    expectInvalid(LeadSubmissionSchema, { ...lead(), email: "josé@hospital.example" }, "email");
+  });
 });
 
 describe("LeadCreatedResponseSchema", () => {
-  it("returns only the lead id and email-queued flag", () => {
-    expectValid(LeadCreatedResponseSchema, { leadId: "lead_1", emailQueued: true });
+  const statusToken = "A".repeat(43);
+  it("returns only an opaque status token and flags (no lead id)", () => {
+    expectValid(LeadCreatedResponseSchema, { statusToken, emailQueued: true, replayed: false });
     expectInvalid(
       LeadCreatedResponseSchema,
-      { leadId: "lead_1", emailQueued: true, leadTier: "A" },
+      { statusToken: "short", emailQueued: true, replayed: false },
+      "statusToken",
+    );
+    expectInvalid(
+      LeadCreatedResponseSchema,
+      { statusToken, emailQueued: true, replayed: false, leadId: "lead_1" },
       "",
       "Unrecognized",
     );

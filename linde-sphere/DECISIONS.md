@@ -358,7 +358,8 @@ entry here — architecture is never changed silently.
 
 ## ADR-038 — Health route with a dependency-free SQLite probe; Prisma deferred to Phase 7
 
-- **Date:** 2026-09-29 · **Status:** Accepted (amends ADR-010 timing)
+- **Date:** 2026-09-29 · **Status:** Accepted (amends ADR-010 timing; probe amended by ADR-052: it stays on
+  `node:sqlite` and now also requires all migrations to be applied)
 - **Context:** The foundation phase needs a health route reporting database readiness, and should add only
   the dependencies it needs. No data is stored until lead capture (Phase 7).
 - **Decision:** `GET /api/health` reports app info, configuration validity (variable names only), content
@@ -678,3 +679,81 @@ entry here — architecture is never changed silently.
     visited no longer score, which is a deliberate change from the engine's raw-signal tests (those still pass
     on raw signals).
   - The facility-type step and path C's optional "tailor" step remain open.
+
+## ADR-052 — Lead storage: Prisma 7 + better-sqlite3, layered services, idempotent submissions, opaque status tokens
+
+- **Date:** 2026-09-30 · **Status:** Accepted (implements ADR-010 and ADR-011's storage half; amends ADR-038;
+  replaces the planned data model in ARCHITECTURE §9.3 for this phase)
+- **Context:** The phase brief defines the stored data: `Lead`, `LeadInterest`, `VisitorSessionSummary` and
+  `EmailDelivery` with specified fields. It asks for migrations, a safe seed, repository/service layers,
+  transactions, leads surviving email failures, double-tap protection by request token, Zod validation,
+  email normalization, masked logs, backup/export guidance, a retention placeholder and three routes (create,
+  status by opaque token, health), with no listing endpoint. The earlier architecture draft planned more
+  tables (snapshot, report, consent records, delivery events, audit log) and a lead score.
+- **Decision:**
+  - **Stack:** `prisma@7.10.0`, `@prisma/client@7.10.0`, `@prisma/adapter-better-sqlite3@7.10.0`, and
+    `better-sqlite3@12.11.1` (pinned, ADR-010). The client is generated to `src/generated/prisma`
+    (git-ignored) by `postinstall`, `build` and `typecheck`. `prisma.config.ts` reads `DATABASE_URL` from the
+    shell with the same default as `env.ts`. Driver timeout is 5 s for lock waits.
+  - **Data model:** exactly the brief's four models, plus `SessionSummaryItem`, which holds challenges,
+    scenes, hotspots and recommendation ids as normalized, de-duplicated related records (not JSON, not
+    events).
+    - Extra `Lead` columns needed by the requirements: `idempotencyKey` (unique), `requestFingerprint`,
+      `statusTokenHash` (unique), `contentVersion`.
+    - `EmailDelivery` adds `nextAttemptAt` for retries.
+    - Relevance is stored in words (`high`/`medium`/`possible`), never as a score.
+    - `Lead.status` is `active | archived | erasure_requested`. No workflow uses the last two yet; they exist
+      so post-event handling does not need a migration. `roleLabel` is the Spanish persona label.
+  - **Deferred, not dropped:** `RecommendationSnapshot`, `Report`, `ConsentRecord` rows and
+    `EmailDeliveryEvent` history (Phase 8); `AdminAuditLog` (Phase 9); the server-only lead score (Phase 7b,
+    with the form). Consent wording is identified by `consentTextVersion`; the texts are versioned in git.
+  - **Database constraints:** SQLite stores enums as TEXT, so the initial migration adds hand-written `CHECK`
+    constraints for every enum, `attempts ≥ 0`, the `errorCode` shape and `reportConsent = 1`. Prisma does
+    not model them; a test fails if a future table-redefining migration drops them. Foreign keys cascade from
+    `Lead` to interests and deliveries (erasure deletes them); the anonymous session summary remains.
+  - **Layers:** route handler → `lead-http.ts` (HTTP mapping) → `lead-service.ts` (use case) → repositories
+    (`lead-repository.ts`, `email-delivery-repository.ts`) → Prisma. Only `db/client.ts` and the repositories
+    import Prisma (the CLI export module and scripts are admin tooling). A unit test enforces the boundaries.
+  - **Transaction:** summary upsert (+ item replacement), lead, interests and a `pending` email delivery are
+    written in one interactive transaction. Email outcomes update only `EmailDelivery`
+    (`recordAttempt`: `retrying` with exponential backoff capped at 1 h, `failed` at the ceiling or on a
+    permanent error, `sent` with the provider message id). Any provider error becomes a sanitized
+    UPPER_SNAKE code; raw messages and responses are never stored or logged.
+  - **Idempotency:** the kiosk sends a v4 UUID request token per form (`idempotencyKey`, nil UUID rejected).
+    - The same token with the same normalized payload (SHA-256 fingerprint, client clock excluded) returns
+      the original result (HTTP 200, `replayed: true`).
+    - The same token with a different payload returns 409.
+    - When two taps race past the lookup, the unique index makes the loser answer as a replay.
+  - **Status token:** `base64url(HMAC-SHA256(key = idempotencyKey, msg = "lead-status:v1:" + leadId))`.
+    - It is unguessable without the request token.
+    - It is re-derivable, so replays return the same token without storing it; only its SHA-256 is stored.
+    - It is separate from the request token because it travels in URLs.
+    - The status response contains only `{ submission: "stored", report: <delivery state> }`. Unknown and
+      malformed tokens both answer 404.
+  - **Validation:** strict Zod schema (unknown keys such as notes or patient fields are rejected). Email is
+    trimmed and lower-cased (ASCII addresses only). The server also checks the submission against the
+    served content: consent version, role id, interest ids, and a session start that is not in the future.
+    Signal ids unknown to the content are dropped before storage. Recommendations are recomputed from
+    `recommendationEvidence` (ADR-025, ADR-051). Requests must be JSON (which forces a CORS preflight
+    cross-site) and ≤ 16 KB. Responses never echo submitted values.
+  - **Logging:** `src/server/logging/logger.ts` writes single-line JSON. It masks personal keys (email →
+    `m***@domain`, names → initial, phone → last two digits, organization and tokens redacted) and any
+    email-looking string anywhere. Services log ids and outcomes only.
+  - **Health:** the probe stays on synchronous `node:sqlite` (it must work even if the Prisma client cannot
+    start). `ready` now also requires every `prisma/migrations` folder to be applied.
+  - **Seed:** `npm run db:seed` stores two synthetic leads (`example.test`, "(ficticio)") through the real
+    service, refuses `NODE_ENV=production`, and is idempotent (fixed request tokens and timestamps).
+  - **Operations:** `db:backup` (SQLite online backup API, safe while running) and `db:export` (CSV, UTF-8
+    BOM, formula-injection guard, file mode 600). Both are CLI-only (ADR-024).
+  - **Retention:** `LEAD_RETENTION_DAYS` is a placeholder. Unset means no period is configured, and nothing
+    is deleted automatically. The period is Q7 (owner/compliance).
+- **Consequences:**
+  - A stored lead survives any email failure. Double taps and retries never create duplicates.
+  - Contact data appears only in the database file, backups and CSV exports, which the README covers.
+  - Recommendations stored on the server follow the engine's ranking. The kiosk's order-stability layer can
+    show an older order, so the Phase 8 report must decide which order to present.
+  - `npm audit` reports high-severity advisories in the Prisma CLI's transitive dependencies (`mysql2`,
+    `deepmerge-ts`). They affect the dev-time CLI, not the SQLite runtime path; revisit on the next Prisma
+    7.x patch.
+  - Still open: per-IP rate limiting, the lead form, consent records, and verifying better-sqlite3 prebuilds
+    on the Windows laptop.

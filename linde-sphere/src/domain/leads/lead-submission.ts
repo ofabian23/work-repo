@@ -21,6 +21,11 @@ const organization = z
   .max(160)
   .regex(/^[\p{L}\p{M}\p{N} &'’.,()/+-]+$/u, { error: "Contains unsupported characters" });
 
+/**
+ * Normalized business email: trimmed and lower-cased (addresses are treated case-insensitively, so the same
+ * person typing "Ana@X.com" and "ana@x.com" is one address). ASCII addresses only: Zod's email check rejects
+ * internationalized addresses, which the email providers used here do not reliably support either.
+ */
 export const BusinessEmailSchema = z
   .string()
   .trim()
@@ -45,8 +50,13 @@ export const LeadConsentsSchema = z.strictObject({
 
 export const LeadSubmissionSchema = z.strictObject({
   sessionId: z.uuid(),
-  /** Client-generated; the server ignores duplicates (double-tap, retries after network loss). */
-  idempotencyKey: z.uuid(),
+  /** When the anonymous kiosk session started (stored in the session summary). */
+  sessionStartedAt: IsoDateTimeSchema,
+  /**
+   * Request token generated once per form (crypto.randomUUID, v4). Repeating a submission with the same
+   * key (double tap, retry after network loss) returns the original result instead of a duplicate lead.
+   */
+  idempotencyKey: z.uuidv4(),
   firstName: personName,
   lastName: personName,
   organization,
@@ -67,9 +77,26 @@ export const LeadSubmissionSchema = z.strictObject({
 export type LeadSubmission = z.infer<typeof LeadSubmissionSchema>;
 export type LeadSubmissionInput = z.input<typeof LeadSubmissionSchema>;
 
-/** The only data returned to the kiosk after a successful submission. */
+/** Opaque, URL-safe status token (256-bit, base64url). It reveals nothing about the lead. */
+export const StatusTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+
+/**
+ * The only data returned to the kiosk after a successful submission: no lead id, no personal data.
+ * `replayed` is true when the same request token was already processed (double tap or retry).
+ */
 export const LeadCreatedResponseSchema = z.strictObject({
-  leadId: z.string().min(1).max(64),
+  statusToken: StatusTokenSchema,
   emailQueued: z.boolean(),
+  replayed: z.boolean(),
 });
 export type LeadCreatedResponse = z.infer<typeof LeadCreatedResponseSchema>;
+
+export const ReportDeliveryStateSchema = z.enum(["pending", "sent", "failed", "retrying"]);
+export type ReportDeliveryState = z.infer<typeof ReportDeliveryStateSchema>;
+
+/** Public shape of the submission-status lookup: states only, never contact data or error details. */
+export const SubmissionStatusResponseSchema = z.strictObject({
+  submission: z.literal("stored"),
+  report: ReportDeliveryStateSchema,
+});
+export type SubmissionStatusResponse = z.infer<typeof SubmissionStatusResponseSchema>;

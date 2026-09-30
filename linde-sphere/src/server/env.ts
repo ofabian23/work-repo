@@ -38,6 +38,11 @@ const ServerEnvSchema = z
     SMTP_PASS: optional(z.string().min(1)),
     EMAIL_MAX_ATTEMPTS: optional(z.coerce.number().int().min(1).max(50)).transform((v) => v ?? 12),
     ADMIN_ENABLED: booleanFlag,
+    /**
+     * Retention placeholder (ADR-052). The company's lead-retention policy is not decided yet: unset means
+     * "no automatic deletion configured", never a default period. Nothing deletes data automatically.
+     */
+    LEAD_RETENTION_DAYS: optional(z.coerce.number().int().min(1).max(3650)),
     /** Dev-only component gallery at /dev/components; in production it is disabled unless this is true. */
     ENABLE_COMPONENT_GALLERY: booleanFlag,
     /** Dev-only scene coordinate calibration at /dev/scenes; in production it is disabled unless this is true. */

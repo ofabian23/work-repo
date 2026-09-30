@@ -27,8 +27,9 @@ The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md
 Run these from the `linde-sphere/` folder:
 
 ```bash
-npm install
+npm install                 # also generates the Prisma client
 cp .env.example .env        # Windows PowerShell: Copy-Item .env.example .env
+npm run db:deploy           # create/upgrade the SQLite database in data/
 npm run dev                 # open http://localhost:3000
 ```
 
@@ -52,6 +53,11 @@ npm run dev                 # open http://localhost:3000
 | `npm run content:export`                     | Regenerate the sales CSV (`exports/`) and CONTENT_VALIDATION.md §11       |
 | `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests |
 | `npm run format`                             | Format all files with Prettier                                            |
+| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)     |
+| `npm run db:migrate`                         | Development only: create a new migration after editing the schema         |
+| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`) |
+| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                      |
+| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)           |
 
 Use another port with `-- -p <port>`, for example `npm run dev -- -p 4000`.
 
@@ -117,9 +123,61 @@ positions with the calibration tool.
 variable name only), content validity and database readiness. It is never cached and contains no secrets.
 
 - `status: "ok"`: everything ready.
-- `status: "degraded"`: serving, but not every dependency is ready. This is expected until the database
-  is created in Phase 7 (`database.status: "not_initialized"`).
+- `status: "degraded"`: serving, but not every dependency is ready — usually the database has not been
+  created or migrated yet (`database.status: "not_initialized"`, reason `database_file_missing`,
+  `migrations_not_applied` or `migrations_pending`). Run `npm run db:deploy`.
 - `status: "error"` (HTTP 503): invalid configuration or content, or an unreadable database.
+
+## Database (leads)
+
+Leads are stored locally in SQLite (`data/linde-sphere.db`, git-ignored) through Prisma. The kiosk sends
+leads to `POST /api/leads`; the only other lead route returns a delivery status for an opaque token.
+**No web route lists or exports leads** — exports run on the laptop.
+
+- **Create or upgrade:** `npm run db:deploy`. Run it after every update that adds a migration; the health
+  check reports `migrations_pending` until you do.
+- **Where the file is:** `DATABASE_URL` (default `file:./data/linde-sphere.db`). Prisma CLI commands read it
+  from the shell, not from `.env`: `DATABASE_URL=file:./data/other.db npm run db:deploy`
+  (PowerShell: `$env:DATABASE_URL="file:./data/other.db"; npm run db:deploy`).
+- **Test data:** `npm run db:seed` adds two obviously fictitious leads (`@example.test`) for development.
+  Never seed the event laptop; the command refuses to run with `NODE_ENV=production`.
+
+### Backup
+
+- `npm run db:backup` writes a consistent copy to `data/backups/linde-sphere-<timestamp>.db` using SQLite's
+  online backup, so it is safe while the kiosk is running. Use `-- --out <path>` to choose the file.
+- Do not copy `linde-sphere.db` by hand while the server runs: recent writes may still be in the
+  `-wal` file. Stop the server first, or use `db:backup`.
+- Suggested event routine: back up at the end of each event day and before any update, to an
+  **encrypted** USB drive or approved company storage. Keep at least the last two backups.
+- Restore: stop the server, replace `data/linde-sphere.db` with the backup file (delete any
+  `linde-sphere.db-wal` / `-shm` files next to it), run `npm run db:deploy`, then start the server.
+
+### Export
+
+- `npm run db:export` writes `data/exports/leads-<timestamp>.csv` (UTF-8 with BOM for Excel). It holds one
+  row per lead: contact fields, role, language, consents and consent-text version, report-delivery state,
+  selected challenges and recommended solution ids. Use `-- --out <path>` to choose the file.
+- Follow up only with leads whose `followUpConsent` is `true`; `reportConsent` covers the requested
+  report only.
+- The CSV contains personal contact data. Keep it on encrypted storage, share it only through the
+  company's approved channel, and delete local copies after import. Cells that start with `=`, `+`, `-`
+  or `@` are prefixed with `'` so spreadsheet programs do not run them as formulas.
+
+### Retention
+
+The retention period for leads **has not been decided** (open question Q7, owner/compliance).
+`LEAD_RETENTION_DAYS` in `.env` is a placeholder: leave it empty until a period is approved. Nothing is
+deleted automatically in any case; a purge command will be added once the policy exists.
+
+### Privacy safeguards
+
+- The form collects business contact data only: no patient information, no free-text fields. The server
+  rejects unknown fields.
+- Application logs never contain full contact records: names, emails, phones and organizations are
+  masked, and only record ids and outcomes are logged.
+- Email delivery keeps a status, an attempt count and a short error code only; never credentials or
+  provider responses.
 
 ## Configuration
 

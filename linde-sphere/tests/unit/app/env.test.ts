@@ -85,4 +85,13 @@ describe("parseServerEnv", () => {
     expect(message).toContain("DATABASE_URL");
     expect(message).toContain(".env.example");
   });
+
+  it("leaves lead retention undecided by default (placeholder, no invented policy)", () => {
+    const result = parseServerEnv({});
+    expect(result.ok && result.env.LEAD_RETENTION_DAYS).toBeUndefined();
+    const set = parseServerEnv({ LEAD_RETENTION_DAYS: "180" });
+    expect(set.ok && set.env.LEAD_RETENTION_DAYS).toBe(180);
+    expect(parseServerEnv({ LEAD_RETENTION_DAYS: "0" }).ok).toBe(false);
+    expect(parseServerEnv({ LEAD_RETENTION_DAYS: "forever" }).ok).toBe(false);
+  });
 });

@@ -735,17 +735,19 @@ Allowed placeholders: `{persona}`, `{challenges}`, `{facilityType}`, `{scenes}`,
 
 ### 9.1 Route handlers
 
-| Method + path                      | Purpose                                      | Request validation             | Response                               |
-| ---------------------------------- | -------------------------------------------- | ------------------------------ | -------------------------------------- |
-| `GET /api/health`                  | Readiness: app, config, content, database    | —                              | `HealthReport` (see §9.1.1) ✅         |
-| `POST /api/sessions`               | Store anonymous session summary (sendBeacon) | Zod `SessionSummary` (C1 only) | `204`                                  |
-| `POST /api/leads`                  | Create lead, snapshot, report, outbox entry  | Zod `LeadSubmission`           | `201 { leadId, emailQueued: boolean }` |
-| `GET /api/admin/leads.csv`         | CSV export                                   | Admin auth                     | `text/csv`                             |
-| `GET /api/admin/outbox`            | Outbox status                                | Admin auth                     | JSON                                   |
-| `POST /api/admin/outbox/:id/retry` | Force retry                                  | Admin auth                     | JSON                                   |
+| Method + path                      | Purpose                                      | Request validation             | Response                                              |
+| ---------------------------------- | -------------------------------------------- | ------------------------------ | ----------------------------------------------------- |
+| `GET /api/health`                  | Readiness: app, config, content, database    | —                              | `HealthReport` (see §9.1.1) ✅                        |
+| `POST /api/sessions`               | Store anonymous session summary (sendBeacon) | Zod `SessionSummary` (C1 only) | `204` (planned)                                       |
+| `POST /api/leads`                  | Store lead + session summary + pending email | Zod `LeadSubmission` + content | `201`/`200 { statusToken, emailQueued, replayed }` ✅ |
+| `GET /api/leads/status/:token`     | Report-delivery state for an opaque token    | `StatusTokenSchema`            | `200 { submission, report }` / `404` ✅               |
+| `GET /api/admin/leads.csv`         | CSV export                                   | Admin auth                     | `text/csv`                                            |
+| `GET /api/admin/outbox`            | Outbox status                                | Admin auth                     | JSON                                                  |
+| `POST /api/admin/outbox/:id/retry` | Force retry                                  | Admin auth                     | JSON                                                  |
 
-All handlers run on the Node.js runtime. Payload size limits are enforced; unknown fields are rejected
-(`z.strictObject`).
+All handlers run on the Node.js runtime. Payload size limits are enforced (16 KB for leads); unknown fields
+are rejected (`z.strictObject`). There is **no** endpoint that lists leads: `/api/leads` exports only
+`POST` (GET answers 405) and exports run from the CLI (§14, ADR-024). Admin routes are Phase 9.
 
 #### 9.1.1 Health report (`src/types/health.ts`)
 
@@ -772,43 +774,66 @@ All handlers run on the Node.js runtime. Payload size limits are enforced; unkno
 ```
 
 `Cache-Control: no-store`. No values, paths, URLs or personal data. The database probe opens the SQLite
-file read-only with Node's built-in `node:sqlite` and never creates it. Until Phase 7 migrations exist,
-`not_initialized` and overall `degraded` are expected (ADR-038).
+file read-only with Node's built-in `node:sqlite` and never creates it. `ready` requires every folder in
+`prisma/migrations` to be recorded as applied in `_prisma_migrations` (ADR-052). Reasons:
+`database_file_missing`, `migrations_not_applied`, `migrations_pending` (all `not_initialized` → overall
+`degraded`), `migration_failed`, `database_unreadable` (`unavailable` → overall `error`).
 
-### 9.2 `POST /api/leads` flow
+### 9.2 `POST /api/leads` flow (ADR-052)
 
 ```
-validate payload (Zod) ─► load content + visibleContent(mode)
-  ─► recompute recommendations server-side from submitted signals (never trust client output)
-  ─► compute lead score (server-only)
-  ─► render report HTML + text (visitor language, visible content only)
-  ─► prisma.$transaction([
-        upsert VisitorSession, create Lead, create RecommendationSnapshot,
-        create Report, create EmailOutbox(status=pending) if reportConsent
-     ])
-  ─► respond 201 { leadId, emailQueued }
-  ─► nudge outbox worker (async, fire-and-forget; errors logged, never surfaced)
+route handler (src/app/api/leads/route.ts)
+  ─► lead-http: content-type JSON, ≤ 16 KB, JSON parse               → 415 / 413 / 400
+  ─► lead-service.submitLead
+       Zod LeadSubmissionSchema (strict; normalizes email: trim + lower-case)   → 422 { issues: field, code, message }
+       check against served content: consent version, role id, interest ids,
+       session start not in the future                                         → 422
+       fingerprint = SHA-256(normalized payload without submittedAt)
+       existing lead with this idempotencyKey?  same fingerprint → replay 200 · different → 409
+       keep only signal ids that exist in content; recompute recommendations (ADR-025)
+       lead-repository.createSubmission  ── ONE transaction ──
+           upsert VisitorSessionSummary (+ replace its SessionSummaryItems)
+           create Lead · createMany LeadInterest · create EmailDelivery(status=pending)
+       unique violation on idempotencyKey (two taps raced) → answer as replay
+       onDeliveryQueued(deliveryId)  (outbox wake-up; errors logged as codes, never surfaced)
+  ─► 201 { statusToken, emailQueued: true, replayed: false }
 ```
 
-The HTTP response is sent **after** the transaction commits and **before** any email attempt. Email
-failure therefore cannot roll back or block lead creation.
+The response is sent **after** the transaction commits and **before** any email attempt. Email failures
+only ever update the `EmailDelivery` row (`email-delivery-repository.recordAttempt`), so they cannot roll
+back or block a stored lead. The status token is `base64url(HMAC-SHA256(idempotencyKey, "lead-status:v1:" +
+leadId))`: unguessable, re-derivable for replays, and only its SHA-256 hash is stored.
 
-### 9.3 Data model (Prisma, SQLite)
+**Layers.** Route handlers → `src/server/leads/lead-http.ts` (HTTP mapping) → `lead-service.ts` (use case)
+→ `lead-repository.ts` / `email-delivery-repository.ts` (the only Prisma users besides `db/client.ts`) →
+Prisma client (`src/generated/prisma`, git-ignored) with the `better-sqlite3` driver adapter. UI code never
+imports `src/server/db` or `src/server/leads`; `tests/unit/db/layer-boundaries.test.ts` enforces this.
 
-| Model                    | Fields (abridged)                                                                                                                                                                                                                                                                                                                     |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VisitorSession`         | `id`, `startedAt`, `endedAt?`, `outcome` (`completed`/`abandoned`/`timeout`), `language`, `entryPath?`, `contentMode`, `contentVersion`, `signals` (JSON), `appVersion`                                                                                                                                                               |
-| `Lead`                   | `id`, `sessionId` → VisitorSession, `createdAt`, `firstName`, `lastName`, `organization`, `jobFunction` (persona id), `email`, `emailIsFreeDomain`, `phone?`, `preferredLanguage`, `interests` (JSON), `consentVersion` (details in `ConsentRecord`), `leadScore`, `leadTier`, `leadScoreFactors` (JSON), `contentMode`, `deletedAt?` |
-| `RecommendationSnapshot` | `id`, `leadId`, `engineVersion`, `contentVersion`, `contentMode`, `items` (JSON: ids, reasons, environments, resources)                                                                                                                                                                                                               |
-| `Report`                 | `id`, `leadId`, `language`, `subject`, `html`, `text`, `createdAt`                                                                                                                                                                                                                                                                    |
-| `EmailOutbox`            | `id`, `reportId`, `kind` (`visitor_report`; `sales_notification` reserved), `to`, `status` (`pending`/`sending`/`sent`/`failed`/`cancelled`), `attempts`, `nextAttemptAt`, `lastError?` (sanitized, no PII), `providerMessageId?`, `createdAt`, `sentAt?`                                                                             |
-| `ConsentRecord`          | `id`, `leadId`, `consentType` (`report-delivery`/`sales-follow-up`), `granted`, `consentVersion`, `language`, `textShown`, `recordedAt`, `source` — mirrors `ConsentRecordSchema`                                                                                                                                                     |
-| `EmailDeliveryEvent`     | `id`, `outboxId`, `leadId`, `kind`, `eventType`, `attempt`, `provider`, `occurredAt`, `providerMessageId?`, `errorCode?`, `errorMessage?` (sanitized), `retryable?`, `nextAttemptAt?` — mirrors `EmailDeliveryEventSchema`                                                                                                            |
-| `AdminAuditLog`          | `id`, `at`, `action` (`export`/`retry`/`purge`), `detail` (no PII)                                                                                                                                                                                                                                                                    |
+### 9.3 Data model (Prisma, SQLite) — `prisma/schema.prisma`
 
-Indexes: `EmailOutbox(status, nextAttemptAt)`, `Lead(createdAt)`, `Lead(email)`.
-JSON columns use Prisma's `Json` type on SQLite; if unsupported by the chosen adapter, stored as
-`String` with Zod parse on read (documented in DECISIONS if needed).
+| Model                   | Fields                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Lead`                  | `id`, `createdAt`, `updatedAt`, `firstName`, `lastName`, `organization`, `roleLabel` (Spanish persona label), `businessEmail` (normalized), `optionalPhone?`, `preferredLanguage`, `sessionId` → summary, `reportConsent` (always true), `followUpConsent`, `consentTextVersion`, `source`, `status` (`active`/`archived`/`erasure_requested`), `idempotencyKey` (unique), `requestFingerprint`, `statusTokenHash` (unique), `contentVersion` |
+| `LeadInterest`          | `id`, `leadId` (cascade), `category` (`role`/`challenge`/`solution`), `value` (content id), `relevance?` (`high`/`medium`/`possible`, recommendations only — never a score), `sourceType` (`session_selection`/`explicit_interest`/`form_selection`/`recommendation`); unique per lead+category+value+source                                                                                                                                  |
+| `VisitorSessionSummary` | `id`, `sessionId` (unique, anonymous UUID), `startedAt`, `completedAt?`, `selectedPersona?`, `contentVersion`, timestamps                                                                                                                                                                                                                                                                                                                     |
+| `SessionSummaryItem`    | `id`, `summaryId` (cascade), `kind` (`challenge`/`scene`/`hotspot`/`recommendation`), `value`, `position`; unique per summary+kind+value — de-duplicated sets, not an event stream                                                                                                                                                                                                                                                            |
+| `EmailDelivery`         | `id`, `leadId` (cascade), `provider` (`file`/`smtp`/`graph`), `status` (`pending`/`sent`/`failed`/`retrying`), `attempts`, `lastAttemptAt?`, `nextAttemptAt?`, `providerMessageId?`, `errorCode?` (sanitized UPPER_SNAKE code), timestamps                                                                                                                                                                                                    |
+
+Indexes: `Lead(createdAt)`, `Lead(sessionId)`, `Lead(businessEmail)`, `LeadInterest(category, value)`,
+`EmailDelivery(status, nextAttemptAt)`, `EmailDelivery(leadId)`. Enums are `TEXT` in SQLite, so the initial
+migration adds hand-written `CHECK` constraints for every enum column, `attempts ≥ 0`, the error-code shape
+and `reportConsent = 1`; a schema test fails if a later migration drops them. Never stored: credentials,
+raw provider responses or messages, recipient copies, patient information, free text, behaviour streams,
+lead scores.
+
+**Deferred (ADR-052):** `RecommendationSnapshot`, `Report`, `ConsentRecord` rows and
+`EmailDeliveryEvent` history arrive with report delivery (Phase 8); `AdminAuditLog` with admin (Phase 9).
+Until then the consent wording is identified by `consentTextVersion` (texts are versioned in
+`content/consent.json` under git).
+
+**Operations.** `npm run db:deploy` (apply migrations), `db:migrate` (create a migration in development),
+`db:seed` (synthetic data; refuses `NODE_ENV=production`), `db:backup` (online SQLite backup),
+`db:export` (CSV). See README → Database.
 
 ### 9.4 Email outbox and worker
 
@@ -856,21 +881,21 @@ promised. Demo mode marks assumed offering items with the pending-validation not
 
 ## 10. Privacy and security boundaries
 
-| Boundary           | Rule                                                                                              | Enforcement                                                      |
-| ------------------ | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Client persistence | No PII or session data in `localStorage`/`sessionStorage`/IndexedDB/cookies                       | Code review + E2E assertion after reset (AC-28)                  |
-| Client memory      | Lead draft exists only while the form is mounted; hard reload on reset                            | Reset controller; E2E test                                       |
-| Browser history    | No history entries; reset uses `location.replace`                                                 | Single-route design                                              |
-| Autofill           | Disabled/discouraged on lead form; kiosk Chrome autofill off                                      | Form attributes + runbook                                        |
-| Commercial data    | Lead score/tier/factors never leave the server except admin/CSV                                   | `server-only` imports; response schema test; bundle grep in CI   |
-| Admin surface      | Disabled unless `ADMIN_ENABLED=true`; HTTP Basic auth with env credentials; not linked; `noindex` | `proxy.ts` guard + handler-level check (defense in depth)        |
-| Logs               | Never log names, emails, phones, or payload bodies; log IDs and status codes only                 | `log.ts` helper; lint rule against `console.log` in `src/server` |
-| Secrets            | `.env` only, git-ignored; nothing sensitive in `NEXT_PUBLIC_*`                                    | `env.ts` Zod schema; `.env.example`                              |
-| PHI                | Not collected; no free-text fields in visitor flow                                                | Form design (ADR-020)                                            |
-| External requests  | Kiosk loads only same-origin assets                                                               | Self-hosted fonts; E2E network assertion (AC-31)                 |
-| Data at rest       | SQLite file on an encrypted laptop disk                                                           | Runbook (BitLocker)                                              |
-| Retention          | Export then purge after the agreed period                                                         | `leads:purge` script; Q7 open                                    |
-| Input abuse        | Zod strict schemas, size limits, basic per-IP rate limit on `/api/leads`                          | Handler middleware                                               |
+| Boundary           | Rule                                                                                                                          | Enforcement                                                                                                           |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Client persistence | No PII or session data in `localStorage`/`sessionStorage`/IndexedDB/cookies                                                   | Code review + E2E assertion after reset (AC-28)                                                                       |
+| Client memory      | Lead draft exists only while the form is mounted; hard reload on reset                                                        | Reset controller; E2E test                                                                                            |
+| Browser history    | No history entries; reset uses `location.replace`                                                                             | Single-route design                                                                                                   |
+| Autofill           | Disabled/discouraged on lead form; kiosk Chrome autofill off                                                                  | Form attributes + runbook                                                                                             |
+| Commercial data    | Lead score/tier/factors never leave the server except admin/CSV                                                               | `server-only` imports; response schema test; bundle grep in CI                                                        |
+| Admin surface      | Disabled unless `ADMIN_ENABLED=true`; HTTP Basic auth with env credentials; not linked; `noindex`                             | `proxy.ts` guard + handler-level check (defense in depth)                                                             |
+| Logs               | Never log names, emails, phones, or payload bodies; log IDs and status codes only                                             | `src/server/logging/logger.ts` masks personal keys and any email-looking string; tests assert no contact data in logs |
+| Secrets            | `.env` only, git-ignored; nothing sensitive in `NEXT_PUBLIC_*`                                                                | `env.ts` Zod schema; `.env.example`                                                                                   |
+| PHI                | Not collected; no free-text fields in visitor flow                                                                            | Form design (ADR-020)                                                                                                 |
+| External requests  | Kiosk loads only same-origin assets                                                                                           | Self-hosted fonts; E2E network assertion (AC-31)                                                                      |
+| Data at rest       | SQLite file on an encrypted laptop disk                                                                                       | Runbook (BitLocker)                                                                                                   |
+| Retention          | Export then purge after the agreed period — period **not decided** (Q7)                                                       | `LEAD_RETENTION_DAYS` placeholder (unset = none configured); no automatic deletion; purge script later                |
+| Input abuse        | Zod strict schemas, 16 KB limit, JSON-only (forces a CORS preflight cross-site), idempotency; per-IP rate limit still planned | `lead-http.ts`; `lead-service.ts`                                                                                     |
 
 ---
 
@@ -1012,7 +1037,8 @@ Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebG
 
 | Capability            | Primary (no network exposure)                              | Secondary (optional, guarded web UI) |
 | --------------------- | ---------------------------------------------------------- | ------------------------------------ |
-| CSV export            | `npm run leads:export -- --out leads.csv`                  | `/admin` → Export                    |
+| CSV export            | `npm run db:export -- --out leads.csv` ✅                  | `/admin` → Export                    |
+| Database backup       | `npm run db:backup` ✅ (SQLite online backup)              | —                                    |
 | Outbox status / retry | `npm run outbox:retry`                                     | `/admin` → Outbox                    |
 | Purge after retention | `npm run leads:purge -- --before 2026-12-31`               | —                                    |
 | Content readiness     | `npm run content:check -- --mode production`               | `/admin` → Content status            |
@@ -1035,6 +1061,7 @@ status, timestamps.
 | `EMAIL_FROM` / `EMAIL_REPLY_TO`                                       | —                             | Sender identity                                                   |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` | —                             | SMTP provider                                                     |
 | `EMAIL_MAX_ATTEMPTS`                                                  | `12`                          | Outbox retry ceiling                                              |
+| `LEAD_RETENTION_DAYS`                                                 | — (undecided)                 | Retention placeholder; nothing is deleted automatically (ADR-052) |
 | `ADMIN_ENABLED`                                                       | `false`                       | Enable admin pages/APIs                                           |
 | `ADMIN_USER` / `ADMIN_PASSWORD`                                       | —                             | Basic auth credentials (required if enabled)                      |
 | `DEV_ALLOWED_ORIGINS`                                                 | —                             | Extra dev-server HMR hostnames (comma list)                       |
