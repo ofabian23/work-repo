@@ -1,49 +1,7 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AppShell } from "@/components/shell/app-shell";
-import { visibleContent } from "@/domain/content/visibility";
-import { KioskExperience } from "@/features/kiosk/kiosk-experience";
-import { KioskHeaderActions } from "@/features/kiosk/kiosk-header-actions";
-import { KioskSessionProvider, useKioskSession } from "@/features/kiosk/state/kiosk-session-provider";
-import { LanguageProvider } from "@/lib/i18n/language-provider";
-import { loadSeedBundle } from "../helpers/schema";
-
-const content = visibleContent(loadSeedBundle(), "demo");
-
-/** Test-only window into the session store (never rendered in the app). */
-function SessionProbe() {
-  const { state } = useKioskSession();
-  return <output data-testid="probe">{JSON.stringify(state.session)}</output>;
-}
-const session = () => JSON.parse(screen.getByTestId("probe").textContent || "null");
-
-let counter = 0;
-function renderKiosk({
-  idle = { warningAfterMs: 60_000, countdownMs: 15_000 },
-  attractTimings = { rotationMs: 1_000, revertMs: 5_000 },
-}: {
-  idle?: { warningAfterMs: number; countdownMs: number };
-  attractTimings?: { rotationMs: number; revertMs: number };
-} = {}) {
-  const onHardReset = vi.fn();
-  const utils = render(
-    <LanguageProvider>
-      <KioskSessionProvider
-        onHardReset={onHardReset}
-        createId={() => `00000000-0000-4000-8000-00000000000${++counter % 10}`}
-      >
-        <AppShell contentMode="demo" headerActions={<KioskHeaderActions />}>
-          <KioskExperience content={content} idle={idle} attractTimings={attractTimings} />
-        </AppShell>
-        <SessionProbe />
-      </KioskSessionProvider>
-    </LanguageProvider>,
-  );
-  return { ...utils, onHardReset };
-}
-
-const startSession = () => fireEvent.click(screen.getByTestId("attract-start"));
+import { renderKiosk, session, startSession } from "./kiosk-harness";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -117,20 +75,27 @@ describe("language switching", () => {
   });
 });
 
+const PATH_SCREENS = {
+  role: { screen: "persona-screen", title: "¿En qué área trabaja?", back: "persona-back" },
+  challenge: { screen: "path-screen-challenge", title: "Necesito…", back: "back-to-welcome" },
+  explore: { screen: "path-screen-explore", title: "Explorar el hospital", back: "back-to-welcome" },
+} as const;
+
 describe("entry paths", () => {
-  it.each([
-    ["role", "Trabajo en…"],
-    ["challenge", "Necesito…"],
-    ["explore", "Explorar el hospital"],
-  ] as const)("selecting '%s' opens its screen and records the path", async (path, title) => {
-    renderKiosk();
-    startSession();
-    await userEvent.click(screen.getByTestId(`path-${path}`));
-    const pathScreen = screen.getByTestId(`path-screen-${path}`);
-    expect(within(pathScreen).getByRole("heading", { level: 1 })).toHaveTextContent(title);
-    expect(within(pathScreen).getByRole("heading", { level: 1 })).toHaveFocus();
-    expect(session().entryPath).toBe(path);
-  });
+  it.each(["role", "challenge", "explore"] as const)(
+    "selecting '%s' opens its screen and records the path",
+    async (path) => {
+      renderKiosk();
+      startSession();
+      await userEvent.click(screen.getByTestId(`path-${path}`));
+      const pathScreen = screen.getByTestId(PATH_SCREENS[path].screen);
+      expect(within(pathScreen).getByRole("heading", { level: 1 })).toHaveTextContent(
+        PATH_SCREENS[path].title,
+      );
+      expect(within(pathScreen).getByRole("heading", { level: 1 })).toHaveFocus();
+      expect(session().entryPath).toBe(path);
+    },
+  );
 
   it.each(["role", "challenge", "explore"] as const)(
     "returns from '%s' to the welcome screen keeping the session",
@@ -139,7 +104,7 @@ describe("entry paths", () => {
       startSession();
       const id = session().id;
       await userEvent.click(screen.getByTestId(`path-${path}`));
-      await userEvent.click(screen.getByTestId("back-to-welcome"));
+      await userEvent.click(screen.getByTestId(PATH_SCREENS[path].back));
       expect(screen.getByTestId("welcome-screen")).toBeInTheDocument();
       expect(session().id).toBe(id);
     },

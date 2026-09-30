@@ -231,7 +231,7 @@ library, ADR-047). `kiosk-state.ts` is a pure reducer, unit-tested without rende
 
 ```ts
 type KioskState = {
-  screen: "attract" | "welcome" | "role" | "challenges" | "explore"; // grows in Phases 5–7
+  screen: KioskScreen; // attract · welcome · role journey (below) · challenges (path B) · explore
   session: ActiveSession | null; // null on the attract screen
   resetCount: number; // remount key: every reset renders fresh components
   lastResetReason: "explicit" | "timeout" | "completed" | null;
@@ -241,7 +241,9 @@ type ActiveSession = {
   startedAt: string;
   entryPath: "role" | "challenge" | "explore" | null; // first path chosen
   signals: SessionSignals; // C1 anonymous signals: role, challenges (max 3), facility, scenes, hotspots, interests
-  recommendations: string[]; // solution ids last shown (filled in Phase 5)
+  otherChallengeSelected: boolean; // "Algo más / Something else" (no free text is ever collected)
+  recommendations: RecommendationResult | null; // snapshot stored when the visitor is shown recommendations
+  events: SessionEvent[]; // anonymous ordered events (ADR-048)
   accessibility: { largeText: boolean; reduceMotion: boolean }; // this visitor only
 };
 ```
@@ -255,8 +257,38 @@ type ActiveSession = {
   `html[data-motion="reduce"]` (animations and transitions off), and removed on reset.
 - Each screen change scrolls to the top and moves focus to the screen's `h1` (without scrolling).
 
-Planned derived selectors: `recommendations = recommend(signals, publicContent)`, `hasMinimumInfo`,
-`shouldShowPrompt` (Phase 5). The lead draft (C2) will live only inside the lead form (Phase 7).
+**Recommendations are derived, not stored first:** `KioskExperience` calculates
+`recommend(signals, publicContent)` in a memo whenever the signals change (they keep their identity
+otherwise), so preliminary recommendations exist the moment a persona is selected. The snapshot is written to
+the session (`SET_RECOMMENDATIONS`, which also records a `recommendations-calculated` event) when the visitor
+continues to the transition, refines, or opens the recommendations, and only if it changed.
+
+Still planned: `hasMinimumInfo` and `shouldShowPrompt` (path B / explorer prompt, Phase 5–6). The lead draft
+(C2) will live only inside the lead form (Phase 7).
+
+#### 5.2.1 Role journey (path A, `src/features/kiosk/journey/`)
+
+```
+ROLE (persona grid, 1 of 2) ─Continuar─► ROLE-CHALLENGES (≤ 4 suggestions + "Algo más", 2 of 2)
+   ─Continuar─► TAILORING ("Estamos adaptando la experiencia a sus prioridades", 1.8 s)
+   ─auto─► NEXT-STEPS ─┬─ Ver recomendaciones preliminares ─► RECOMMENDATIONS ⇄ REFINE / EXPLORE
+                       ├─ Refinar eligiendo retos ─► REFINE-CHALLENGES (all challenges, max 3) ─► RECOMMENDATIONS
+                       └─ Explorar áreas relevantes ─► EXPLORE (placeholder listing the relevant areas until Phase 6)
+```
+
+- One primary persona (single select; selecting another replaces it). Continue is disabled until one is chosen.
+- "Mi función abarca varias áreas" is a content persona with `scope: "multiple"`: shown apart, its
+  suggestions are the most common challenges, and no rule may weight it, so its recommendations come from the
+  challenges chosen (fallback if none).
+- The challenge step shows the persona's `suggestedChallengeIds` (max 4, `journey-view.ts`) plus any challenge
+  already chosen elsewhere, and "Algo más", which is recorded as `otherChallengeSelected` and an event, does not
+  count toward the limit of three, and never opens a text field.
+- Next steps summarize the choices and name up to three relevant areas: the `relatedSceneIds` of the
+  recommendations in order, without the campus root.
+- Every recommendation card shows "Por qué aparece" from the engine's `whyThisAppeared` (built from
+  `matchedSignals`); scores are never shown.
+- The persona grid uses a compact `TouchCard` density so all 11 options fit 1080 × 1920 without scrolling
+  (verified by E2E).
 
 The page (`src/app/page.tsx`) renders at request time and passes the visibility-filtered
 `PublicContentBundle` from `src/server/content/public-content.ts`, cached per content mode in production.
@@ -346,7 +378,7 @@ only. They make no offering claim, and the project owner approves them.
 
 | Entity (file)                                      | Key fields                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Persona` (`personas.json`)                        | `id`, `label`, `description`, `icon`, `sortOrder`, `suggestedChallengeIds[]` (ordering hint only), `validationStatus`                                                                                                                                                                                                                                                                                                          |
+| `Persona` (`personas.json`)                        | `id`, `label`, `description`, `icon`, `sortOrder`, `suggestedChallengeIds[]` (ordering hint only), `scope: single \| multiple` (default single; at most one "several areas" persona, never weighted by a rule), `validationStatus`                                                                                                                                                                                             |
 | `Challenge` (`challenges.json`)                    | `id`, `label`, `description`, `icon`, `sortOrder`, `validationStatus`                                                                                                                                                                                                                                                                                                                                                          |
 | `FacilityType` (`facility-types.json`)             | `id`, `label`, `description`, `sortOrder`, `validationStatus`                                                                                                                                                                                                                                                                                                                                                                  |
 | `Scene` (`scenes/<id>.json`)                       | `id`, `slug`, `title`, `description`, `background` (layer, depth 0), `foregroundLayers[]`, `hotspots[]`, `parentSceneId` (null = root), `breadcrumb[]` (root → self), `validationStatus`, `sortOrder`                                                                                                                                                                                                                          |
@@ -367,6 +399,7 @@ Planned content (later phases): `settings.json` (engine tuning), `report.json`
 | ---------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SessionSignals`       | `domain/session/visitor-session.ts`               | Anonymous C1 signals; unique ids; ≤ 3 challenges; engaged ⊆ opened hotspots                                                                    |
 | `VisitorSession`       | same                                              | UUID, timestamps, language, entry path, content mode/version, outcome, signals                                                                 |
+| `SessionEvent`         | `domain/session/session-event.ts`                 | `{seq, type, targetId}` only: fixed event types, kebab-case ids with a letter (no free text, digits-only strings or timestamps); ≤ 200/session |
 | `RecommendationResult` | `domain/recommendations/recommendation-result.ts` | 1–5 ranked items with matched signals, bilingual explanation, next step, `pendingValidation`; never pending in production; fallback only alone |
 | `LeadSubmission`       | `domain/leads/lead-submission.ts`                 | Kiosk → server payload: minimum contact fields, separate consents (report consent required), consent version, signals (not recommendations)    |
 | `LeadCreatedResponse`  | same                                              | `{ leadId, emailQueued }` only — no score                                                                                                      |

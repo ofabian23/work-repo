@@ -35,18 +35,16 @@ test.describe("attract and welcome experience", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("¿Cómo desea comenzar?");
   });
 
-  for (const [path, title] of [
-    ["role", "Trabajo en…"],
-    ["challenge", "Necesito…"],
-    ["explore", "Explorar el hospital"],
+  for (const [path, screen, title, back] of [
+    ["role", "persona-screen", "¿En qué área trabaja?", "persona-back"],
+    ["challenge", "path-screen-challenge", "Necesito…", "back-to-welcome"],
+    ["explore", "path-screen-explore", "Explorar el hospital", "back-to-welcome"],
   ] as const) {
     test(`entry path '${path}' opens and returns to the welcome screen`, async ({ page }) => {
       await page.getByTestId("attract-start").click();
       await page.getByTestId(`path-${path}`).click();
-      await expect(page.getByTestId(`path-screen-${path}`).getByRole("heading", { level: 1 })).toHaveText(
-        title,
-      );
-      await page.getByTestId("back-to-welcome").click();
+      await expect(page.getByTestId(screen).getByRole("heading", { level: 1 })).toHaveText(title);
+      await page.getByTestId(back).click();
       await expect(page.getByTestId("welcome-screen")).toBeVisible();
     });
   }

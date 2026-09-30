@@ -45,6 +45,71 @@ export const en: Messages = {
     comingNext: "This part of the experience is completed in the next development phase.",
     backToWelcome: "Back to start",
   },
+  journey: {
+    back: "Back",
+    continue: "Continue",
+    steps: { role: "Your area", priorities: "Your priorities" },
+  },
+  role: {
+    title: "What area do you work in?",
+    subtitle: "Choose the one that best describes your main role.",
+    listLabel: "Professional areas",
+    or: "or",
+    empty: "Professional areas are not available yet. You can explore the hospital.",
+  },
+  roleChallenges: {
+    title: "What are your priorities?",
+    subtitle: "Common challenges in {persona}. Choose up to {max}, or continue without choosing.",
+    subtitleMultiple: "Common challenges across several areas. Choose up to {max}, or continue without choosing.",
+    listLabel: "Suggested challenges",
+    selectedCount: "{count} of {max} chosen",
+  },
+  somethingElse: {
+    title: "Something else",
+    description: "My priority is not listed here. No need to type anything.",
+  },
+  tailoring: {
+    message: "We are tailoring the experience to your priorities.",
+  },
+  nextSteps: {
+    title: "Your experience is ready",
+    area: "Area: {persona}",
+    priorities: "Priorities: {challenges}",
+    noPriorities: "Priorities: none chosen yet",
+    optionsLabel: "What would you like to do now?",
+    view: {
+      title: "View preliminary recommendations",
+      descriptionOne: "1 recommendation, with the reason why.",
+      descriptionMany: "{count} recommendations, each with the reason why.",
+    },
+    refine: {
+      title: "Refine by selecting challenges",
+      description: "Choose up to {max} challenges to fine-tune the recommendations.",
+    },
+    explore: {
+      title: "Explore relevant hospital areas",
+      description: "For example: {areas}.",
+      descriptionGeneric: "Walk through the hospital areas related to your priorities.",
+    },
+    changeRole: "Change my area",
+  },
+  recommendations: {
+    title: "Preliminary recommendations",
+    subtitle: "Based on what you chose. They are indicative: a specialist will confirm what applies to your organization.",
+    listLabel: "Recommendations",
+    refine: "Refine challenges",
+    explore: "Explore areas",
+    empty: "No recommendations are available yet.",
+  },
+  refine: {
+    title: "Refine by challenges",
+    subtitle: "Choose up to {max} challenges you want to solve.",
+    listLabel: "Challenges",
+    continue: "View recommendations",
+  },
+  explorePreview: {
+    relevantAreas: "Areas relevant to you",
+  },
   accessibility: {
     button: "Accessibility",
     title: "Accessibility options",

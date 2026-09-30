@@ -6,8 +6,8 @@
       "en": "Executive leadership"
     },
     "description": {
-      "es": "Estrategia, crecimiento, sostenibilidad y reducción de riesgos para la organización.",
-      "en": "Strategy, growth, sustainability and risk reduction for the organization."
+      "es": "Estrategia, crecimiento y gestión de riesgos.",
+      "en": "Strategy, growth and risk management."
     },
     "icon": "executive",
     "sortOrder": 10,
@@ -26,8 +26,8 @@
       "en": "Operations and facilities"
     },
     "description": {
-      "es": "Confiabilidad, infraestructura, planificación de capacidad y mantenimiento.",
-      "en": "Reliability, infrastructure, capacity planning and maintenance."
+      "es": "Infraestructura, confiabilidad y mantenimiento.",
+      "en": "Infrastructure, reliability and maintenance."
     },
     "icon": "facilities",
     "sortOrder": 20,
@@ -46,8 +46,8 @@
       "en": "Procurement and supply chain"
     },
     "description": {
-      "es": "Continuidad, control de inventario, gestión de proveedores y estandarización.",
-      "en": "Continuity, inventory control, vendor management and standardization."
+      "es": "Suministro, inventario y proveedores.",
+      "en": "Supply, inventory and vendors."
     },
     "icon": "supply-chain",
     "sortOrder": 30,
@@ -66,8 +66,8 @@
       "en": "Clinical and respiratory care"
     },
     "description": {
-      "es": "Seguridad del paciente, calidad del cuidado, flujo clínico y disponibilidad de recursos críticos.",
-      "en": "Patient safety, care quality, clinical workflow and availability of critical resources."
+      "es": "Seguridad del paciente y flujo clínico.",
+      "en": "Patient safety and clinical workflow."
     },
     "icon": "clinical",
     "sortOrder": 40,
@@ -86,8 +86,8 @@
       "en": "Quality, safety, risk and compliance"
     },
     "description": {
-      "es": "Seguridad, acreditación, mitigación de riesgos, estándares y documentación.",
-      "en": "Safety, accreditation, risk mitigation, standards and documentation."
+      "es": "Acreditación, estándares y documentación.",
+      "en": "Accreditation, standards and documentation."
     },
     "icon": "compliance",
     "sortOrder": 50,
@@ -101,8 +101,8 @@
       "en": "Finance and reimbursement"
     },
     "description": {
-      "es": "Manejo de costos, eficiencia operacional y sostenibilidad financiera.",
-      "en": "Cost management, operational efficiency and financial sustainability."
+      "es": "Costos, eficiencia y sostenibilidad financiera.",
+      "en": "Costs, efficiency and financial sustainability."
     },
     "icon": "finance",
     "sortOrder": 60,
@@ -116,8 +116,8 @@
       "en": "Technology, biomedical and digital transformation"
     },
     "description": {
-      "es": "Monitoreo, automatización, visibilidad, analítica y modernización digital.",
-      "en": "Monitoring, automation, visibility, analytics and digital modernization."
+      "es": "Equipos, monitoreo y modernización digital.",
+      "en": "Equipment, monitoring and digital modernization."
     },
     "icon": "technology",
     "sortOrder": 70,
@@ -131,8 +131,8 @@
       "en": "Ambulatory care and homecare"
     },
     "description": {
-      "es": "Continuidad del cuidado fuera del hospital, logística y apoyo a pacientes.",
-      "en": "Continuity of care outside the hospital, logistics and patient support."
+      "es": "Cuidado fuera del hospital y su logística.",
+      "en": "Care outside the hospital and its logistics."
     },
     "icon": "homecare",
     "sortOrder": 80,
@@ -146,8 +146,8 @@
       "en": "Academia and research"
     },
     "description": {
-      "es": "Operaciones de laboratorio, infraestructura de investigación y educación.",
-      "en": "Laboratory operations, research infrastructure and education."
+      "es": "Laboratorios, investigación y educación.",
+      "en": "Laboratories, research and education."
     },
     "icon": "research",
     "sortOrder": 90,
@@ -161,8 +161,8 @@
       "en": "Government or healthcare-system stakeholder"
     },
     "description": {
-      "es": "Preparación de salud pública, estandarización a nivel de sistema y resiliencia.",
-      "en": "Public health preparedness, system-wide standardization and resilience."
+      "es": "Salud pública, preparación y resiliencia.",
+      "en": "Public health, preparedness and resilience."
     },
     "icon": "government",
     "sortOrder": 100,
@@ -172,6 +172,27 @@
       "compliance-readiness",
       "facility-expansion"
     ],
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "multiple-areas",
+    "label": {
+      "es": "Mi función abarca varias áreas",
+      "en": "My role spans several areas"
+    },
+    "description": {
+      "es": "Empezaremos por los retos más comunes.",
+      "en": "We will start with the most common challenges."
+    },
+    "icon": "multiple-areas",
+    "sortOrder": 1000,
+    "suggestedChallengeIds": [
+      "supply-continuity",
+      "emergency-preparedness",
+      "patient-staff-safety",
+      "operational-complexity"
+    ],
+    "scope": "multiple",
     "validationStatus": "assumed"
   }
 ]

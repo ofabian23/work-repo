@@ -23,6 +23,7 @@ persona,technology-biomed,,"Tecnología, biomédica y transformación digital","
 persona,ambulatory-homecare,,Cuidado ambulatorio y en el hogar,Ambulatory care and homecare,assumed,n/a (taxonomy),no,,,,,,,,,care-outside-hospital; cylinder-inventory; supply-continuity,,,,,,,,,,
 persona,academia-research,,Academia e investigación,Academia and research,assumed,n/a (taxonomy),no,,,,,,,,,supply-continuity; patient-staff-safety; facility-expansion,,,,,,,,,,
 persona,government-system,,Gobierno o sistema de salud,Government or healthcare-system stakeholder,assumed,n/a (taxonomy),no,,,,,,,,,emergency-preparedness; supply-continuity; compliance-readiness; facility-expansion,,,,,,,,,,
+persona,multiple-areas,,Mi función abarca varias áreas,My role spans several areas,assumed,n/a (taxonomy),no,,,,,,,,,supply-continuity; emergency-preparedness; patient-staff-safety; operational-complexity,,,,,,,,,,
 challenge,supply-continuity,,Mejorar la continuidad del suministro,Improve supply continuity,assumed,n/a (taxonomy),no,,,,,,,,,,,,,,,,,,,
 challenge,emergency-preparedness,,Prepararse para emergencias,Prepare for emergencies,assumed,n/a (taxonomy),no,,,,,,,,,,,,,,,,,,,
 challenge,aging-infrastructure,,Modernizar infraestructura envejecida,Modernize aging infrastructure,assumed,n/a (taxonomy),no,,,,,,,,,,,,,,,,,,,

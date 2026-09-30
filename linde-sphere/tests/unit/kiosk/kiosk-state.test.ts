@@ -42,7 +42,16 @@ describe("starting a session", () => {
   it("holds no personal-information fields", () => {
     const session = run([start()]).session!;
     expect(Object.keys(session).sort()).toEqual(
-      ["accessibility", "entryPath", "id", "recommendations", "signals", "startedAt"].sort(),
+      [
+        "accessibility",
+        "entryPath",
+        "events",
+        "id",
+        "otherChallengeSelected",
+        "recommendations",
+        "signals",
+        "startedAt",
+      ].sort(),
     );
     expect(JSON.stringify(session)).not.toMatch(/email|name|phone|organization/i);
   });

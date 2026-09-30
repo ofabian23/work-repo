@@ -93,13 +93,24 @@ describe("recommendation journeys (seed content, demo mode)", () => {
 });
 
 describe("coverage", () => {
-  it.each(seed.personas.map((p) => [p.id]))(
+  const singleAreaPersonas = seed.personas.filter((p) => p.scope === "single");
+  it.each(singleAreaPersonas.map((p) => [p.id]))(
     "persona %s alone yields rule-based recommendations",
     (personaId) => {
       const r = run({ personaId });
       expect(r.items[0]!.isFallback).toBe(false);
     },
   );
+
+  it("the several-areas persona names no area: alone it yields the fallback, with challenges it follows them", () => {
+    expect(run({ personaId: "multiple-areas" }).items[0]!.isFallback).toBe(true);
+    const r = run({ personaId: "multiple-areas", challengeIds: ["supply-continuity"] });
+    expect(r.items[0]!.isFallback).toBe(false);
+    for (const item of r.items) {
+      expect(item.matchedSignals.some((m) => m.signalType === "personas")).toBe(false);
+      expect(item.whyThisAppeared.es).not.toMatch(/varias áreas/);
+    }
+  });
 
   it.each(seed.challenges.map((c) => [c.id]))(
     "challenge %s alone yields rule-based recommendations",

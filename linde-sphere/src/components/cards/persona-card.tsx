@@ -9,10 +9,12 @@ export function PersonaCard({
   persona,
   selected,
   onSelect,
+  density,
 }: {
   persona: Pick<Persona, "id" | "label" | "description">;
   selected: boolean;
   onSelect: (personaId: string) => void;
+  density?: "comfortable" | "compact";
 }) {
   const { localize } = useLanguage();
   return (
@@ -23,6 +25,7 @@ export function PersonaCard({
       selected={selected}
       onSelect={() => onSelect(persona.id)}
       indicator="check"
+      density={density}
     />
   );
 }

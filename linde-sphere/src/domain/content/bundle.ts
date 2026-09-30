@@ -172,6 +172,30 @@ export function checkContentBundle(bundle: ContentBundle): ContentIssue[] {
       ref("personas", p.id, `suggestedChallengeIds[${i}]`, "challenges", id),
     );
   }
+  const multiple = bundle.personas.filter((p) => p.scope === "multiple");
+  multiple.slice(1).forEach((p) =>
+    add({
+      severity: "error",
+      collection: "personas",
+      recordId: p.id,
+      path: "scope",
+      message: "Only one persona may use scope 'multiple' (the \"several areas\" option)",
+    }),
+  );
+  const multipleIds = new Set(multiple.map((p) => p.id));
+  for (const rule of bundle.recommendationRules) {
+    for (const id of Object.keys(rule.weights.personas)) {
+      if (multipleIds.has(id)) {
+        add({
+          severity: "error",
+          collection: "recommendationRules",
+          recordId: rule.id,
+          path: `weights.personas.${id}`,
+          message: `Persona '${id}' spans several areas and must not be weighted; use challenges instead`,
+        });
+      }
+    }
+  }
 
   // ---- Scene tree ------------------------------------------------------------------------
   const sceneById = new Map(bundle.scenes.map((s) => [s.id, s]));

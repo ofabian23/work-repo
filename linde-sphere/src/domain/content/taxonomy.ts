@@ -21,6 +21,11 @@ export const PersonaSchema = z.strictObject({
   sortOrder: SortOrderSchema,
   /** Challenges shown first after this persona is selected (ordering hint only, not scoring). */
   suggestedChallengeIds: z.array(IdSchema).max(12),
+  /**
+   * "single" (default): one professional area. "multiple": the "My role spans several areas" option,
+   * shown apart from the list and never weighted by a rule (it names no specific area).
+   */
+  scope: z.enum(["single", "multiple"]).default("single"),
   validationStatus: ValidationStatusSchema,
 });
 export type Persona = z.infer<typeof PersonaSchema>;

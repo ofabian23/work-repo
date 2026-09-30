@@ -47,6 +47,71 @@ export const es = {
     comingNext: "Esta parte de la experiencia se completa en la próxima fase de desarrollo.",
     backToWelcome: "Volver al inicio",
   },
+  journey: {
+    back: "Volver",
+    continue: "Continuar",
+    steps: { role: "Su área", priorities: "Sus prioridades" },
+  },
+  role: {
+    title: "¿En qué área trabaja?",
+    subtitle: "Elija la que mejor describa su función principal.",
+    listLabel: "Áreas profesionales",
+    or: "o",
+    empty: "Las áreas profesionales todavía no están disponibles. Puede explorar el hospital.",
+  },
+  roleChallenges: {
+    title: "¿Cuáles son sus prioridades?",
+    subtitle: "Retos frecuentes en {persona}. Elija hasta {max} o continúe sin elegir.",
+    subtitleMultiple: "Retos frecuentes en varias áreas. Elija hasta {max} o continúe sin elegir.",
+    listLabel: "Retos sugeridos",
+    selectedCount: "{count} de {max} elegidos",
+  },
+  somethingElse: {
+    title: "Algo más",
+    description: "Mi prioridad no aparece aquí. No hace falta escribir nada.",
+  },
+  tailoring: {
+    message: "Estamos adaptando la experiencia a sus prioridades.",
+  },
+  nextSteps: {
+    title: "Su experiencia está lista",
+    area: "Área: {persona}",
+    priorities: "Prioridades: {challenges}",
+    noPriorities: "Prioridades: aún no eligió ninguna",
+    optionsLabel: "¿Qué desea hacer ahora?",
+    view: {
+      title: "Ver recomendaciones preliminares",
+      descriptionOne: "1 recomendación, con el porqué.",
+      descriptionMany: "{count} recomendaciones, cada una con el porqué.",
+    },
+    refine: {
+      title: "Refinar eligiendo retos",
+      description: "Elija hasta {max} retos para afinar las recomendaciones.",
+    },
+    explore: {
+      title: "Explorar áreas relevantes del hospital",
+      description: "Por ejemplo: {areas}.",
+      descriptionGeneric: "Recorra las áreas del hospital relacionadas con sus prioridades.",
+    },
+    changeRole: "Cambiar mi área",
+  },
+  recommendations: {
+    title: "Recomendaciones preliminares",
+    subtitle: "Basadas en lo que eligió. Son orientativas: un especialista confirmará qué aplica a su organización.",
+    listLabel: "Recomendaciones",
+    refine: "Refinar retos",
+    explore: "Explorar áreas",
+    empty: "Todavía no hay recomendaciones disponibles.",
+  },
+  refine: {
+    title: "Refinar por retos",
+    subtitle: "Elija hasta {max} retos que quiera resolver.",
+    listLabel: "Retos",
+    continue: "Ver recomendaciones",
+  },
+  explorePreview: {
+    relevantAreas: "Áreas relevantes para usted",
+  },
   accessibility: {
     button: "Accesibilidad",
     title: "Opciones de accesibilidad",

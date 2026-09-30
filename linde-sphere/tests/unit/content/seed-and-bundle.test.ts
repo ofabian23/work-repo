@@ -22,7 +22,7 @@ describe("seed content", () => {
     for (const w of result.issues) expect(w.message).toMatch(/Placeholder image not found/);
   });
 
-  it("contains all ten initial personas", () => {
+  it("contains the ten initial personas plus the several-areas option", () => {
     expect(seed.personas.map((p) => p.id)).toEqual([
       "executive",
       "operations-facilities",
@@ -34,7 +34,9 @@ describe("seed content", () => {
       "ambulatory-homecare",
       "academia-research",
       "government-system",
+      "multiple-areas",
     ]);
+    expect(seed.personas.filter((p) => p.scope === "multiple").map((p) => p.id)).toEqual(["multiple-areas"]);
   });
 
   it("contains the eight initial scenes with the campus as the single root", () => {

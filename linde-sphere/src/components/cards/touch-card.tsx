@@ -18,6 +18,8 @@ export type TouchCardProps = {
   hint?: string;
   /** Visual indicator for selected state: "check" (single choice) or "checkbox" (multi-select). */
   indicator?: "check" | "checkbox";
+  /** "compact" tightens spacing for long lists that must fit one screen (still ≥ 80 px tall). */
+  density?: "comfortable" | "compact";
   testId?: string;
   className?: string;
 };
@@ -35,11 +37,13 @@ export function TouchCard({
   disabled = false,
   hint,
   indicator = "check",
+  density = "comfortable",
   testId,
   className,
 }: TouchCardProps) {
   const { t } = useLanguage();
   const interactive = onSelect !== undefined;
+  const compact = density === "compact";
   const content = (
     <>
       {icon && (
@@ -53,22 +57,30 @@ export function TouchCard({
         </span>
       )}
       <span className="flex min-w-0 flex-1 flex-col gap-1 text-left">
-        <span className="text-lead text-ink font-semibold text-balance">{title}</span>
-        {description && <span className="text-body text-ink-muted text-pretty">{description}</span>}
+        <span className={cn("text-ink font-semibold text-balance", compact ? "text-label" : "text-lead")}>
+          {title}
+        </span>
+        {description && (
+          <span className={cn("text-ink-muted text-pretty", compact ? "text-caption" : "text-body")}>
+            {description}
+          </span>
+        )}
         {hint && <span className="text-caption text-notice font-medium">{hint}</span>}
       </span>
       {interactive && (
         <span
           aria-hidden
           className={cn(
-            "flex size-10 shrink-0 items-center justify-center border-2",
+            "flex shrink-0 items-center justify-center border-2",
+            // Compact cards put the mark in the corner so the text can use the full width.
+            compact ? "absolute top-3 right-3 size-8" : "size-10",
             indicator === "checkbox" ? "rounded-lg" : "rounded-full",
             selected
               ? "border-primary bg-primary text-on-primary"
               : "border-line bg-surface text-transparent",
           )}
         >
-          <CheckIcon size="size-6" />
+          <CheckIcon size={compact ? "size-5" : "size-6"} />
         </span>
       )}
       {selected && <span className="sr-only">{t("ui.selected")}</span>}
@@ -76,7 +88,8 @@ export function TouchCard({
   );
 
   const classes = cn(
-    "rounded-card flex min-h-24 w-full items-center gap-5 border-2 p-5 text-left",
+    "rounded-card flex w-full items-center border-2 text-left",
+    compact ? "relative min-h-20 gap-4 py-3 pr-14 pl-5" : "min-h-24 gap-5 p-5",
     "transition-[border-color,background-color,box-shadow] duration-(--duration-fast) ease-standard",
     selected ? "border-primary bg-primary/5 shadow-card" : "border-line bg-surface",
     className,

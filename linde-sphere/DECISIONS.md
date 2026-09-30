@@ -508,3 +508,41 @@ entry here — architecture is never changed silently.
 - **Consequences:** Leak-free resets are covered at three levels: reducer unit tests, component tests and
   E2E with a real reload. Path screens remain placeholders until Phases 5–6. Invalid content now stops the
   server at boot instead of failing on the first request.
+
+## ADR-048 — Role journey: several-areas persona, derived recommendations and anonymous session events
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Context:** The "Trabajo en…" path must accept "My role spans several areas", offer "Something else"
+  without free text, calculate recommendations immediately, and record only non-personal session events.
+- **Decision:**
+  - **Several areas:**
+    - "My role spans several areas" is a content persona (`multiple-areas`) with the new field
+      `scope: "multiple"`, so its label is reviewed with the rest of the content and hidden in production
+      until validated.
+    - The bundle check allows at most one such persona and rejects any rule that weights it, because it names
+      no area.
+    - Its recommendations come from the challenges chosen, or the fallback when none are chosen.
+  - **Something else:**
+    - "Algo más / Something else" is a UI option, not a challenge: it is stored as
+      `ActiveSession.otherChallengeSelected` plus an event, does not count toward the limit of three, and never
+      shows a text field.
+    - `SessionSignals` (the engine input) is unchanged.
+  - **Recommendations:**
+    - They are derived, not stored first: `KioskExperience` memoizes `recommend(signals, content)`, so they
+      exist as soon as a persona is selected.
+    - The snapshot is written to the session when shown, only if it changed. The engine and its result schema
+      were already explainable (`matchedSignals` and bilingual `whyThisAppeared`) and stay unchanged.
+  - **Session events:**
+    - `SessionEvent` is `{seq, type, targetId}` in a strict schema.
+    - The reducer maps actions to events itself; UI code never writes events.
+    - A target must be a kebab-case id containing a letter. Free text, email addresses and digit-only strings
+      such as phone numbers are dropped.
+    - There are no timestamps, and the list is capped at 200 per session.
+  - **Transition:** the tailoring transition is a real screen with a configurable duration
+    (`kiosk.tailoringTransitionMs`, 1.8 s) announced as a status.
+  - **Persona text:** descriptions are shortened to about two lines so all 11 options fit the kiosk screen.
+    Labels keep the owner-provided names.
+- **Consequences:**
+  - Events are not yet part of `VisitorSession`. Phase 7 decides whether the anonymous summary includes them.
+  - Path B and the explorer reuse `ChallengePicker`, `ScreenFrame` and the next-steps pattern.
+  - The optional facility-type step is still to do.

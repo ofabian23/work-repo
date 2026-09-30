@@ -183,13 +183,13 @@ these terms, it requires a documented decision (DECISIONS.md) and a code change.
 
 ### 9.1 Taxonomy
 
-| Area                  | Items                 | Status                                 | Notes                                             |
-| --------------------- | --------------------- | -------------------------------------- | ------------------------------------------------- |
-| Personas              | 10 (PROJECT_BRIEF §4) | `assumed`                              | Spanish labels are drafts                         |
-| Challenges            | 12 (PROJECT_BRIEF §5) | `assumed`                              | Customer language (v0.2.0 list). Confirm Spanish. |
-| Facility types        | 7 (PROJECT_BRIEF §6)  | `assumed`                              |                                                   |
-| Environments / scenes | 8 (PROJECT_BRIEF §7)  | `assumed` (text) · `placeholder` (art) | Generic educational descriptions only             |
-| UI strings            | `src/data/i18n/*.ts`  | `assumed`                              | Owner review of tone (formal "usted")             |
+| Area                  | Items                                                    | Status                                 | Notes                                                                                                                                   |
+| --------------------- | -------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Personas              | 10 (PROJECT_BRIEF §4) + "Mi función abarca varias áreas" | `assumed`                              | Spanish labels are drafts; descriptions shortened to ~2 lines for the kiosk (v0.3.0); `multiple-areas` must never be weighted by a rule |
+| Challenges            | 12 (PROJECT_BRIEF §5)                                    | `assumed`                              | Customer language (v0.2.0 list). Confirm Spanish.                                                                                       |
+| Facility types        | 7 (PROJECT_BRIEF §6)                                     | `assumed`                              |                                                                                                                                         |
+| Environments / scenes | 8 (PROJECT_BRIEF §7)                                     | `assumed` (text) · `placeholder` (art) | Generic educational descriptions only                                                                                                   |
+| UI strings            | `src/data/i18n/*.ts`                                     | `assumed`                              | Owner review of tone (formal "usted")                                                                                                   |
 
 ### 9.2 Sample solution categories (offering)
 
@@ -218,13 +218,14 @@ contains every content item.
 
 ### 9.4 Legal
 
-| Item                                  | Status        | Notes                                                                                                                                                                                |
-| ------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Report consent text (ES/EN)           | `placeholder` | `content/consent.json` v0.1.0, marked [BORRADOR]/[DRAFT]; needs legal approval (Q3)                                                                                                  |
-| Follow-up consent text (ES/EN)        | `placeholder` | Needs legal approval (Q3)                                                                                                                                                            |
-| Privacy notice (short, shown on form) | `placeholder` | Must state purpose, controller, and contact for data requests                                                                                                                        |
-| Report disclaimer (ES/EN)             | `assumed`     | "Final applicability requires consultation with a qualified representative."                                                                                                         |
-| Privacy summary sheet (UI, ES/EN)     | `assumed`     | `src/data/i18n` `privacy.points.*`: four plain-language statements shown from the welcome screen before any data is collected; legal review pending together with the privacy notice |
+| Item                                  | Status        | Notes                                                                                                                                                                                                            |
+| ------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Report consent text (ES/EN)           | `placeholder` | `content/consent.json` v0.1.0, marked [BORRADOR]/[DRAFT]; needs legal approval (Q3)                                                                                                                              |
+| Follow-up consent text (ES/EN)        | `placeholder` | Needs legal approval (Q3)                                                                                                                                                                                        |
+| Privacy notice (short, shown on form) | `placeholder` | Must state purpose, controller, and contact for data requests                                                                                                                                                    |
+| Report disclaimer (ES/EN)             | `assumed`     | "Final applicability requires consultation with a qualified representative."                                                                                                                                     |
+| Privacy summary sheet (UI, ES/EN)     | `assumed`     | `src/data/i18n` `privacy.points.*`: four plain-language statements shown from the welcome screen before any data is collected; legal review pending together with the privacy notice                             |
+| Role journey UI copy (ES/EN)          | `assumed`     | `src/data/i18n` `role.*`, `roleChallenges.*`, `somethingElse.*`, `tailoring.*`, `nextSteps.*`, `recommendations.*`: states that recommendations are indicative and a specialist confirms what applies; no claims |
 
 ### 9.5 Brand and contacts
 
@@ -376,6 +377,7 @@ relevance. Order is the ranking shown to visitors.
 | Ambulatory care and homecare                      | Ambulatory and homecare support                                                                   |
 | Academia and research                             | Medical gas supply planning → Training and operational readiness                                  |
 | Government or healthcare-system stakeholder       | Backup and emergency supply → Medical gas supply planning                                         |
+| My role spans several areas                       | Talk with a specialist                                                                            |
 
 **Challenge only**
 

@@ -101,12 +101,22 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 
 ## Phase 5 — Entry paths and recommendations UI
 
-- [ ] Role selection · challenge multi-select (max 3) · optional facility type
-- [ ] Preliminary recommendations screen: cards with reasons, environments, next step, resources
+- [x] **Path A "Trabajo en…"** (ADR-048): persona grid (one primary persona, plain-language cards, concise
+      descriptions, "Mi función abarca varias áreas"), ≤ 4 role-relevant challenges + "Algo más" (no free text),
+      recommendations calculated immediately, "Estamos adaptando la experiencia a sus prioridades" transition,
+      next steps (view recommendations · refine with challenges · explore relevant areas)
+- [x] Anonymous session events written by the reducer (`SessionEvent`: seq, type, id only)
+- [x] Preliminary recommendations screen: cards with "Por qué aparece", relevance, related areas, next step,
+      pending-validation badge (resources/digital assets: with the report, Phase 8)
+- [x] Refine screen with all challenges (max 3) → updated recommendations
+- [x] Tests: engine reasons for operations/facilities, procurement/supply chain, clinical/respiratory care and
+      executive leadership (unit), the same four journeys rendered end to end in jsdom (integration) and in
+      Playwright at kiosk, laptop and phone sizes (E2E), plus several-areas, "Algo más", English and layout fit
+- [ ] Optional facility type step (not in this prompt; engine already supports `facilityTypeId`)
 - [ ] Persistent "View my recommendations" action + contextual prompt (once per session)
 - [ ] Path B ordering (challenges → role) and path C "tailor" step
 - [ ] Value screen ("We found opportunities…" + what the report includes)
-- [ ] E2E: quick path to recommendations in both languages
+- [~] E2E: quick path to recommendations in both languages (path A done; path B pending)
 - **Done when:** AC-03, AC-04, AC-06, AC-07, AC-13, AC-15 pass.
 
 ## Phase 6 — Hospital Explorer

@@ -96,6 +96,10 @@ Selectable in "I work in…" and reused as the lead form's job function.
 
 Spanish labels are drafts and must be reviewed (see CONTENT_VALIDATION.md).
 
+In addition, **"My role spans several areas" / "Mi función abarca varias áreas"** (`multiple-areas`) is offered
+apart from the list. It names no specific area: it suggests the most common challenges and is never weighted
+by a recommendation rule (ADR-048).
+
 ---
 
 ## 5. Challenges (objectives)
