@@ -206,6 +206,10 @@ confirm:
 | A13 | Validated Puerto Rico solution catalog and approved resources                           | **[Linde Marketing]** (with PR sales) | Production mode             |
 | A14 | Log capture and retention on the laptop                                                 | **[Linde IT] [Linde Privacy]**        | Event deployment            |
 | A15 | Security review of this MVP before any use beyond the convention                        | **[Linde Security]**                  | Any wider deployment        |
+| A16 | Network for the event: Windows Mobile Hotspot or venue network; which devices may join  | **[Linde IT] [Linde Security]**       | Event deployment            |
+| A17 | Inbound firewall rule for Node.js on the server port (profile, scope)                   | **[Linde IT] [Linde Security]**       | Kiosk reaching the laptop   |
+| A18 | Running the launch scripts: PowerShell execution policy or script signing               | **[Linde IT]**                        | Using the launch scripts    |
+| A19 | Laptop power, sleep and lid settings for event use; Node.js installation                | **[Linde IT]**                        | Event deployment            |
 
 ## 10. Residual risks (accepted for the MVP, pending review)
 

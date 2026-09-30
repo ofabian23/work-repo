@@ -298,7 +298,27 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       rejected (ADR-058)
 - [x] MANUAL_KIOSK_TEST.md: physical-device checklist
 - Measured on the production build: first-load JS for the kiosk route went from ~277 KB to ~173 KB
-  gzipped (~578 KB raw; framework 130 KB and app 43 KB; zod now only in the lazy lead-form chunk); interactive in about READY_MS ms on the local E2E server.
+  gzipped (~578 KB raw; framework 130 KB and app 43 KB; zod now only in the lazy lead-form chunk); interactive in about 0.5 s on the local E2E server.
+
+## Phase 10b — Local-network launch (ADR-059) ✅
+
+- [x] `scripts/windows/start-kiosk-server.ps1`:
+  - checks runtime, dependencies, `.env`, database, build freshness and port;
+  - starts on `0.0.0.0` with the configured port and waits for health;
+  - lists candidate IPv4 addresses and the kiosk URL format;
+  - explains failures; never touches the firewall
+- [x] `scripts/windows/start-dev-network.ps1` (development on the network); `-CheckOnly` on both; `PORT` in
+      `.env.example`
+- [x] README "Deployment on the event laptop (Windows)": install, `.env`, SQLite, build, start, network,
+      IPv4, Chrome, health, troubleshooting, firewall as a [Linde IT] step, backup, safe shutdown
+- [x] CONVENTION_STARTUP_CHECKLIST.md; PRIVACY_REVIEW A16–A19 (hotspot, firewall, execution policy, power)
+- [x] Tests:
+  - static (ASCII, no 7-only syntax, no settings changes);
+  - runtime with PowerShell 7 when available (check-only output, invalid port, port in use);
+  - PSScriptAnalyzer with 5.1 compatibility rules (0 findings)
+- [x] Backup completes under concurrent writes (single-step online backup)
+- [ ] On the event laptop: Windows PowerShell 5.1 run, Mobile Hotspot, firewall behavior, physical kiosk
+      connection (not verifiable in the development container)
 
 ## Phase 10 — Hardening, accessibility, deployment
 
@@ -307,7 +327,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       (Phase 10a)
 - [x] Performance pass: bundle budget, asset sizes (Phase 10a)
 - [ ] Throttled or physical-device run: MANUAL_KIOSK_TEST.md, on the event hardware
-- [ ] `DEPLOYMENT.md`: Windows setup (Node LTS, install, `.env`, migration, firewall, hotspot, startup script, power settings, BitLocker), Android kiosk setup (Chrome, screen pinning, autofill off, portrait lock), event-day checklist, recovery procedures
+- [ ] Remaining deployment documentation beyond README → Deployment (Phase 10b): Windows setup (Node LTS, install, `.env`, migration, firewall, hotspot, startup script, power settings, BitLocker), Android kiosk setup (Chrome, screen pinning, autofill off, portrait lock), event-day checklist, recovery procedures
 - [x] `npm run start:network` (`next start -H 0.0.0.0`), done in Phase 1
 - [ ] Rehearsal script: 20 consecutive visitor sessions with resets; offline email test
 - **Done when:** all acceptance criteria are verified (automated or documented manual check).

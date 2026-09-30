@@ -7,8 +7,8 @@
  */
 import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
 import { resolveSqlitePath } from "../src/server/database-probe";
+import { backupSqliteFile } from "../src/server/db/sqlite-backup";
 
 async function main() {
   const source = resolveSqlitePath(process.env.DATABASE_URL?.trim() || "file:./data/linde-sphere.db");
@@ -24,13 +24,8 @@ async function main() {
       : `data/backups/linde-sphere-${stamp}.db`,
   );
   mkdirSync(path.dirname(out), { recursive: true });
-  const db = new Database(source, { readonly: true, fileMustExist: true });
-  try {
-    await db.backup(out);
-    console.log(`Backup written to ${out}`);
-  } finally {
-    db.close();
-  }
+  await backupSqliteFile(source, out);
+  console.log(`Backup written to ${out}`);
 }
 
 main().catch((error: unknown) => {

@@ -2,10 +2,10 @@ import "server-only";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import Database from "better-sqlite3";
 import type { ContentBundle } from "@/domain/content";
 import { buildReviewRows, reviewRowsAsTable, type ReviewRow } from "@/domain/review/content-review";
 import { toCsv } from "@/lib/csv";
+import { backupSqliteFile } from "@/server/db/sqlite-backup";
 import type { EmailOutbox } from "@/server/email/email-outbox";
 import type { Logger } from "@/server/logging/logger";
 import type { AdminFilters } from "./admin-filters";
@@ -185,14 +185,12 @@ export function createAdminService({
     async createBackup(): Promise<{ filename: string; bytes: Buffer }> {
       const dir = mkdtempSync(path.join(os.tmpdir(), "linde-backup-"));
       const file = path.join(dir, "backup.db");
-      const source = new Database(databaseFile, { readonly: true, fileMustExist: true });
       try {
-        await source.backup(file);
+        await backupSqliteFile(databaseFile, file);
         const bytes = readFileSync(file);
         logger.info("admin.backup", { bytes: bytes.length });
         return { filename: `linde-sphere-backup-${stamp(now())}.db`, bytes };
       } finally {
-        source.close();
         rmSync(dir, { recursive: true, force: true });
       }
     },

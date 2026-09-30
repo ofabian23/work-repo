@@ -9,13 +9,16 @@ The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md
 
 ## Documentation
 
-| Document                                         | Purpose                                                     |
-| ------------------------------------------------ | ----------------------------------------------------------- |
-| [PROJECT_BRIEF.md](./PROJECT_BRIEF.md)           | Scope, journey, MVP boundaries, acceptance criteria         |
-| [ARCHITECTURE.md](./ARCHITECTURE.md)             | Stack, structure, content model, engine, privacy boundaries |
-| [DECISIONS.md](./DECISIONS.md)                   | Architecture decision records                               |
-| [TASKS.md](./TASKS.md)                           | Phased implementation plan and progress                     |
-| [CONTENT_VALIDATION.md](./CONTENT_VALIDATION.md) | Content statuses, visibility rules, validation workflow     |
+| Document                                                             | Purpose                                                     |
+| -------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [PROJECT_BRIEF.md](./PROJECT_BRIEF.md)                               | Scope, journey, MVP boundaries, acceptance criteria         |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)                                 | Stack, structure, content model, engine, privacy boundaries |
+| [DECISIONS.md](./DECISIONS.md)                                       | Architecture decision records                               |
+| [TASKS.md](./TASKS.md)                                               | Phased implementation plan and progress                     |
+| [CONTENT_VALIDATION.md](./CONTENT_VALIDATION.md)                     | Content statuses, visibility rules, validation workflow     |
+| [PRIVACY_REVIEW.md](./PRIVACY_REVIEW.md)                             | Data, storage, transmission, consent, open approvals        |
+| [CONVENTION_STARTUP_CHECKLIST.md](./CONVENTION_STARTUP_CHECKLIST.md) | Daily startup, test and shutdown checklist at the booth     |
+| [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md)                       | Physical-device test of the Android kiosk                   |
 
 ## Requirements
 
@@ -63,6 +66,8 @@ npm run dev                 # open http://localhost:3000
 | `npm run security:bundle`                    | After `build`: fail if server secrets or server-only code reach the browser bundle |
 | `npm run security:audit`                     | `npm audit` of the runtime dependency tree (high severity fails)                   |
 | `npm run email:preview`                      | Sample reports (ES and EN, synthetic data) in `data/email-preview/`                |
+| `scripts\windows\start-kiosk-server.ps1`     | Windows: checks, then production server on the network, with kiosk URLs            |
+| `scripts\windows\start-dev-network.ps1`      | Windows: checks, then development server on the network (not for the event)        |
 
 Use another port with `-- -p <port>`, for example `npm run dev -- -p 4000`.
 
@@ -98,11 +103,162 @@ Notes:
 
 - Next.js prints `Network: http://0.0.0.0:3000` in network mode. That means "all interfaces". Browse
   to the laptop's real IPv4 address, not `0.0.0.0`.
-- The first time, Windows Defender Firewall may ask whether Node.js can accept connections. Allow it on
-  **Private networks only**, or add an inbound rule for TCP port 3000 on the Private profile.
+- The first time, Windows Defender Firewall may ask whether Node.js can accept connections. Whether to
+  allow it, and on which network profile, is decided by Linde IT (see
+  [Deployment on the event laptop](#deployment-on-the-event-laptop-windows), step 9).
 - `npm run dev:network` also works for testing on the kiosk. The dev server accepts hot-reload
   connections from private LAN addresses (192.168.x.x, 10.x.x.x, 172.x.x.x). Add other hostnames with
   `DEV_ALLOWED_ORIGINS` in `.env`. At the event, always use `build` + `start:network`.
+
+## Deployment on the event laptop (Windows)
+
+This section runs the kiosk from a Windows laptop and opens it on the Android kiosk over the same network
+(a venue network or the laptop's Windows Mobile Hotspot). Steps marked **[Linde IT]** are organizationally
+controlled. This project does not assume that corporate policy allows them, and the scripts never change
+them. Before each event, use [CONVENTION_STARTUP_CHECKLIST.md](./CONVENTION_STARTUP_CHECKLIST.md) and, for
+new hardware, [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md).
+
+Commands run in **PowerShell** from the `linde-sphere` folder.
+
+1. **Install dependencies.** Install Node.js 22 LTS (at least 20.9), which includes npm, then:
+
+   ```powershell
+   npm install
+   ```
+
+   Installing software on a company laptop may need **[Linde IT]** approval.
+
+2. **Create the environment configuration.**
+
+   ```powershell
+   Copy-Item .env.example .env
+   notepad .env
+   ```
+
+   Set at least `CONTENT_MODE` (`demo` until content is validated), the email settings (see
+   [Personalized report email](#personalized-report-email)) and, only if needed, `PORT`. Keep secrets only
+   in `.env`, which is git-ignored.
+
+3. **Initialize SQLite.** This creates `data\linde-sphere.db` and applies migrations. Run it again after
+   every update.
+
+   ```powershell
+   npm run db:deploy
+   ```
+
+4. **Create the production build.** Run it again after every update or content change.
+
+   ```powershell
+   npm run build
+   ```
+
+5. **Start the local server.**
+
+   ```powershell
+   powershell -NoProfile -File scripts\windows\start-kiosk-server.ps1
+   ```
+
+   What the script does:
+   - It checks Node.js and npm, the dependencies, `.env`, the database, the build (and whether it is out of
+     date) and the port.
+   - It starts the production server on `0.0.0.0` (all adapters) and waits for `/api/health`.
+   - It prints the laptop's candidate IPv4 addresses and the exact URL format for the kiosk.
+   - If anything is wrong, it says what and how to fix it, and does not start the server.
+
+   Options:
+   - `-Port 3001`: use another port. The default is the `PORT` environment variable, then `PORT` in
+     `.env`, then 3000.
+   - `-CheckOnly`: run the checks and show the addresses without starting.
+
+   Keep the window open while the kiosk is in use. For development on the kiosk, use
+   `scripts\windows\start-dev-network.ps1` instead (hot reload, not for the event).
+
+   If PowerShell refuses to run scripts ("running scripts is disabled on this system"), the execution
+   policy is managed by **[Linde IT]**: ask them to approve or sign the scripts. Do not change the policy
+   yourself. The equivalent manual command is `npm run start:network` (add `-- -p 3001` for another port).
+
+6. **Connect the laptop and the kiosk to the same network.** Use either:
+   - the venue or office Wi-Fi, if both devices may join it and the network allows device-to-device
+     traffic (many guest networks do not); or
+   - the laptop's **Windows Mobile Hotspot** (Settings → Network & internet → Mobile hotspot), with the
+     kiosk joined to it.
+
+   Using a hotspot, and joining the kiosk to a given network, are **[Linde IT]** decisions. Only use a
+   network IT has approved.
+
+7. **Find the laptop's IPv4 address.** The launch script lists the candidates.
+   - **Mobile Hotspot:** usually **`192.168.137.1`**.
+   - **By hand:** `ipconfig` shows the IPv4 Address of the adapter on the shared network. The hotspot
+     adapter is named `Local Area Connection* …`.
+   - Addresses starting with `169.254.` mean that adapter has no working network.
+   - Public addresses are refused by the server's host allowlist unless added to `ALLOWED_HOSTS`.
+
+8. **Open the address in Chrome on the kiosk:** `http://<laptop-IPv4>:3000/`, for example
+   `http://192.168.137.1:3000/`.
+   - Use `http://`, not `https://`, and include the port.
+   - Never use `0.0.0.0`.
+   - Then set that address as the kiosk browser's start page. Kiosk browser lockdown is a **[Linde IT]**
+     setting (PRIVACY_REVIEW A6).
+
+9. **Check the health route.** Open `http://<laptop-IPv4>:3000/api/health` on the kiosk, or
+   `http://localhost:3000/api/health` on the laptop.
+   - `"status":"ok"`: ready.
+   - `"degraded"`: usually the database is missing or not migrated (step 3).
+   - `"error"`: configuration or content is invalid; `invalidVariables` lists the variable names.
+   - See [Health check](#health-check).
+
+   **Windows firewall (organizationally controlled).** If the page opens on the laptop (`localhost`) but
+   not on the kiosk, Windows Defender Firewall is the usual cause. It blocks inbound connections to
+   Node.js on TCP port 3000 until a rule allows them.
+   - Allowing it (for example, the Private network profile only, never Public) is a **[Linde IT]** change.
+   - The scripts never modify firewall rules. Do not approve the Windows prompt or add rules unless IT has
+     authorized it.
+
+10. **If the kiosk cannot connect,** check these common causes, in order:
+    - **Different networks:** the kiosk is on another Wi-Fi, mobile data, or a guest network with client
+      isolation.
+    - **Wrong address:** an old IP (it can change when the network changes), `0.0.0.0`, `https://`, or a
+      missing `:3000`.
+    - **Server not running:** the window was closed, the laptop slept, or the script stopped with
+      `[FAIL]`. Check on the laptop with `http://localhost:3000/api/health`.
+    - **Firewall:** see step 9 (**[Linde IT]**).
+    - **VPN or security software:** it may block local traffic. Ask **[Linde IT]**; do not disable it
+      yourself.
+    - **"Misdirected request" (421):** the address is not local or private. Add the hostname to
+      `ALLOWED_HOSTS` only if IT approves.
+    - **Laptop asleep:** screen and sleep settings follow the approved IT configuration.
+
+11. **Back up the database** at the end of each event day and before any update. This is safe while the
+    server is running.
+
+    ```powershell
+    npm run db:backup
+    ```
+
+    The backup goes to `data\backups\linde-sphere-<timestamp>.db` and contains personal data. Move it only
+    to encrypted storage approved by **[Linde IT] [Linde Privacy]** (see [Backup](#backup) and
+    PRIVACY_REVIEW A9).
+
+12. **Shut down safely.**
+    1. Let the current visitor finish, or let the kiosk return to the attract screen.
+    2. Run `npm run db:backup` in a second PowerShell window.
+    3. Press **Ctrl+C** in the server window. The script stops the server and frees the port.
+    4. Close the kiosk browser, then shut down or lock the laptop as IT requires.
+
+    Do not unplug the laptop or close the lid while the server is running. Do not copy
+    `data\linde-sphere.db` by hand while it runs; use `db:backup`.
+
+What could not be verified in the development environment:
+
+- The launch scripts were exercised with PowerShell 7 on Linux:
+  - checks, a real start with the health check, Ctrl+C;
+  - failure paths: invalid port, port in use, missing Node.js, dependencies, build or database, invalid
+    configuration;
+  - a project path with spaces.
+- PSScriptAnalyzer found no syntax or command incompatibilities with Windows PowerShell 5.1.
+- Not verified here, and to be checked on the event laptop: running under Windows PowerShell 5.1 itself,
+  the Windows Mobile Hotspot, the firewall prompt, `ipconfig` adapter names, Ctrl+C in a Windows console,
+  and a physical Android kiosk connecting over Wi-Fi.
 
 ## Development tools (development only)
 

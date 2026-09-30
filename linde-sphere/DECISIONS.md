@@ -1072,3 +1072,41 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
     reaches the first load again.
   - Physical-device behavior (Fully Kiosk or Chrome settings, rotation lock, real touch) cannot be
     automated. It is covered by MANUAL_KIOSK_TEST.md.
+
+## ADR-059 — Windows launch scripts for the kiosk network; organizational settings stay manual
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Context:**
+  - The event runs the server on a Windows laptop. The Android kiosk opens it over the same network: a
+    venue network or the laptop's Mobile Hotspot.
+  - Staff need a repeatable start that finds problems before visitors do.
+  - Firewall, hotspot, power and execution-policy settings belong to Linde IT, and corporate policy for
+    them is unknown.
+- **Decision:**
+  - **Scripts:** `scripts/windows/start-kiosk-server.ps1` (production) and `start-dev-network.ps1`
+    (development), with shared helpers in `launch-common.ps1`.
+  - **Checks before starting:**
+    - Node.js ≥ 20.9 and npm; installed dependencies; `.env` (values never printed).
+    - The SQLite file; the production build and whether it is older than `src`, `content` or `public`.
+    - The port (parameter, then `PORT` env, then `PORT` in `.env`, then 3000) and whether it is free.
+  - **Start:** Node runs `next start -H 0.0.0.0 -p <port>` (or `next dev`), then the script waits for
+    `/api/health`.
+    - The health request bypasses any proxy.
+    - A server that exits, or never answers, is stopped and explained, with exit code 2.
+    - Ctrl+C stops the server, and the port is freed.
+  - **Addresses:** the laptop's IPv4 addresses come from .NET (not Windows-only cmdlets). They are ranked
+    and annotated: usual hotspot `192.168.137.1`, private, link-local, or refused by the host allowlist.
+    The script shows the kiosk URL format and the health URL.
+  - **Never changed:** the scripts do not modify firewall rules, network or hotspot settings, power
+    settings, the registry, services or execution policy. A test enforces this. The README and
+    PRIVACY_REVIEW (A16–A19) mark those steps **[Linde IT]**.
+  - **Compatibility:** Windows PowerShell 5.1 and 7. ASCII-only files (5.1 reads BOM-less files in the ANSI
+    code page). PSScriptAnalyzer settings check 5.1 syntax and command compatibility.
+  - **Backup fix, found while testing:** `db:backup` and the admin backup now copy all pages in one step.
+    better-sqlite3's default of 100 pages per step, with yields in between, restarts whenever another
+    connection writes, and never finished under steady writes (reproduced; covered by a unit test).
+- **Consequences:**
+  - One command starts the event server and says exactly what is wrong when it cannot.
+  - Settings that need IT stay visible and manual.
+  - Physical Windows behavior (5.1 host, Mobile Hotspot, firewall prompt, console Ctrl+C) is verified only
+    by hand, using CONVENTION_STARTUP_CHECKLIST.md and MANUAL_KIOSK_TEST.md.
