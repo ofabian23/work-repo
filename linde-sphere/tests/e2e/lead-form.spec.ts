@@ -1,10 +1,12 @@
+import { readdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoHorizontalOverflow, expectTouchTargets, gotoKiosk } from "./helpers";
 
 /**
  * Lead form and consent experience against the real production server and database (ADR-053).
- * Email delivery is not wired yet (Phase 8), so a real submission ends "saved, will be sent"; the
- * email-failure and server-error paths are simulated by intercepting the API responses.
+ * The E2E servers use the development preview provider (ADR-054), so a real submission is "sent" into
+ * a local preview file; the email-failure and server-error paths are simulated by intercepting responses.
  */
 
 const EMAIL_USER = `e2e.${Math.random().toString(36).slice(2, 8)}`;
@@ -89,10 +91,21 @@ test.describe("lead form and consent", () => {
 
     const result = page.getByTestId("lead-result");
     await expect(result).toBeVisible();
-    await expect(result).toContainText("Guardamos su solicitud");
+    await expect(result).toHaveAttribute("data-delivery", "sent");
+    await expect(result).toContainText("Enviamos su resumen");
     await expect(result).toContainText(`${EMAIL_USER.slice(0, 2)}•••@example.test`);
     await expect(page.locator("body")).not.toContainText(EMAIL);
     expect(leadRequests).toHaveLength(1);
+
+    // The report was generated and "delivered" to the local preview folder only.
+    // Same folder as EMAIL_PREVIEW_DIR in playwright.config.ts.
+    const dir = path.resolve("data/e2e-email-preview");
+    const emails = readdirSync(dir).filter((f) => f.endsWith(".eml"));
+    const mine = emails
+      .map((f) => readFileSync(path.join(dir, f), "utf8"))
+      .find((eml) => eml.includes(`To: ${EMAIL}`));
+    expect(mine).toBeDefined();
+    expect(mine).toContain("Subject: Su resumen personalizado de Linde Sphere");
 
     await page.getByTestId("lead-finish").click();
     await expect(page.getByTestId("attract-screen")).toBeVisible();

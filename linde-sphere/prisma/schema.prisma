@@ -62,9 +62,21 @@ enum SessionItemKind {
 }
 
 enum EmailProvider {
-  file
+  /// DevelopmentPreviewProvider: writes a local preview, never sends.
+  preview
   smtp
+  /// Reserved for a future Microsoft Graph provider (not implemented).
   graph
+}
+
+enum EmailEventType {
+  queued
+  attempt_started
+  sent
+  attempt_failed
+  retry_scheduled
+  gave_up
+  manual_retry
 }
 
 enum EmailDeliveryStatus {
@@ -104,6 +116,7 @@ model Lead {
   session         VisitorSessionSummary @relation(fields: [sessionId], references: [sessionId])
   interests       LeadInterest[]
   emailDeliveries EmailDelivery[]
+  report          Report?
 
   @@index([createdAt])
   @@index([sessionId])
@@ -168,9 +181,45 @@ model EmailDelivery {
   providerMessageId String?
   /// Sanitized UPPER_SNAKE_CASE code (e.g. SMTP_TIMEOUT). Never a raw provider message.
   errorCode         String?
+  /// Set while a worker is sending this message (atomic claim; stale claims expire).
+  claimedAt         DateTime?
 
-  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead   Lead                 @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  events EmailDeliveryEvent[]
 
   @@index([status, nextAttemptAt])
   @@index([leadId])
+}
+
+/// Append-only delivery history: codes only, never addresses, message bodies or provider responses.
+model EmailDeliveryEvent {
+  id                String         @id @default(cuid())
+  deliveryId        String
+  eventType         EmailEventType
+  /// 0 for queued/manual_retry; the attempt number otherwise.
+  attempt           Int
+  occurredAt        DateTime       @default(now())
+  errorCode         String?
+  providerMessageId String?
+
+  delivery EmailDelivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryId, occurredAt])
+}
+
+/// The personalized report, rendered once when the lead is stored (ADR-013) so retries send exactly what
+/// the visitor was promised. Contains the visitor's name and organization; deleted with the lead.
+model Report {
+  id             String   @id @default(cuid())
+  leadId         String   @unique
+  createdAt      DateTime @default(now())
+  language       Language
+  subject        String
+  html           String
+  text           String
+  contentVersion String
+  /// Version of content/report.json (report copy) used.
+  copyVersion    String
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }

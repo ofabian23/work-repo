@@ -203,18 +203,32 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] `POST /api/sessions` for anonymous summaries (table exists: VisitorSessionSummary)
 - **Done when:** AC-21 … AC-24 and AC-16 pass.
 
-## Phase 8 — Report and email delivery
+## Phase 8 — Report and email delivery (ADR-054) ✅
 
-- [ ] Report renderer (HTML + text, ES/EN, all nine sections, demo indicator, disclaimer, sales contact)
-- [ ] `EmailProvider` interface; `file` and `smtp` providers; Graph stub
-- [ ] Outbox worker (claim, backoff, stuck-row recovery, max attempts) started from `instrumentation.ts`
-- [ ] Integration tests: provider failure keeps lead and schedules retry; success marks sent; production mode report excludes non-validated content
-- [ ] Manual check: report renders acceptably in common email clients (documented)
+- [x] `content/report.json` (versioned, governed, claim-scanned): title, subject, intro, consultation CTA, sales
+      contact (dummy `example.com`), disclaimer, privacy footer, pending notice; production readiness checks
+- [x] Report builder (server-recomputed top recommendations with reasons, priorities, explored areas, validated
+      https resources only, demo pending marks) and renderer (responsive email-safe HTML + text, ES/EN, print
+      styles, escaping, no remote assets)
+- [x] `EmailProvider` interface; `DevelopmentPreviewProvider` (eml/html/txt + index, never sends), `SmtpProvider`
+      (implicit TLS or required STARTTLS, TLS ≥ 1.2, verified certs, timeouts), `GraphProvider` stub rejected at startup
+- [x] Migration 2: `Report`, `EmailDeliveryEvent`, `EmailDelivery.claimedAt`, provider `file` → `preview`, CHECKs
+- [x] Workflow: lead + report + pending delivery + queued event in one transaction → attempt after the response →
+      sent / retrying (backoff) / failed; bounded retries and batches; atomic claims; stale-claim recovery
+- [x] Local admin CLI: `email:status`, `email:retry` (one attempt, `manual_retry` event), `email:preview`
+- [x] Health shows the provider; `.env.example` and README with exact steps and dummy values
+- [x] Tests: rendering ES/EN, escaping, privacy boundaries, provider selection and env rules, SMTP delivery and
+      STARTTLS refusal against a local fake server, preview files, failure queueing, retry/backoff/give-up,
+      manual retry, concurrent claims, batches, missing report, migration upgrade; E2E through the preview provider
+- [x] Optional printable report: print styles in the email HTML (open the preview `.html` and print)
+- [ ] Optional QR code to a short-lived local report view — not built (needs a public tokenized route; not required)
+- [ ] Manual check: report in Outlook, Gmail and Apple Mail with the event SMTP account (needs Q2)
+- [ ] ConsentRecord rows (exact text + language per consent)
 - **Done when:** AC-25, AC-26, AC-36 pass (offline → online simulated in tests).
 
 ## Phase 9 — Admin and data operations
 
-- [~] CLI: `db:export` (CSV, UTF-8 BOM) ✅ and `db:backup` ✅ (Phase 7a); `outbox:retry`, `leads:purge` (needs Q7)
+- [~] CLI: `db:export` ✅, `db:backup` ✅ (Phase 7a), `email:status` / `email:retry` ✅ (Phase 8); `leads:purge` (needs Q7)
 - [ ] Optional `/admin` (disabled by default, Basic auth, `noindex`): outbox status, retry, export, content readiness
 - [ ] `proxy.ts` guard + handler-level checks; audit log entries
 - [ ] Tests: admin disabled → 404; wrong credentials → 401; CSV columns and encoding

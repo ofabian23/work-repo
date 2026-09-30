@@ -825,11 +825,14 @@ route handler (src/app/api/leads/route.ts)
        fingerprint = SHA-256(normalized payload without submittedAt)
        existing lead with this idempotencyKey?  same fingerprint → replay 200 · different → 409
        keep only signal ids that exist in content; recompute recommendations (ADR-025)
+       build ReportPayload + render HTML/text in the visitor's language (ADR-054; null if impossible)
        lead-repository.createSubmission  ── ONE transaction ──
            upsert VisitorSessionSummary (+ replace its SessionSummaryItems)
-           create Lead · createMany LeadInterest · create EmailDelivery(status=pending)
+           create Lead · createMany LeadInterest · create Report
+           create EmailDelivery(status=pending) + EmailDeliveryEvent(queued)
+           (no report → EmailDelivery failed REPORT_UNAVAILABLE + gave_up; lead still stored)
        unique violation on idempotencyKey (two taps raced) → answer as replay
-       onDeliveryQueued(deliveryId)  (outbox wake-up; errors logged as codes, never surfaced)
+       onDeliveryQueued(deliveryId) → outbox.schedule (setTimeout 0; never awaited by the request)
   ─► 201 { statusToken, emailQueued: true, replayed: false }
 ```
 
@@ -851,7 +854,9 @@ imports `src/server/db` or `src/server/leads`; `tests/unit/db/layer-boundaries.t
 | `LeadInterest`          | `id`, `leadId` (cascade), `category` (`role`/`challenge`/`solution`), `value` (content id), `relevance?` (`high`/`medium`/`possible`, recommendations only — never a score), `sourceType` (`session_selection`/`explicit_interest`/`form_selection`/`recommendation`); unique per lead+category+value+source                                                                                                                                  |
 | `VisitorSessionSummary` | `id`, `sessionId` (unique, anonymous UUID), `startedAt`, `completedAt?`, `selectedPersona?`, `contentVersion`, timestamps                                                                                                                                                                                                                                                                                                                     |
 | `SessionSummaryItem`    | `id`, `summaryId` (cascade), `kind` (`challenge`/`scene`/`hotspot`/`recommendation`), `value`, `position`; unique per summary+kind+value — de-duplicated sets, not an event stream                                                                                                                                                                                                                                                            |
-| `EmailDelivery`         | `id`, `leadId` (cascade), `provider` (`file`/`smtp`/`graph`), `status` (`pending`/`sent`/`failed`/`retrying`), `attempts`, `lastAttemptAt?`, `nextAttemptAt?`, `providerMessageId?`, `errorCode?` (sanitized UPPER_SNAKE code), timestamps                                                                                                                                                                                                    |
+| `EmailDelivery`         | `id`, `leadId` (cascade), `provider` (`preview`/`smtp`/`graph`), `status` (`pending`/`sent`/`failed`/`retrying`), `attempts`, `lastAttemptAt?`, `nextAttemptAt?`, `providerMessageId?`, `errorCode?` (sanitized UPPER_SNAKE code), `claimedAt?` (atomic send claim), timestamps                                                                                                                                                               |
+| `EmailDeliveryEvent`    | `id`, `deliveryId` (cascade), `eventType` (`queued`/`attempt_started`/`sent`/`attempt_failed`/`retry_scheduled`/`gave_up`/`manual_retry`), `attempt`, `occurredAt`, `errorCode?`, `providerMessageId?` — append-only, codes only                                                                                                                                                                                                              |
+| `Report`                | `id`, `leadId` (unique, cascade), `language`, `subject`, `html`, `text`, `contentVersion`, `copyVersion`, `createdAt` — rendered once at lead time (ADR-013), so retries send exactly what was promised; contains the visitor's name and organization                                                                                                                                                                                         |
 
 Indexes: `Lead(createdAt)`, `Lead(sessionId)`, `Lead(businessEmail)`, `LeadInterest(category, value)`,
 `EmailDelivery(status, nextAttemptAt)`, `EmailDelivery(leadId)`. Enums are `TEXT` in SQLite, so the initial
@@ -860,56 +865,79 @@ and `reportConsent = 1`; a schema test fails if a later migration drops them. Ne
 raw provider responses or messages, recipient copies, patient information, free text, behaviour streams,
 lead scores.
 
-**Deferred (ADR-052):** `RecommendationSnapshot`, `Report`, `ConsentRecord` rows and
-`EmailDeliveryEvent` history arrive with report delivery (Phase 8); `AdminAuditLog` with admin (Phase 9).
-Until then the consent wording is identified by `consentTextVersion` (texts are versioned in
-`content/consent.json` under git).
+**Deferred:** `RecommendationSnapshot` (the stored `Report` plus `SessionSummaryItem` recommendation ids
+cover it for now), `ConsentRecord` rows (exact text and language per consent) and `AdminAuditLog` (Phase 9).
+The consent wording is identified by `consentTextVersion` (texts are versioned in `content/consent.json`).
+Migration 2 redefines `EmailDelivery` (provider `file` → `preview`, `claimedAt`) and re-creates every
+`_check` constraint; an upgrade test covers existing databases.
 
 **Operations.** `npm run db:deploy` (apply migrations), `db:migrate` (create a migration in development),
 `db:seed` (synthetic data; refuses `NODE_ENV=production`), `db:backup` (online SQLite backup),
 `db:export` (CSV). See README → Database.
 
-### 9.4 Email outbox and worker
+### 9.4 Email outbox and worker (ADR-011, ADR-054) — `src/server/email/email-outbox.ts`
 
-- **Transactional outbox:** the outbox row is written in the same transaction as the lead.
-- **Worker:** started once per process from `instrumentation.ts`; polls every 15 s and is also nudged after
-  each lead creation.
-- **Claiming:** `UPDATE … SET status='sending' WHERE id=? AND status='pending'` (atomic in SQLite) so a
-  message is never sent twice concurrently. Rows stuck in `sending` longer than 5 min revert to `pending`.
-- **Backoff:** 30 s, 2 min, 10 min, 30 min, then hourly; after `EMAIL_MAX_ATTEMPTS` (default 12) →
-  `failed` (visible in admin; manual retry possible).
-- **Errors:** stored sanitized (provider code + short message, no addresses or bodies).
+```
+lead stored (transaction: Lead + Report + EmailDelivery pending + event queued)
+  └─► schedule(id) right after the response      periodic worker (instrumentation.ts, every 15 s)
+         └──────────────► processDelivery(id) ◄──── processDue(): ≤ 10 due deliveries per tick
+                            claim: UPDATE … SET claimedAt WHERE id AND status IN (pending, retrying)
+                                   AND due AND (claimedAt IS NULL OR stale > 5 min)   → else "skipped"
+                            load stored Report + lead address → provider.send
+                            ok   → sent (providerMessageId)                     events: attempt_started, sent
+                            fail → sanitizeEmailError → retrying (nextAttemptAt) | failed
+                                                                    events: attempt_failed, retry_scheduled | gave_up
+```
 
-### 9.5 Email providers
+- **Bounded:** backoff 1, 2, 4, 8 … min capped at 1 h; after `EMAIL_MAX_ATTEMPTS` (default 12) or a permanent
+  error (auth, recipient rejected, 5xx, no report) the delivery is `failed` and never picked automatically
+  again. Each tick handles at most one batch; ticks never overlap; nothing re-schedules itself.
+- **Exactly one sender:** the claim is a single conditional `UPDATE`, so two workers (or two server
+  processes sharing the database) never send the same message twice; a claim abandoned by a crash expires.
+- **Manual retry:** `npm run email:retry -- --delivery <id> | --all-failed` (local CLI, ADR-024) claims even
+  `failed` deliveries for **one** immediate attempt, recorded as `manual_retry`. Sent deliveries are never
+  re-sent. `npm run email:status` lists counts and deliveries needing attention (ids and codes only).
+- **Errors:** providers throw; the outbox stores `sanitizeEmailError(error).code` only (`NETWORK_TIMEOUT`,
+  `TLS_FAILURE`, `PROVIDER_AUTH_FAILED`, `SMTP_TRANSIENT_FAILURE`, `SMTP_PERMANENT_FAILURE`, …). Logs carry
+  delivery id, provider, attempt and code.
+
+### 9.5 Email providers — `src/server/email/`
 
 ```ts
 interface EmailProvider {
-  readonly name: "file" | "smtp" | "graph";
-  send(message: {
-    to: string;
-    from: string;
-    replyTo?: string;
-    subject: string;
-    html: string;
-    text: string;
-  }): Promise<
-    { ok: true; messageId: string } | { ok: false; retryable: boolean; code: string; message: string }
-  >;
+  readonly name: "preview" | "smtp" | "graph";
+  readonly deliversExternally: boolean;
+  send(message: { to; from; replyTo?; subject; html; text }, meta: { deliveryId }): Promise<{ messageId }>; // throws on failure
 }
 ```
 
-| Provider         | Use                                 | Notes                                                              |
-| ---------------- | ----------------------------------- | ------------------------------------------------------------------ |
-| `file` (default) | Development, demos without internet | Writes `.eml` + `.html` to `data/outbox-dev/`; no external service |
-| `smtp`           | Event                               | Nodemailer; host/port/secure/user/pass from env                    |
-| `graph`          | Future                              | Interface stub only; not in MVP                                    |
+| Provider                     | `EMAIL_PROVIDER`    | Behaviour                                                                                                                                                                                                    |
+| ---------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DevelopmentPreviewProvider` | `preview` (default) | Builds the full MIME message (nodemailer stream transport) and writes `<stamp>-<deliveryId>.eml/.html/.txt` + `index.html` to `EMAIL_PREVIEW_DIR` (mode 600). Never sends. File names hold no personal data. |
+| `SmtpProvider`               | `smtp`              | nodemailer SMTP: implicit TLS (`SMTP_SECURE=true`) or **required** STARTTLS; TLS ≥ 1.2, certificates verified, 10/10/20 s timeouts, no file/URL access. Env-only credentials (server-only module).           |
+| `GraphProvider`              | `graph`             | Stub. Rejected by env validation at startup; `send` throws `PROVIDER_NOT_CONFIGURED`. Needs an Entra ID app registration, Mail.Send with admin consent and a mailbox policy before it can exist.             |
 
-### 9.6 Report renderer
+`createEmailProvider(env)` selects the provider; `GET /api/health` reports `email.provider` and
+`email.deliversExternally`. `SMTP_REQUIRE_TLS=false` (plain SMTP to a local test server) is refused when
+`NODE_ENV=production`.
 
-Server-side functions that turn `(lead, snapshot, visibleContent, reportCopy, brand, language)` into
-email-safe HTML (table layout, inline styles, no external images or fonts by default) plus plain text.
-The report is rendered once at lead creation and stored, so resends are identical to what the visitor was
-promised. Demo mode marks assumed offering items with the pending-validation note.
+### 9.6 Report builder and renderer — `src/server/report/`
+
+- **`buildReportPayload`** (pure) turns the lead contact, role, priorities (session + form challenges), the
+  scenes where content was opened (evidence, ADR-051) and the **server-recomputed** primary recommendations
+  (≤ 3) into the strict `ReportPayload`. Content comes from `visibleContent(mode)`, so internal notes and
+  sales-review data are already gone; resources are **validated assets with public https URLs only**;
+  demo-mode (assumed) items are marked "pendiente de validación local" with the notice, and the schema
+  rejects pending items in production. Configurable copy (title, subject, intro, consultation CTA, sales
+  contact, disclaimer, privacy footer, pending notice) comes from `content/report.json` (versioned,
+  `validationStatus`, claim-scanned, production requires `validated` and a sales contact).
+- **`renderReport`** produces the subject, email-safe HTML (600 px table layout, inline styles, mobile media
+  query, print styles, no scripts/images/remote CSS, every value escaped, links limited to validated https
+  resources and the `mailto:` CTA) and a plain-text alternative, in the visitor's language (labels in
+  `report-messages.ts`). The CTA link carries only the report subject — no visitor data.
+- Excluded by construction: scores or relevance numbers, internal notes, session events, hotspot ids, lead
+  or session ids, other visitors' data. Tests assert each of these.
+- `npm run email:preview` renders ES/EN samples from fictitious data for design review.
 
 ---
 
@@ -1091,10 +1119,13 @@ status, timestamps.
 | `DATABASE_URL`                                                        | `file:./data/linde-sphere.db` | SQLite location                                                   |
 | `CONTENT_MODE`                                                        | `demo`                        | `production` \| `demo`                                            |
 | `CONTENT_PREVIEW_PLACEHOLDERS`                                        | `false`                       | Dev-only placeholder preview                                      |
-| `EMAIL_PROVIDER`                                                      | `file`                        | `file` \| `smtp`                                                  |
+| `EMAIL_PROVIDER`                                                      | `preview`                     | `preview` (local files, never sends) \| `smtp`; `graph` rejected  |
 | `EMAIL_FROM` / `EMAIL_REPLY_TO`                                       | —                             | Sender identity                                                   |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` | —                             | SMTP provider                                                     |
 | `EMAIL_MAX_ATTEMPTS`                                                  | `12`                          | Outbox retry ceiling                                              |
+| `SMTP_REQUIRE_TLS`                                                    | `true`                        | STARTTLS required when not `SMTP_SECURE`; `false` refused in prod |
+| `EMAIL_PREVIEW_DIR`                                                   | `data/email-preview`          | Development preview output                                        |
+| `EMAIL_WORKER_INTERVAL_MS`                                            | `15000`                       | Retry worker tick                                                 |
 | `LEAD_RETENTION_DAYS`                                                 | — (undecided)                 | Retention placeholder; nothing is deleted automatically (ADR-052) |
 | `ADMIN_ENABLED`                                                       | `false`                       | Enable admin pages/APIs                                           |
 | `ADMIN_USER` / `ADMIN_PASSWORD`                                       | —                             | Basic auth credentials (required if enabled)                      |

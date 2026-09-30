@@ -11,7 +11,7 @@ describe("parseServerEnv", () => {
       CONTENT_MODE: "demo",
       CONTENT_PREVIEW_PLACEHOLDERS: false,
       DATABASE_URL: "file:./data/linde-sphere.db",
-      EMAIL_PROVIDER: "file",
+      EMAIL_PROVIDER: "preview",
       EMAIL_MAX_ATTEMPTS: 12,
       ADMIN_ENABLED: false,
     });

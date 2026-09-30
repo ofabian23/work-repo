@@ -37,27 +37,30 @@ npm run dev                 # open http://localhost:3000
 
 ## Scripts
 
-| Command                                      | What it does                                                              |
-| -------------------------------------------- | ------------------------------------------------------------------------- |
-| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)           |
-| `npm run dev:network`                        | Development server reachable from **other devices** on the network        |
-| `npm run build`                              | Production build                                                          |
-| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)       |
-| `npm run start:network`                      | Serve the production build to the network (kiosk use)                     |
-| `npm run lint`                               | ESLint (zero warnings allowed)                                            |
-| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                         |
-| `npm run test`                               | Unit tests (Vitest)                                                       |
-| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes            |
-| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                 |
-| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                |
-| `npm run content:export`                     | Regenerate the sales CSV (`exports/`) and CONTENT_VALIDATION.md §11       |
-| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests |
-| `npm run format`                             | Format all files with Prettier                                            |
-| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)     |
-| `npm run db:migrate`                         | Development only: create a new migration after editing the schema         |
-| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`) |
-| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                      |
-| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)           |
+| Command                                      | What it does                                                               |
+| -------------------------------------------- | -------------------------------------------------------------------------- |
+| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)            |
+| `npm run dev:network`                        | Development server reachable from **other devices** on the network         |
+| `npm run build`                              | Production build                                                           |
+| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)        |
+| `npm run start:network`                      | Serve the production build to the network (kiosk use)                      |
+| `npm run lint`                               | ESLint (zero warnings allowed)                                             |
+| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                          |
+| `npm run test`                               | Unit tests (Vitest)                                                        |
+| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes             |
+| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                  |
+| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                 |
+| `npm run content:export`                     | Regenerate the sales CSV (`exports/`) and CONTENT_VALIDATION.md §11        |
+| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests  |
+| `npm run format`                             | Format all files with Prettier                                             |
+| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)      |
+| `npm run db:migrate`                         | Development only: create a new migration after editing the schema          |
+| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`)  |
+| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                       |
+| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)            |
+| `npm run email:status`                       | Email deliveries by status, and those needing attention (ids and codes)    |
+| `npm run email:retry -- --delivery <id>`     | One immediate attempt for a delivery (`--all-failed` for every failed one) |
+| `npm run email:preview`                      | Sample reports (ES and EN, synthetic data) in `data/email-preview/`        |
 
 Use another port with `-- -p <port>`, for example `npm run dev -- -p 4000`.
 
@@ -178,6 +181,72 @@ deleted automatically in any case; a purge command will be added once the policy
   masked, and only record ids and outcomes are logged.
 - Email delivery keeps a status, an attempt count and a short error code only; never credentials or
   provider responses.
+
+## Personalized report email
+
+When a visitor sends the form, the server stores the lead, builds their personalized report (in their
+chosen language) and stores it with a pending email — all in one step — and then tries to send it. If
+sending fails, the lead is safe: the email is retried automatically with increasing waits, up to
+`EMAIL_MAX_ATTEMPTS` times, and then marked failed for a manual retry. Nothing ever loops forever.
+
+The report contains the visitor's name, organization and role, their priorities, the areas they explored,
+the top recommendations with why each appeared, approved resources only, the sales contact with a
+consultation button, the applicability disclaimer and a privacy footer. It never contains scores,
+internal notes, session details or anyone else's data. Its wording and the sales contact live in
+`content/report.json` (placeholder text marked [BORRADOR]/[DRAFT] and a dummy `example.com` contact until
+marketing, legal and sales approve them).
+
+### Development: preview without sending (default)
+
+1. Leave `EMAIL_PROVIDER=preview` in `.env` (or leave it unset).
+2. Submit the form in the kiosk (or run `npm run db:seed`).
+3. Open `data/email-preview/index.html` in a browser. Each email is saved as `.html` (open or print),
+   `.txt` and `.eml` (open in any mail client). File names contain only a timestamp and an id.
+4. `npm run email:preview` writes `sample-es.html` and `sample-en.html` from fictitious data, for reviewing
+   the design without submitting the form.
+
+Preview files contain the visitor's contact details: they stay in `data/` (git-ignored), readable by your
+user only. Delete them when you no longer need them.
+
+### Event: real delivery through SMTP
+
+1. Ask IT for an SMTP relay account and an approved sender address (PROJECT_BRIEF Q2).
+2. In `.env` (never commit it), set — dummy values shown:
+
+   ```dotenv
+   EMAIL_PROVIDER=smtp
+   EMAIL_FROM=Linde Sphere <reportes@example.com>
+   EMAIL_REPLY_TO=ventas@example.com
+   SMTP_HOST=smtp.example.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_REQUIRE_TLS=true
+   SMTP_USER=reportes@example.com
+   SMTP_PASS=change-me
+   ```
+
+   For implicit TLS use `SMTP_PORT=465` and `SMTP_SECURE=true`. The connection always uses TLS 1.2+ with
+   certificate verification; with `SMTP_SECURE=false` the server must offer STARTTLS or nothing is sent.
+
+3. Restart the server. `GET /api/health` shows `"email": { "provider": "smtp", "deliversExternally": true }`.
+   An invalid configuration stops the server with a message naming the variable (never its value).
+4. Send one test submission to your own address and check `npm run email:status`.
+
+The SMTP password lives only in `.env` on the laptop. It is read by the server, never sent to the kiosk
+screen, and never logged; provider errors are stored as short codes such as `SMTP_TRANSIENT_FAILURE`.
+
+### Checking and retrying deliveries
+
+- `npm run email:status` — counts by status and the deliveries that failed or are waiting to retry, with
+  their error code. No names or addresses are printed.
+- `npm run email:retry -- --delivery <id>` — one immediate attempt for that delivery.
+- `npm run email:retry -- --all-failed` — one immediate attempt for each failed delivery (for example after
+  fixing the SMTP settings or the network).
+
+These commands run only on the laptop (there is no web page for them) and use the same `.env`.
+
+Microsoft Graph (Microsoft 365) sending is not available: it needs an organizational app registration and
+admin consent. The code is structured so a Graph provider can be added later.
 
 ## Configuration
 

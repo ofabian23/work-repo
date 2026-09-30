@@ -28,7 +28,13 @@ const ServerEnvSchema = z
     DATABASE_URL: optional(
       z.string().regex(/^file:.+/, { error: "Must be a SQLite file URL, e.g. file:./data/linde-sphere.db" }),
     ).transform((v) => v ?? "file:./data/linde-sphere.db"),
-    EMAIL_PROVIDER: optional(z.enum(["file", "smtp"])).transform((v) => v ?? "file"),
+    /**
+     * preview (default): DevelopmentPreviewProvider, writes local files, never sends · smtp: real delivery.
+     * "file" is accepted as the former name of "preview". "graph" is reserved and rejected (ADR-054).
+     */
+    EMAIL_PROVIDER: optional(
+      z.enum(["preview", "file", "smtp", "graph"], { error: "Use preview or smtp" }),
+    ).transform((v) => (v === undefined || v === "file" ? "preview" : v)),
     EMAIL_FROM: optional(z.email({ error: "Must be an email address" })),
     EMAIL_REPLY_TO: optional(z.email({ error: "Must be an email address" })),
     SMTP_HOST: optional(z.string().min(1)),
@@ -36,6 +42,22 @@ const ServerEnvSchema = z
     SMTP_SECURE: booleanFlag,
     SMTP_USER: optional(z.string().min(1)),
     SMTP_PASS: optional(z.string().min(1)),
+    /**
+     * With SMTP_SECURE=false the connection must upgrade with STARTTLS (default true). Only a local test
+     * mail server outside production may turn this off.
+     */
+    SMTP_REQUIRE_TLS: z
+      .preprocess(
+        (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+        z.enum(["true", "false", "1", "0"], { error: "Use true or false" }).optional(),
+      )
+      .transform((v) => v === undefined || v === "true" || v === "1"),
+    /** Where the development preview provider writes emails (relative to the project root). */
+    EMAIL_PREVIEW_DIR: optional(z.string().min(1).max(200)).transform((v) => v ?? "data/email-preview"),
+    /** How often the email worker looks for deliveries that are due (retries). */
+    EMAIL_WORKER_INTERVAL_MS: optional(z.coerce.number().int().min(1_000).max(3_600_000)).transform(
+      (v) => v ?? 15_000,
+    ),
     EMAIL_MAX_ATTEMPTS: optional(z.coerce.number().int().min(1).max(50)).transform((v) => v ?? 12),
     ADMIN_ENABLED: booleanFlag,
     /**
@@ -55,10 +77,33 @@ const ServerEnvSchema = z
       if (env[key] === undefined)
         ctx.addIssue({ code: "custom", path: [key], message: `Required ${reason}` });
     };
+    if (env.EMAIL_PROVIDER === "graph") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["EMAIL_PROVIDER"],
+        message:
+          "Microsoft Graph delivery is not implemented; it needs an organizational app registration " +
+          "(tenant, client id, Mail.Send permission). Use preview or smtp",
+      });
+    }
     if (env.EMAIL_PROVIDER === "smtp") {
       require("SMTP_HOST", "when EMAIL_PROVIDER=smtp");
       require("SMTP_PORT", "when EMAIL_PROVIDER=smtp");
       require("EMAIL_FROM", "when EMAIL_PROVIDER=smtp");
+      if ((env.SMTP_USER === undefined) !== (env.SMTP_PASS === undefined)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [env.SMTP_USER ? "SMTP_PASS" : "SMTP_USER"],
+          message: "Set both SMTP_USER and SMTP_PASS, or neither",
+        });
+      }
+      if (!env.SMTP_REQUIRE_TLS && !env.SMTP_SECURE && env.NODE_ENV === "production") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["SMTP_REQUIRE_TLS"],
+          message: "Unencrypted SMTP is not allowed in production; use SMTP_SECURE=true or STARTTLS",
+        });
+      }
     }
     if (env.ADMIN_ENABLED) {
       require("ADMIN_USER", "when ADMIN_ENABLED=true");

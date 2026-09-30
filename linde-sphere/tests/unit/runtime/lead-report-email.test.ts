@@ -136,8 +136,12 @@ const report = () => ({
   language: "es",
   contentMode: "demo",
   contentVersion: "0.1.0",
+  copyVersion: "0.1.0",
   engineVersion: "1.0.0",
   generatedAt: "2026-10-20T14:03:01Z",
+  subject: "Su resumen personalizado",
+  title: "Su resumen personalizado",
+  intro: "Gracias por visitarnos.",
   visitor: { firstName: "María", lastName: "Rivera", organization: "Hospital San Juan" },
   role: { id: "procurement-supply", label: "Compras y cadena de suministro" },
   priorities: [{ id: "supply-continuity", label: "Mejorar la continuidad del suministro" }],
@@ -154,9 +158,15 @@ const report = () => ({
       pendingValidation: true,
     },
   ],
-  callToAction: { heading: "Próximos pasos", body: "Un especialista puede ayudarle." },
+  callToAction: {
+    heading: "Próximos pasos",
+    body: "Un especialista puede ayudarle.",
+    buttonLabel: "Solicitar una conversación",
+    href: null,
+  },
   salesContact: null,
   disclaimer: "La aplicabilidad final requiere una consulta con un representante calificado.",
+  privacyFooter: "Recibe este mensaje porque solicitó su resumen.",
   pendingValidationNotice: "Parte del contenido está pendiente de validación para Puerto Rico.",
 });
 
@@ -210,6 +220,19 @@ describe("ReportPayloadSchema", () => {
   });
   it("requires a disclaimer", () => {
     expectInvalid(ReportPayloadSchema, { ...report(), disclaimer: "" }, "disclaimer");
+    expectInvalid(ReportPayloadSchema, { ...report(), privacyFooter: "" }, "privacyFooter");
+  });
+  it("allows only a mailto: consultation link", () => {
+    const cta = report().callToAction;
+    expectValid(ReportPayloadSchema, {
+      ...report(),
+      callToAction: { ...cta, href: "mailto:ventas@x.com?subject=Hola" },
+    });
+    expectInvalid(
+      ReportPayloadSchema,
+      { ...report(), callToAction: { ...cta, href: "https://tracker.example/click" } },
+      "callToAction.href",
+    );
   });
 });
 

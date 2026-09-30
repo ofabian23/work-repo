@@ -1,10 +1,10 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { probeSqliteDatabase } from "@/server/database-probe";
+import { expectedMigrations, probeSqliteDatabase } from "@/server/database-probe";
 import {
   createTestDatabase,
   createTestLeadService,
@@ -91,6 +91,10 @@ describe("database constraints (defence in depth behind Prisma's enums)", () => 
     expect(tableSql("Lead")).toContain("Lead_reportConsent_check");
     expect(tableSql("LeadInterest")).toContain("LeadInterest_sourceType_check");
     expect(tableSql("SessionSummaryItem")).toContain("SessionSummaryItem_kind_check");
+    expect(tableSql("EmailDelivery")).toContain("EmailDelivery_provider_check");
+    expect(tableSql("EmailDeliveryEvent")).toContain("EmailDeliveryEvent_eventType_check");
+    expect(tableSql("EmailDeliveryEvent")).toContain("EmailDeliveryEvent_errorCode_check");
+    expect(tableSql("Report")).toContain("Report_language_check");
   });
 
   it.each([
@@ -103,6 +107,13 @@ describe("database constraints (defence in depth behind Prisma's enums)", () => 
     ["an unknown lead status", `UPDATE Lead SET status = 'hot'`],
     ["a lead without report consent", `UPDATE Lead SET reportConsent = 0`],
     ["an unknown interest source", `UPDATE LeadInterest SET sourceType = 'guess'`],
+    ["the retired provider name", `UPDATE EmailDelivery SET provider = 'file'`],
+    ["an unknown delivery event", `UPDATE EmailDeliveryEvent SET eventType = 'opened'`],
+    [
+      "a raw message as event error code",
+      `UPDATE EmailDeliveryEvent SET errorCode = 'user maria@x.com unknown'`,
+    ],
+    ["an unknown report language", `UPDATE Report SET language = 'fr'`],
   ])("rejects %s", (_label, sql) => {
     expect(() => raw.prepare(sql).run()).toThrow(/CHECK constraint failed/);
   });
@@ -124,7 +135,7 @@ describe("database constraints (defence in depth behind Prisma's enums)", () => 
     expect(() =>
       raw
         .prepare(
-          "INSERT INTO EmailDelivery (id, updatedAt, leadId, provider) VALUES ('d2', 0, 'missing-lead', 'file')",
+          "INSERT INTO EmailDelivery (id, updatedAt, leadId, provider) VALUES ('d2', 0, 'missing-lead', 'preview')",
         )
         .run(),
     ).toThrow(/FOREIGN KEY constraint failed/);
@@ -136,5 +147,31 @@ describe("database constraints (defence in depth behind Prisma's enums)", () => 
     expect(await t.db.emailDelivery.count()).toBe(0);
     // The anonymous session summary is not personal data and stays.
     expect(await t.db.visitorSessionSummary.count()).toBe(1);
+  });
+});
+
+describe("migration 2 (report and delivery events) on an existing database", () => {
+  it("keeps existing deliveries and renames the provider 'file' to 'preview'", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "linde-upgrade-"));
+    try {
+      const [first, ...rest] = expectedMigrations(PROJECT_ROOT);
+      const sql = (name: string) =>
+        readFileSync(path.join(PROJECT_ROOT, "prisma", "migrations", name, "migration.sql"), "utf8");
+      const db = new Database(path.join(dir, "old.db"));
+      db.exec(sql(first!));
+      db.exec(`INSERT INTO VisitorSessionSummary (id, sessionId, startedAt, contentVersion, updatedAt) VALUES ('s1', 'session-1', 0, '0.4.0', 0);
+        INSERT INTO Lead (id, updatedAt, firstName, lastName, organization, roleLabel, businessEmail, preferredLanguage, sessionId, reportConsent, followUpConsent, consentTextVersion, idempotencyKey, requestFingerprint, statusTokenHash, contentVersion)
+          VALUES ('l1', 0, 'A', 'B', 'Org', 'Rol', 'a@b.co', 'es', 'session-1', 1, 0, '0.1.0', 'k1', 'f1', 'h1', '0.4.0');
+        INSERT INTO EmailDelivery (id, updatedAt, leadId, provider, status) VALUES ('d1', 0, 'l1', 'file', 'pending');`);
+      for (const name of rest) db.exec(sql(name));
+      expect(db.prepare("SELECT provider, status FROM EmailDelivery WHERE id = 'd1'").get()).toEqual({
+        provider: "preview",
+        status: "pending",
+      });
+      expect(db.pragma("foreign_key_check")).toEqual([]);
+      db.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

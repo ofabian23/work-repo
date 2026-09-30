@@ -8,7 +8,7 @@ import {
 } from "./recommendation-rule";
 import { EngineSettingsSchema } from "./engine-settings";
 import { SceneSchema } from "./scene";
-import { ConsentTextSetSchema, ContentManifestSchema } from "./settings";
+import { ConsentTextSetSchema, ContentManifestSchema, ReportCopySchema } from "./settings";
 import { ChallengeSchema, FacilityTypeSchema, PersonaSchema } from "./taxonomy";
 import type { LocalizedText } from "./primitives";
 
@@ -23,10 +23,11 @@ export const ContentBundleSchema = z.strictObject({
   digitalAssets: z.array(DigitalAssetSchema),
   recommendationRules: z.array(RecommendationRuleSchema),
   consent: ConsentTextSetSchema,
+  report: ReportCopySchema,
   settings: EngineSettingsSchema,
 });
 export type ContentBundle = z.infer<typeof ContentBundleSchema>;
-export type ContentCollection = Exclude<keyof ContentBundle, "manifest" | "consent" | "settings">;
+export type ContentCollection = Exclude<keyof ContentBundle, "manifest" | "consent" | "report" | "settings">;
 
 export type IssueSeverity = "error" | "warning";
 export type ContentIssue = {
@@ -433,6 +434,8 @@ export function checkContentBundle(bundle: ContentBundle): ContentIssue[] {
     { collection: "scenes", records: bundle.scenes },
     { collection: "personas", records: bundle.personas },
     { collection: "challenges", records: bundle.challenges },
+    // The report copy goes out by email, so it gets the same claim scan.
+    { collection: "report", records: [{ ...bundle.report, id: "report" }] },
   ];
   for (const { collection, records } of scanned) {
     for (const record of records) {

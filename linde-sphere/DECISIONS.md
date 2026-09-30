@@ -115,7 +115,7 @@ entry here — architecture is never changed silently.
 
 ## ADR-012 — Provider abstraction: `file` (default) and `smtp`; Graph later
 
-- **Date:** 2026-09-29 · **Status:** Accepted
+- **Date:** 2026-09-29 · **Status:** Accepted (implemented by ADR-054; `file` renamed `preview`)
 - **Decision:** `EmailProvider` interface. The `file` provider writes `.eml`/`.html` locally, so the app runs
   with no external service. The `smtp` provider uses Nodemailer. A Microsoft Graph provider is a future
   extension (stub only).
@@ -804,3 +804,66 @@ entry here — architecture is never changed silently.
   - The consent text shown is identified by its version only; storing the exact text and language per
     consent (ConsentRecord) is part of Phase 8.
   - The report language can differ from the UI language; the consent text is shown in the UI language.
+
+## ADR-054 — Report generation and email delivery: stored report, preview/SMTP providers, bounded outbox
+
+- **Date:** 2026-09-30 · **Status:** Accepted (implements ADR-011, ADR-012 and ADR-013)
+- **Context:** The phase requires an `EmailProvider` interface with a development preview provider and an
+  SMTP provider. Graph must stay possible without pretending to work. The report is a responsive
+  bilingual HTML email with fixed contents and fixed exclusions. Delivery follows: store the lead, build the
+  report, store a pending event, attempt, mark sent or failed, bounded retries, a protected manual retry,
+  sanitized errors, and an easy-to-inspect preview.
+- **Decision:**
+  - **Report copy is content:** `content/report.json` holds the title, subject, intro, consultation CTA,
+    sales contact, disclaimer, privacy footer and pending notice. It is versioned and has a
+    `validationStatus`. Internal notes are stripped by `visibleContent` and the claim scan covers it.
+    Production readiness requires it to be validated and to have a sales contact; a validated copy cannot
+    use an example address. Section labels are code (`report-messages.ts`).
+  - **Title:** the prompt asked for a "Mockup Vision title". Per ADR-001 the visitor-facing name is
+    "Linde Sphere" (Mockup Vision is the internal codename), so the email shows the product name and a
+    configurable title ("Su resumen personalizado de Linde Sphere"). Changing `title` in `report.json` is
+    enough if the owner wants the codename.
+  - **Language:** the report is rendered in the visitor's chosen language (ES or EN, both supported).
+    It is not two languages in one email, which would double its length.
+  - **Payload:** built on the server from the recomputed primary recommendations (≤ 3), the same evidence
+    rule as the kiosk, and visible content only. Resources must be validated with public https URLs, in any
+    mode. Demo items keep the pending marks and notice; production rejects pending items (schema). Scores,
+    internal notes, session events, hotspot and lead ids, and other visitors' data cannot appear: the
+    payload is strict and tests assert each exclusion.
+  - **Rendering:** a 600 px table layout with inline styles, a mobile media query, print styles (the
+    optional printable report), no remote assets or scripts, and every value escaped. Links are limited to
+    validated https resources and a `mailto:` CTA carrying only the subject. A plain-text alternative is
+    included. The report is rendered once and stored in a `Report` table (ADR-013). If it cannot be
+    built, the lead is still stored and the delivery is recorded as `failed` with `REPORT_UNAVAILABLE`.
+  - **Providers:**
+    - `DevelopmentPreviewProvider` (`EMAIL_PROVIDER=preview`, the default; `file` is accepted as the old
+      name) builds real MIME with nodemailer's stream transport and writes `.eml`, `.html`, `.txt` and an
+      `index.html` under `data/`. File names are timestamp plus delivery id, files are mode 600, and
+      nothing is ever sent.
+    - `SmtpProvider` (nodemailer 10.0.12, pinned) uses implicit TLS or required STARTTLS, TLS ≥ 1.2,
+      verified certificates, timeouts, and no file or URL access. Plain SMTP (`SMTP_REQUIRE_TLS=false`) is
+      allowed only outside production. `SMTP_USER` and `SMTP_PASS` must be set together.
+    - `GraphProvider` is a stub: `EMAIL_PROVIDER=graph` fails env validation with the reason, and `send`
+      throws a non-retryable `PROVIDER_NOT_CONFIGURED`.
+  - **Workflow:**
+    - One transaction writes the lead, the report, a `pending` delivery and a `queued` event.
+    - `schedule()` attempts delivery just after the response; a worker started from `instrumentation.ts`
+      processes due deliveries every 15 s, at most 10 per tick, with no overlapping ticks.
+    - Claims are one conditional `UPDATE` on a new `claimedAt` column, and stale claims expire after 5 min.
+      The status set stays `pending | sent | failed | retrying` as the brief specified.
+    - Backoff is 1 min doubling to 1 h, up to `EMAIL_MAX_ATTEMPTS`. Permanent errors fail immediately.
+      Failed deliveries are never picked automatically.
+    - `EmailDeliveryEvent` keeps an append-only history of codes.
+  - **Manual retry:** a local CLI (`email:retry`, ADR-024), with no web route. It makes one attempt per
+    command, including for failed deliveries, and records a `manual_retry` event. `email:status` lists ids,
+    counts and codes only.
+  - **Migration 2:** redefines `EmailDelivery` (the provider CHECK now allows `preview`; `file` rows are
+    mapped) and adds `Report` and `EmailDeliveryEvent` with CHECK constraints. An upgrade test covers it.
+- **Consequences:**
+  - An email failure can never lose a lead. Retries are bounded, and duplicates are prevented by the claim.
+  - With the preview provider the kiosk says "Enviamos su resumen" although nothing left the machine.
+    Health exposes `email.deliversExternally`, and the README requires `smtp` at the event.
+  - The stored report contains personal data; it is deleted with the lead (cascade) and falls under the
+    same retention question (Q7).
+  - Not built: the QR code / short-lived report view (optional; it would need a public tokenized route),
+    PDF, Graph, ConsentRecord rows, and a check in real mail clients (needs the SMTP account, Q2).

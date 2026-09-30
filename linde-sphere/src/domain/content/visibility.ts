@@ -4,7 +4,7 @@ import type { DigitalAsset, Solution } from "./offering";
 import type { ContentMode, ValidationStatus } from "./primitives";
 import { SIGNAL_TYPES, type RecommendationRule, type SignalWeights } from "./recommendation-rule";
 import type { Hotspot, Scene } from "./scene";
-import type { ConsentTextSet } from "./settings";
+import type { ConsentTextSet, ReportCopy } from "./settings";
 
 /**
  * Single source of truth for what a visitor may see (CONTENT_VALIDATION.md §3).
@@ -48,6 +48,7 @@ export type PublicRecommendationRule = Omit<RecommendationRule, "internalNotes" 
   exclusions: Omit<RecommendationRule["exclusions"][number], "reason">[];
 };
 export type PublicConsentTextSet = Omit<ConsentTextSet, "internalNotes">;
+export type PublicReportCopy = Omit<ReportCopy, "internalNotes">;
 
 /** Content safe to send to the kiosk client: filtered by mode, internal fields removed. */
 export type PublicContentBundle = {
@@ -61,6 +62,7 @@ export type PublicContentBundle = {
   digitalAssets: PublicDigitalAsset[];
   recommendationRules: PublicRecommendationRule[];
   consent: PublicConsentTextSet;
+  report: PublicReportCopy;
   /** Engine and readiness settings (configuration, passed through unchanged). */
   settings: EngineSettings;
 };
@@ -178,6 +180,7 @@ export function visibleContent(
     }));
 
   const { internalNotes: _consentNotes, ...consent } = bundle.consent;
+  const { internalNotes: _reportNotes, ...report } = bundle.report;
 
   return {
     mode,
@@ -190,6 +193,7 @@ export function visibleContent(
     digitalAssets: assets.map(stripGovernance),
     recommendationRules,
     consent,
+    report,
     settings: bundle.settings,
   };
 }

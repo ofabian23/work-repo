@@ -53,7 +53,10 @@ test.describe("lead storage API", () => {
     const status = await request.get(`/api/leads/status/${bodyA.statusToken}`);
     expect(status.status()).toBe(200);
     expect(status.headers()["cache-control"]).toBe("no-store");
-    expect(await status.json()).toEqual({ submission: "stored", report: "pending" });
+    // Delivery starts right after the response; the preview provider may already have "sent" it.
+    const body = await status.json();
+    expect(body.submission).toBe("stored");
+    expect(["pending", "sent"]).toContain(body.report);
   });
 
   test("validates on the server and never echoes submitted values", async ({ request }) => {

@@ -28,7 +28,7 @@ async function main() {
   const service = createLeadService({
     leads: createPrismaLeadRepository(db),
     content: () => content,
-    emailProvider: "file",
+    emailProvider: "preview",
     logger: createLogger({ minLevel: "warn" }),
   });
 

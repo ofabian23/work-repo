@@ -16,4 +16,6 @@ export type HealthReport = {
   configuration: { status: "valid" | "invalid"; invalidVariables: string[] };
   content: { status: "valid" | "invalid" | "unknown"; version: string | null; errorCount: number };
   database: { status: DatabaseStatus; engine: "sqlite"; reason: string | null };
+  /** Configured email provider; "preview" never sends outside this computer. */
+  email: { provider: "preview" | "smtp" | "graph" | null; deliversExternally: boolean | null };
 };

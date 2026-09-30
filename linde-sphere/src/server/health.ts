@@ -59,5 +59,9 @@ export function getHealthReport({
       errorCount: contentErrors,
     },
     database: { status: database.status, engine: "sqlite", reason: database.reason },
+    email: {
+      provider: env?.EMAIL_PROVIDER ?? null,
+      deliversExternally: env ? env.EMAIL_PROVIDER !== "preview" : null,
+    },
   };
 }

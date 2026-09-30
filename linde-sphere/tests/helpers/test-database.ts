@@ -72,7 +72,7 @@ export function createTestLeadService(db: PrismaDatabase, overrides: Partial<Lea
   const service = createLeadService({
     leads: createPrismaLeadRepository(db),
     content: demoBundle,
-    emailProvider: "file",
+    emailProvider: "preview",
     logger: logs.logger,
     now: () => new Date("2026-10-20T14:05:00Z"),
     ...overrides,

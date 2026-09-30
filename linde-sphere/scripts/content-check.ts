@@ -57,6 +57,10 @@ if (result.bundle && mode === "production") {
     readiness("No validated rule with a validated solution; only the fallback could be recommended");
   if (result.bundle.consent.validationStatus !== "validated")
     readiness("Consent text is not validated by legal/compliance");
+  if (result.bundle.report.validationStatus !== "validated")
+    readiness("Report copy (content/report.json) is not validated by marketing/legal");
+  if (result.bundle.report.salesContact === null)
+    readiness("No sales contact is configured for the report (content/report.json)");
 }
 
 // ---- Report ---------------------------------------------------------------------------------
@@ -95,6 +99,7 @@ if (result.bundle) {
   console.log(`  digital assets       ${count(b.digitalAssets)}`);
   console.log(`  recommendation rules ${count(b.recommendationRules)}`);
   console.log(`  consent text         ${b.consent.validationStatus}`);
+  console.log(`  report copy          ${b.report.validationStatus}`);
   const pending = b.solutions.filter((s) => s.requiresSalesValidation).length;
   console.log(`  solutions requiring Puerto Rico sales validation: ${pending}/${b.solutions.length}`);
   const visible = visibleContent(b, mode);

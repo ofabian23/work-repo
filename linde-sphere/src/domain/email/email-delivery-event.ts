@@ -6,7 +6,7 @@ import { IsoDateTimeSchema } from "../content/primitives";
  * bodies (class C2 data stays in Lead/Report); error text is sanitized and short.
  */
 
-export const EmailProviderNameSchema = z.enum(["file", "smtp", "graph"]);
+export const EmailProviderNameSchema = z.enum(["preview", "smtp", "graph"]);
 export type EmailProviderName = z.infer<typeof EmailProviderNameSchema>;
 
 export const EmailEventTypeSchema = z.enum([

@@ -60,7 +60,7 @@ describe("lead service — storing a submission", () => {
       status: "active",
     });
     expect(lead.emailDeliveries).toEqual([
-      expect.objectContaining({ provider: "file", status: "pending", attempts: 0, errorCode: null }),
+      expect.objectContaining({ provider: "preview", status: "pending", attempts: 0, errorCode: null }),
     ]);
     expect(await counts()).toMatchObject({ leads: 1, sessions: 1, deliveries: 1 });
   });

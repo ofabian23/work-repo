@@ -14,6 +14,7 @@ const NETWORK_CODES: Record<string, string> = {
   EPIPE: "CONNECTION_RESET",
   ENOTFOUND: "DNS_FAILURE",
   EAI_AGAIN: "DNS_FAILURE",
+  EDNS: "DNS_FAILURE",
   ENETUNREACH: "NETWORK_UNREACHABLE",
   EHOSTUNREACH: "NETWORK_UNREACHABLE",
 };
@@ -25,6 +26,9 @@ const PROVIDER_CODES: Record<string, SanitizedEmailError> = {
   EMESSAGE: { code: "MESSAGE_REJECTED", retryable: false },
   ETLS: { code: "TLS_FAILURE", retryable: true },
   ECONNECTION: { code: "CONNECTION_FAILED", retryable: true },
+  ESOCKET: { code: "CONNECTION_FAILED", retryable: true },
+  PROVIDER_NOT_CONFIGURED: { code: "PROVIDER_NOT_CONFIGURED", retryable: false },
+  REPORT_UNAVAILABLE: { code: "REPORT_UNAVAILABLE", retryable: false },
 };
 
 export function sanitizeEmailError(error: unknown): SanitizedEmailError {

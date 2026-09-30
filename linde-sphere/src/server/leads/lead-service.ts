@@ -13,6 +13,8 @@ import { recommend } from "@/domain/recommendations/engine";
 import { recommendationEvidence } from "@/domain/recommendations/recommendation-stability";
 import type { SessionSignals } from "@/domain/session/visitor-session";
 import type { Logger } from "@/server/logging/logger";
+import { buildReportPayload } from "@/server/report/build-report-payload";
+import { renderReport } from "@/server/report/render-report";
 import { sanitizeEmailError } from "./email-error";
 import {
   DuplicateRequestError,
@@ -108,10 +110,12 @@ export function createLeadService({
         receivedAt,
         provider: emailProvider,
       });
+      if (!record.report) logger.error("report.unavailable", { leadId });
 
       let deliveryId: string;
+      let reportStored: boolean;
       try {
-        ({ deliveryId } = await leads.createSubmission(record));
+        ({ deliveryId, reportStored } = await leads.createSubmission(record));
       } catch (error) {
         // Two taps raced past the lookup: the other request committed first, so answer as a replay.
         if (error instanceof DuplicateRequestError) {
@@ -128,7 +132,7 @@ export function createLeadService({
       });
 
       try {
-        await onDeliveryQueued?.(deliveryId);
+        if (reportStored) await onDeliveryQueued?.(deliveryId);
       } catch (error) {
         logger.warn("email.dispatch_failed", { leadId, deliveryId, error: sanitizeEmailError(error).code });
       }
@@ -208,7 +212,8 @@ function buildSubmission(
 ): NewSubmission {
   const signals = knownSignals(s.signals, bundle);
   // Same evidence rule as the kiosk (ADR-051): only choices and content actually opened count.
-  const result = recommend(recommendationEvidence(signals, bundle.scenes), bundle);
+  const evidence = recommendationEvidence(signals, bundle.scenes);
+  const result = recommend(evidence, bundle);
   const challengeIds = new Set(bundle.challenges.map((c) => c.id));
   const persona = bundle.personas.find((p) => p.id === s.jobFunctionId);
 
@@ -282,8 +287,44 @@ function buildSubmission(
         ),
       ],
     },
+    report: renderStoredReport(s, bundle, {
+      leadId: ctx.leadId,
+      generatedAt: ctx.receivedAt,
+      priorityIds: [...signals.challengeIds, ...s.selectedInterestIds.filter((id) => challengeIds.has(id))],
+      exploredSceneIds: evidence.visitedSceneIds,
+      result,
+    }),
     delivery: { provider: ctx.provider },
   };
+}
+
+/** Builds and renders the report in the visitor's language; null (never a thrown error) if impossible. */
+function renderStoredReport(
+  s: LeadSubmission,
+  bundle: PublicContentBundle,
+  ctx: Pick<
+    Parameters<typeof buildReportPayload>[0],
+    "leadId" | "generatedAt" | "priorityIds" | "exploredSceneIds" | "result"
+  >,
+): NewSubmission["report"] {
+  try {
+    const payload = buildReportPayload({
+      ...ctx,
+      language: s.preferredLanguage,
+      visitor: { firstName: s.firstName, lastName: s.lastName, organization: s.organization },
+      roleId: s.jobFunctionId,
+      content: bundle,
+    });
+    const rendered = renderReport(payload);
+    return {
+      language: s.preferredLanguage,
+      ...rendered,
+      contentVersion: payload.contentVersion,
+      copyVersion: payload.copyVersion,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /** SHA-256 over the normalized submission (keys sorted), excluding the client clock. */

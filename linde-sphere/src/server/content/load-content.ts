@@ -12,7 +12,7 @@ import { EngineSettingsSchema } from "../../domain/content/engine-settings";
 import { DigitalAssetSchema, SolutionSchema } from "../../domain/content/offering";
 import { RecommendationRuleSchema } from "../../domain/content/recommendation-rule";
 import { SceneSchema } from "../../domain/content/scene";
-import { ConsentTextSetSchema, ContentManifestSchema } from "../../domain/content/settings";
+import { ConsentTextSetSchema, ReportCopySchema, ContentManifestSchema } from "../../domain/content/settings";
 import { ChallengeSchema, FacilityTypeSchema, PersonaSchema } from "../../domain/content/taxonomy";
 
 /**
@@ -54,6 +54,7 @@ const SINGLE_FILES: { collection: Collection; file: string; schema: z.ZodType }[
     schema: RecommendationRuleSchema.array(),
   },
   { collection: "consent", file: "consent.json", schema: ConsentTextSetSchema },
+  { collection: "report", file: "report.json", schema: ReportCopySchema },
   { collection: "settings", file: "engine-settings.json", schema: EngineSettingsSchema },
 ];
 const SCENES_DIR = "scenes";

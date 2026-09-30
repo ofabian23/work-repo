@@ -52,6 +52,15 @@ export type NewSubmission = {
     contentVersion: string;
     items: NewSessionItem[];
   };
+  /** Rendered report (ADR-013); null when it could not be built — the lead is stored anyway. */
+  report: {
+    language: Language;
+    subject: string;
+    html: string;
+    text: string;
+    contentVersion: string;
+    copyVersion: string;
+  } | null;
   delivery: { provider: EmailProvider };
 };
 
@@ -67,8 +76,10 @@ export class DuplicateRequestError extends Error {
 
 export interface LeadRepository {
   findByIdempotencyKey(idempotencyKey: string): Promise<ExistingSubmission | null>;
-  /** Stores lead, interests, session summary and a pending email delivery atomically. */
-  createSubmission(submission: NewSubmission): Promise<{ leadId: string; deliveryId: string }>;
+  /** Stores lead, interests, session summary, report and a pending email delivery atomically. */
+  createSubmission(
+    submission: NewSubmission,
+  ): Promise<{ leadId: string; deliveryId: string; reportStored: boolean }>;
   /** Latest report-delivery state for a status-token hash, or null if unknown. No personal data. */
   findDeliveryStatusByTokenHash(
     statusTokenHash: string,
@@ -92,7 +103,7 @@ export function createPrismaLeadRepository(db: Database): LeadRepository {
       return lead ? { leadId: lead.id, requestFingerprint: lead.requestFingerprint } : null;
     },
 
-    async createSubmission({ lead, interests, session, delivery }) {
+    async createSubmission({ lead, interests, session, report, delivery }) {
       try {
         return await db.$transaction(async (tx) => {
           // One summary per kiosk session: a second lead from the same session refreshes it.
@@ -124,11 +135,34 @@ export function createPrismaLeadRepository(db: Database): LeadRepository {
               data: interests.map((interest) => ({ ...interest, leadId: lead.id })),
             });
           }
+          if (report) await tx.report.create({ data: { ...report, leadId: lead.id } });
+          // Without a report there is nothing to send: the delivery is recorded as failed (visible to the
+          // operator) instead of retrying forever.
           const created = await tx.emailDelivery.create({
-            data: { leadId: lead.id, provider: delivery.provider, status: "pending" },
+            data: report
+              ? { leadId: lead.id, provider: delivery.provider, status: "pending" }
+              : {
+                  leadId: lead.id,
+                  provider: delivery.provider,
+                  status: "failed",
+                  errorCode: "REPORT_UNAVAILABLE",
+                },
             select: { id: true },
           });
-          return { leadId: lead.id, deliveryId: created.id };
+          await tx.emailDeliveryEvent.createMany({
+            data: report
+              ? [{ deliveryId: created.id, eventType: "queued", attempt: 0 }]
+              : [
+                  { deliveryId: created.id, eventType: "queued", attempt: 0 },
+                  {
+                    deliveryId: created.id,
+                    eventType: "gave_up",
+                    attempt: 0,
+                    errorCode: "REPORT_UNAVAILABLE",
+                  },
+                ],
+          });
+          return { leadId: lead.id, deliveryId: created.id, reportStored: report !== null };
         });
       } catch (error) {
         if (isUniqueViolationOn(error, "idempotencyKey")) throw new DuplicateRequestError();

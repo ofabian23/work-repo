@@ -100,6 +100,7 @@ describe("getHealthReport", () => {
     expect(report.app.name).toBe("Linde Sphere");
     expect(report.content).toEqual({ status: "valid", version: "0.4.0", errorCount: 0 });
     expect(report.database.status).toBe("not_initialized");
+    expect(report.email).toEqual({ provider: "preview", deliversExternally: false });
   });
 
   it("is ok and ready when configuration, content and database are ready", () => {

@@ -1,6 +1,7 @@
 import "server-only";
 import { getPublicContent } from "@/server/content/public-content";
 import { getDatabase } from "@/server/db/client";
+import { getEmailOutbox } from "@/server/email";
 import { getServerEnv } from "@/server/env";
 import { logger } from "@/server/logging/logger";
 import { createPrismaLeadRepository } from "./lead-repository";
@@ -17,8 +18,8 @@ export function getLeadService(): LeadService {
     content: () =>
       getPublicContent(env.CONTENT_MODE, { previewPlaceholders: env.CONTENT_PREVIEW_PLACEHOLDERS }),
     emailProvider: env.EMAIL_PROVIDER,
-    // The email outbox worker arrives with report delivery (Phase 8); until then deliveries stay pending.
-    onDeliveryQueued: undefined,
+    // Delivery is attempted right after the response; the periodic worker handles retries (ADR-054).
+    onDeliveryQueued: (deliveryId) => getEmailOutbox().schedule(deliveryId),
     logger,
   });
   return service;
