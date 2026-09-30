@@ -69,7 +69,11 @@ export const PublicPathSchema = z
   .regex(/^\/(?!\/)[A-Za-z0-9._\-/]+$/, {
     error: "Must be a root-relative path inside public/, e.g. '/scenes/icu.svg'",
   })
-  .refine((p) => !p.split("/").includes(".."), { error: "Path must not contain '..'" });
+  .refine((p) => !p.split("/").includes(".."), { error: "Path must not contain '..'" })
+  // Static files are served as-is: only media types that cannot run code (ADR-057).
+  .refine((p) => /\.(svg|png|jpe?g|webp|avif|pdf|mp4|webm)$/i.test(p), {
+    error: "Use an image, PDF or video file (.svg .png .jpg .webp .avif .pdf .mp4 .webm)",
+  });
 
 export const HttpsUrlSchema = z.url({ protocol: /^https$/, error: "Must be an https:// URL" });
 

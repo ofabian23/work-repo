@@ -179,7 +179,8 @@ describe("CSV escaping (formula injection)", () => {
 describe("proxy: admin route gating", () => {
   afterEach(() => vi.unstubAllEnvs());
   const HASH = "scrypt:32768:8:1:EgSEX40CKurOTD7U7Ft6hw:sIlB1u0Wpa-gW97ZKWhfMKuM5dX_ZdPHzwkw0n3W4Sc";
-  const run = (path: string) => proxy(new NextRequest(new URL(path, "http://localhost:3000")));
+  const run = (path: string) =>
+    proxy(new NextRequest(new URL(path, "http://localhost:3000"), { headers: { host: "localhost:3000" } }));
   const rewrite = (res: Response) => res.headers.get("x-middleware-rewrite");
 
   it("never serves the internal admin segment directly", () => {

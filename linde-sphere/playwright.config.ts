@@ -2,6 +2,8 @@ import { existsSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
+/** Origin of the main E2E server (API calls from the runner declare it, like the kiosk page does). */
+export const E2E_ORIGIN = `http://localhost:${PORT}`;
 /** E2E servers use their own database so test leads never mix with development data. */
 const E2E_DATABASE_URL = "file:./data/e2e.db";
 /**
@@ -61,6 +63,8 @@ export default defineConfig({
         DATABASE_URL: E2E_DATABASE_URL,
         EMAIL_PROVIDER: "preview",
         EMAIL_PREVIEW_DIR: E2E_EMAIL_PREVIEW_DIR,
+        // The suite submits many leads from one address; production keeps the default (10 per minute).
+        LEAD_RATE_LIMIT_PER_MINUTE: "1000",
       },
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
@@ -73,6 +77,7 @@ export default defineConfig({
         DATABASE_URL: E2E_DATABASE_URL,
         EMAIL_PROVIDER: "preview",
         EMAIL_PREVIEW_DIR: E2E_EMAIL_PREVIEW_DIR,
+        LEAD_RATE_LIMIT_PER_MINUTE: "1000",
         ENABLE_COMPONENT_GALLERY: "true",
         ENABLE_SCENE_CALIBRATION: "true",
         // Short kiosk timings so session-management E2E tests can watch a warning and a reset (ADR-055).

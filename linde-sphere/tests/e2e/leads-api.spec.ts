@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test } from "@playwright/test";
+import { E2E_ORIGIN } from "../../playwright.config";
 
 /**
  * Lead storage through the real production server and a migrated SQLite database (ADR-052).
@@ -31,6 +32,9 @@ const lead = () => ({
   submittedAt: new Date().toISOString(),
 });
 
+/** The kiosk page posts same-origin; API calls from the test runner must say so (ADR-057). */
+const SAME_ORIGIN = { origin: E2E_ORIGIN };
+
 test.describe("lead storage API", () => {
   test("health reports the migrated database as ready", async ({ request }) => {
     const body = await (await request.get("/api/health")).json();
@@ -42,8 +46,8 @@ test.describe("lead storage API", () => {
   }) => {
     const payload = lead();
     const [a, b] = await Promise.all([
-      request.post("/api/leads", { data: payload }),
-      request.post("/api/leads", { data: payload }),
+      request.post("/api/leads", { data: payload, headers: SAME_ORIGIN }),
+      request.post("/api/leads", { data: payload, headers: SAME_ORIGIN }),
     ]);
     expect([a.status(), b.status()].sort()).toEqual([200, 201]);
     const [bodyA, bodyB] = [await a.json(), await b.json()];
@@ -62,6 +66,7 @@ test.describe("lead storage API", () => {
   test("validates on the server and never echoes submitted values", async ({ request }) => {
     const res = await request.post("/api/leads", {
       data: { ...lead(), email: "no-es-un-correo", notes: "Paciente en sala 3" },
+      headers: SAME_ORIGIN,
     });
     expect(res.status()).toBe(422);
     const text = await res.text();

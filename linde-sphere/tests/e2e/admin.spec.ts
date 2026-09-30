@@ -19,6 +19,7 @@ const uniqueName = () =>
 async function createLead(page: Page, organization: string, lastName: string) {
   const email = `admin.${randomUUID().slice(0, 8)}@example.test`;
   const response = await page.request.post(`${ADMIN_ORIGIN}/api/leads`, {
+    headers: { origin: ADMIN_ORIGIN },
     data: {
       sessionId: randomUUID(),
       sessionStartedAt: new Date(Date.now() - 60_000).toISOString(),

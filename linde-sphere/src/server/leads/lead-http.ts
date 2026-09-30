@@ -1,4 +1,5 @@
 import "server-only";
+import { clientKey, isSameOrigin, type RateLimiter } from "@/server/http/request-guards";
 import type { Logger } from "@/server/logging/logger";
 import type { LeadService } from "./lead-service";
 
@@ -9,9 +10,30 @@ import type { LeadService } from "./lead-service";
 const MAX_BODY_BYTES = 16 * 1024;
 const NO_STORE = { "Cache-Control": "no-store" };
 
-const json = (body: unknown, status: number) => Response.json(body, { status, headers: NO_STORE });
+const json = (body: unknown, status: number, headers: Record<string, string> = {}) =>
+  Response.json(body, { status, headers: { ...NO_STORE, ...headers } });
 
-export async function handleCreateLead(request: Request, service: LeadService, logger: Logger) {
+/** Optional protections the route files enable (tests exercise the handlers with and without them). */
+export type LeadHttpGuards = { limiter?: RateLimiter; requireSameOrigin?: boolean };
+
+const tooMany = (retryAfterSeconds: number) =>
+  json({ error: "rate_limited" }, 429, { "Retry-After": String(retryAfterSeconds) });
+
+export async function handleCreateLead(
+  request: Request,
+  service: LeadService,
+  logger: Logger,
+  { limiter, requireSameOrigin = false }: LeadHttpGuards = {},
+) {
+  // Only the kiosk page (same origin) may submit leads.
+  if (requireSameOrigin && !isSameOrigin(request)) return json({ error: "forbidden" }, 403);
+  if (limiter) {
+    const slot = limiter.take(clientKey(request));
+    if (!slot.allowed) {
+      logger.warn("lead.rate_limited", { retryAfterSeconds: slot.retryAfterSeconds });
+      return tooMany(slot.retryAfterSeconds);
+    }
+  }
   if (!(request.headers.get("content-type") ?? "").toLowerCase().startsWith("application/json")) {
     return json({ error: "unsupported_media_type" }, 415);
   }
@@ -49,7 +71,16 @@ export async function handleCreateLead(request: Request, service: LeadService, l
   }
 }
 
-export async function handleSubmissionStatus(token: string, service: LeadService, logger: Logger) {
+export async function handleSubmissionStatus(
+  token: string,
+  service: LeadService,
+  logger: Logger,
+  { limiter, request }: { limiter?: RateLimiter; request?: Request } = {},
+) {
+  if (limiter && request) {
+    const slot = limiter.take(clientKey(request));
+    if (!slot.allowed) return tooMany(slot.retryAfterSeconds);
+  }
   try {
     const status = await service.getSubmissionStatus(token);
     // Unknown and malformed tokens get the same answer, so the endpoint cannot be used to probe for leads.

@@ -37,30 +37,32 @@ npm run dev                 # open http://localhost:3000
 
 ## Scripts
 
-| Command                                      | What it does                                                               |
-| -------------------------------------------- | -------------------------------------------------------------------------- |
-| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)            |
-| `npm run dev:network`                        | Development server reachable from **other devices** on the network         |
-| `npm run build`                              | Production build                                                           |
-| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)        |
-| `npm run start:network`                      | Serve the production build to the network (kiosk use)                      |
-| `npm run lint`                               | ESLint (zero warnings allowed)                                             |
-| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                          |
-| `npm run test`                               | Unit tests (Vitest)                                                        |
-| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes             |
-| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                  |
-| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                 |
-| `npm run content:export`                     | Regenerate the sales CSV (`exports/`) and CONTENT_VALIDATION.md §11        |
-| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests  |
-| `npm run format`                             | Format all files with Prettier                                             |
-| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)      |
-| `npm run db:migrate`                         | Development only: create a new migration after editing the schema          |
-| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`)  |
-| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                       |
-| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)            |
-| `npm run email:status`                       | Email deliveries by status, and those needing attention (ids and codes)    |
-| `npm run email:retry -- --delivery <id>`     | One immediate attempt for a delivery (`--all-failed` for every failed one) |
-| `npm run email:preview`                      | Sample reports (ES and EN, synthetic data) in `data/email-preview/`        |
+| Command                                      | What it does                                                                       |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)                    |
+| `npm run dev:network`                        | Development server reachable from **other devices** on the network                 |
+| `npm run build`                              | Production build                                                                   |
+| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)                |
+| `npm run start:network`                      | Serve the production build to the network (kiosk use)                              |
+| `npm run lint`                               | ESLint (zero warnings allowed)                                                     |
+| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                                  |
+| `npm run test`                               | Unit tests (Vitest)                                                                |
+| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes                     |
+| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                          |
+| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                         |
+| `npm run content:export`                     | Regenerate the sales CSV (`exports/`) and CONTENT_VALIDATION.md §11                |
+| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests          |
+| `npm run format`                             | Format all files with Prettier                                                     |
+| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)              |
+| `npm run db:migrate`                         | Development only: create a new migration after editing the schema                  |
+| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`)          |
+| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                               |
+| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)                    |
+| `npm run email:status`                       | Email deliveries by status, and those needing attention (ids and codes)            |
+| `npm run email:retry -- --delivery <id>`     | One immediate attempt for a delivery (`--all-failed` for every failed one)         |
+| `npm run security:bundle`                    | After `build`: fail if server secrets or server-only code reach the browser bundle |
+| `npm run security:audit`                     | `npm audit` of the runtime dependency tree (high severity fails)                   |
+| `npm run email:preview`                      | Sample reports (ES and EN, synthetic data) in `data/email-preview/`                |
 
 Use another port with `-- -p <port>`, for example `npm run dev -- -p 4000`.
 
@@ -265,6 +267,16 @@ These commands run only on the laptop (there is no web page for them) and use th
 
 Microsoft Graph (Microsoft 365) sending is not available: it needs an organizational app registration and
 admin consent. The code is structured so a Graph provider can be added later.
+
+## Privacy and security
+
+- **What is collected, where it goes, and what still needs approval:** see [PRIVACY_REVIEW.md](./PRIVACY_REVIEW.md).
+  Items marked [Linde Security], [Linde Privacy], [Linde Legal], [Linde Marketing] or [Linde IT] must be
+  approved before real visitor data is collected.
+- The kiosk sends nothing to third parties (no analytics, fonts or CDNs) and stores nothing in the tablet's
+  browser. Contact details exist only on the laptop (database, backups, exports) and in the report email.
+- The server answers only to local names and private network addresses; add others in `ALLOWED_HOSTS`.
+- Before an event, run `npm run build && npm run security:bundle` and `npm run security:audit`.
 
 ## Local administration (optional)
 

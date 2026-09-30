@@ -261,6 +261,21 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] Persistent audit log table (log lines only for now)
 - **Done when:** AC-29, AC-34 pass.
 
+## Phase 9b — Privacy, security and reliability hardening (ADR-057) ✅
+
+- [x] Shared request guards: host allowlist in the proxy (DNS rebinding), same-origin required for lead and
+      admin POSTs, in-memory rate limits (`LEAD_RATE_LIMIT_PER_MINUTE`, global cap)
+- [x] Safe errors everywhere (admin handlers wrapped; generic bodies; logs keep error name/code)
+- [x] Security headers: production CSP (self only), COOP/CORP, extended Permissions-Policy, sandboxed assets
+- [x] Static-asset safety: media-type allowlist for content paths; SVG scan in `content:check`
+- [x] `npm run security:bundle` (client bundle scan) and `npm run security:audit` (0 vulnerabilities after
+      `overrides` for the Prisma CLI's `mysql2` and `deepmerge-ts`)
+- [x] `.gitignore` covers databases, WAL files, backups, email previews, lead CSVs and `.env*` (tested)
+- [x] Tests: guards, limits, host check, headers, SVG scan, no patient fields, no client secrets, no
+      analytics, git-ignore coverage, database unavailable, admin errors; E2E: headers, no CSP violations,
+      same-origin traffic only, empty browser storage, network drop and reconnect, refresh, safe error bodies
+- [x] PRIVACY_REVIEW.md with owner labels for every open approval
+
 ## Phase 10 — Hardening, accessibility, deployment
 
 - [ ] E2E: full quick/discovery/explore journeys; post-reset storage/DOM/history assertions; no external requests

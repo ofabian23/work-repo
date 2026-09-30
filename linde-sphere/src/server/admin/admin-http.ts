@@ -1,4 +1,5 @@
 import "server-only";
+import { isSameOrigin } from "@/server/http/request-guards";
 import type { Logger } from "@/server/logging/logger";
 import type { AdminConfig } from "./admin-config";
 import { parseAdminFilters } from "./admin-filters";
@@ -30,24 +31,7 @@ export function readCookie(header: string | null, name: string): string | null {
   return null;
 }
 
-/**
- * Blocks cross-site form posts (CSRF): the Origin (or Referer) must match the Host. Because the site sends
- * `Referrer-Policy: no-referrer`, browsers submit same-origin forms with `Origin: null`; in that case the
- * browser-controlled `Sec-Fetch-Site: same-origin` header (which page scripts cannot set) is accepted.
- */
-export function isSameOrigin(request: Request): boolean {
-  const host = request.headers.get("host");
-  if (!host) return false;
-  const source = request.headers.get("origin") ?? request.headers.get("referer");
-  if (source && source !== "null") {
-    try {
-      return new URL(source).host === host;
-    } catch {
-      return false;
-    }
-  }
-  return request.headers.get("sec-fetch-site") === "same-origin";
-}
+export { isSameOrigin } from "@/server/http/request-guards";
 
 const isHttps = (request: Request) =>
   request.headers.get("x-forwarded-proto") === "https" || new URL(request.url).protocol === "https:";
@@ -80,7 +64,21 @@ async function formOf(request: Request): Promise<URLSearchParams | null> {
   return text.length > 4_096 ? null : new URLSearchParams(text);
 }
 
-/** Wraps a state-changing admin handler: enabled, same origin, signed in, form body. */
+/** Generic 500: never a stack trace or message; the log gets the error's name and code only. */
+async function safely(ctx: AdminHttpContext, event: string, run: () => Promise<Response>): Promise<Response> {
+  try {
+    return await run();
+  } catch (error) {
+    const e = error as { name?: unknown; code?: unknown };
+    ctx.logger.error(event, { errorName: String(e?.name ?? "Error"), errorCode: e?.code ?? null });
+    return new Response("Error interno. Vuelva a intentarlo.", {
+      status: 500,
+      headers: { ...NO_STORE, "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+}
+
+/** Wraps a state-changing admin handler: enabled, same origin, signed in, form body, safe errors. */
 async function guarded(
   request: Request,
   ctx: AdminHttpContext,
@@ -91,11 +89,11 @@ async function guarded(
   if (!hasSession(request, ctx.sessions)) return redirect(`${ctx.config.basePath}/login`);
   const form = await formOf(request);
   if (!form) return new Response("Bad Request", { status: 400, headers: NO_STORE });
-  return handle(form);
+  return safely(ctx, "admin.action_failed", () => handle(form));
 }
 
 export async function handleLogin(request: Request, ctx: AdminHttpContext): Promise<Response> {
-  const { config, throttle, sessions, logger } = ctx;
+  const { config, throttle, logger } = ctx;
   if (!config.enabled || !config.passphraseHash) return notFound();
   if (!isSameOrigin(request)) return forbidden();
   const login = `${config.basePath}/login`;
@@ -104,12 +102,18 @@ export async function handleLogin(request: Request, ctx: AdminHttpContext): Prom
     logger.warn("admin.login_locked", { retryAfterSeconds: Math.ceil(lock.retryAfterMs / 1000) });
     return redirect(`${login}?error=locked`);
   }
+  return safely(ctx, "admin.login_error", () => signIn(request, ctx));
+}
+
+async function signIn(request: Request, ctx: AdminHttpContext): Promise<Response> {
+  const { config, throttle, sessions, logger } = ctx;
+  const login = `${config.basePath}/login`;
   const form = await formOf(request);
   const passphrase = form?.get("passphrase") ?? "";
   const ok =
     passphrase.length > 0 &&
     passphrase.length <= 1_024 &&
-    (await (ctx.verify ?? verifyPassphrase)(passphrase, config.passphraseHash));
+    (await (ctx.verify ?? verifyPassphrase)(passphrase, config.passphraseHash!));
   if (!ok) {
     throttle.fail();
     logger.warn("admin.login_failed", {});

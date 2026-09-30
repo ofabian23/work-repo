@@ -75,6 +75,23 @@ const ServerEnvSchema = z
     KIOSK_FORM_IDLE_WARNING_SECONDS: optional(z.coerce.number().int().min(30).max(3600)),
     KIOSK_FORM_IDLE_COUNTDOWN_SECONDS: optional(z.coerce.number().int().min(5).max(300)),
     KIOSK_COMPLETION_SECONDS: optional(z.coerce.number().int().min(5).max(300)),
+    /**
+     * Extra hostnames the server answers to, comma-separated (ADR-057). Loopback, private IPv4 addresses
+     * and *.local names are always allowed; any other Host header is refused (DNS-rebinding protection).
+     */
+    ALLOWED_HOSTS: optional(z.string().max(500)).transform((v) =>
+      (v ?? "")
+        .split(",")
+        .map((h) => h.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+    /**
+     * Lead submissions allowed per client address per minute (ADR-057); the global cap is six times this.
+     * The default suits one kiosk; raise it only for load tests.
+     */
+    LEAD_RATE_LIMIT_PER_MINUTE: optional(z.coerce.number().int().min(1).max(10_000)).transform(
+      (v) => v ?? 10,
+    ),
     ADMIN_ENABLED: booleanFlag,
     /**
      * Retention placeholder (ADR-052). The company's lead-retention policy is not decided yet: unset means

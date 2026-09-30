@@ -366,6 +366,22 @@ describe("admin HTTP: authorization", () => {
     expect(bad.status).toBe(400);
   });
 
+  it("answers a generic 500 (no stack, no message) when an action fails unexpectedly", async () => {
+    const { ctx, logs } = setup();
+    ctx.service.exportCsv = async () => {
+      throw Object.assign(new Error("SQLITE_BUSY at /home/user/secret/path.db for maria@x.com"), {
+        code: "SQLITE_BUSY",
+      });
+    };
+    const token = ctx.sessions.create();
+    const res = await handleExport(post("/x", { kind: "leads", confirm: "yes" }, { cookie: token }), ctx);
+    expect(res.status).toBe(500);
+    const body = await res.text();
+    expect(body).toBe("Error interno. Vuelva a intentarlo.");
+    expect(logs.text()).toContain("SQLITE_BUSY");
+    expect(logs.text()).not.toMatch(/secret\/path|maria@x\.com/);
+  });
+
   it("logs out by revoking the session", async () => {
     const { ctx } = setup();
     const token = ctx.sessions.create();

@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { scanPublicAssets } from "./asset-safety";
 import path from "node:path";
 import type { z } from "zod";
 import {
@@ -188,6 +189,11 @@ export function loadContentFromDirectory(
     });
   }
 
+  if (publicDir) {
+    for (const { file, message } of scanPublicAssets(publicDir, projectRoot)) {
+      issues.push({ severity: "error", file, path: "", message });
+    }
+  }
   if (publicDir)
     issues.push(
       ...checkLocalAssetFiles(

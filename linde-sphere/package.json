@@ -29,7 +29,9 @@
     "email:status": "tsx --conditions=react-server scripts/email-admin.ts status",
     "email:retry": "tsx --conditions=react-server scripts/email-admin.ts retry",
     "email:preview": "tsx --conditions=react-server scripts/email-admin.ts preview",
-    "admin:passphrase": "tsx --conditions=react-server scripts/admin-passphrase.ts"
+    "admin:passphrase": "tsx --conditions=react-server scripts/admin-passphrase.ts",
+    "security:bundle": "tsx scripts/check-client-bundle.ts",
+    "security:audit": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "7.10.0",
@@ -66,5 +68,9 @@
   },
   "engines": {
     "node": ">=20.9.0"
+  },
+  "overrides": {
+    "mysql2": "3.24.5",
+    "deepmerge-ts": "8.0.2"
   }
 }

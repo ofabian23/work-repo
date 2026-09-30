@@ -958,3 +958,52 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
   - Exports are a deliberate act, and nothing in URLs or logs identifies a visitor.
   - Sessions do not survive restarts. There is no role separation or persistent audit table; both are
     left to the approved production authentication.
+
+## ADR-057 — Privacy, security and reliability hardening for a trusted-LAN kiosk
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Context:** A focused pass was requested on:
+  - input validation, body limits, safe errors and secrets;
+  - duplicate submissions, output encoding and CSV injection;
+  - rate limiting, origin and host validation, and headers;
+  - analytics, patient fields, logs, browser storage and reset;
+  - source-control exclusions, uploads, admin separation and dependency audits;
+  - graceful failure.
+    The kiosk runs over plain HTTP on a private hotspot, served by one laptop.
+- **Decision:**
+  - **Host allowlist in the proxy:** loopback, private IPv4 ranges, `.local`, and `ALLOWED_HOSTS`. Anything
+    else gets 421, which blocks DNS-rebinding attempts from public web pages.
+  - **Same origin:** required for `POST /api/leads`, as it already is for admin POSTs, through a shared
+    `isSameOrigin` helper. Because of `Referrer-Policy: no-referrer`, browsers send `Origin: null` on
+    same-origin form posts, so `Sec-Fetch-Site: same-origin` is accepted in that case.
+  - **Rate limits:** in memory, fixed window, sized for one kiosk. Leads: `LEAD_RATE_LIMIT_PER_MINUTE`
+    per client address (default 10), with a global cap of six times that. Status lookups: 12× per client
+    and 60× overall. Client addresses come from Next's `x-forwarded-for` (filled from the socket) and can be
+    spoofed on a LAN, hence the global cap. The E2E servers raise the limit.
+  - **Errors:** admin handlers are wrapped so that any failure returns a generic 500 text. Lead routes
+    already returned `{"error":"server_error"}`. Logs keep only the error name and code.
+  - **Headers:** a production CSP with self only, `unsafe-inline` for Next's bootstrap and the brand CSS
+    variables, no remote origins, `frame-ancestors 'none'`, `object-src 'none'`, `form-action 'self'` and
+    `base-uri 'self'`. It is relaxed only under `next dev`. Also COOP and CORP same-origin, an extended
+    Permissions-Policy, and a sandboxing CSP for `/assets/*`. There is no HSTS, since the kiosk runs on
+    plain HTTP; HTTPS on the LAN is an open IT/security decision.
+  - **Assets:** content paths are restricted to image, PDF and video extensions. `content:check` scans
+    `public/` for disallowed types and for unsafe SVG content (scripts, event handlers, `javascript:`,
+    foreignObject, embedded documents, external references). Future uploads must apply the same rules and
+    re-encode images, and never write into `public/`.
+  - **Tooling:**
+    - `security:bundle` scans `.next/static` for secret variable names, hash formats, server-only
+      libraries and the current secret values.
+    - `security:audit` runs `npm audit --omit=dev`. `@prisma/client` peer-depends on the Prisma CLI, so the
+      CLI's transitive `mysql2` (unused with SQLite) and `deepmerge-ts` are pinned via `overrides` to patched
+      versions. Prisma validate, generate, the migration drift check and all database tests pass with them.
+  - **Source control:** explicit ignores for databases, WAL/SHM files, SQLite files, `.eml`, lead CSVs and
+    logs, verified by a test using `git check-ignore`.
+  - **Documentation:** `PRIVACY_REVIEW.md` records data, purposes, storage, transmission paths, consent
+    points, retention decisions, access-control assumptions and unresolved approvals, each with a Linde
+    owner label.
+- **Consequences:**
+  - The kiosk only talks to itself, refuses foreign hosts and cross-site posts, and fails safely when the
+    database, email or network is unavailable. These behaviors are covered by unit and E2E tests.
+  - Remaining risks are recorded in PRIVACY_REVIEW.md §10: plain HTTP on the LAN, spoofable per-client
+    limits, and admin without roles.

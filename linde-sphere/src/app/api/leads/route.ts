@@ -1,4 +1,4 @@
-import { getLeadService, logger } from "@/server/leads";
+import { getLeadRateLimits, getLeadService, logger } from "@/server/leads";
 import { handleCreateLead } from "@/server/leads/lead-http";
 
 export const dynamic = "force-dynamic";
@@ -8,5 +8,8 @@ export const dynamic = "force-dynamic";
  * Only POST is exported: there is deliberately no endpoint that lists leads (GET answers 405).
  */
 export function POST(request: Request) {
-  return handleCreateLead(request, getLeadService(), logger);
+  return handleCreateLead(request, getLeadService(), logger, {
+    limiter: getLeadRateLimits().leads,
+    requireSameOrigin: true,
+  });
 }
