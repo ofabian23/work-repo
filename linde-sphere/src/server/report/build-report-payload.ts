@@ -43,6 +43,8 @@ export function buildReportPayload(input: ReportInput): ReportPayload {
   const solutions = new Map(content.solutions.map((s) => [s.id, s]));
   const assets = new Map(content.digitalAssets.map((a) => [a.id, a]));
   const copy = content.report;
+  // Production without validated report copy: no report (lead capture is refused before this point).
+  if (!copy) throw new ReportUnavailableError();
 
   const items = primaryItems(input.result)
     .filter((item) => solutions.has(item.solutionId))

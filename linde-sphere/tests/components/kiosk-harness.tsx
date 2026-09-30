@@ -55,7 +55,7 @@ export function renderKiosk({
         onHardReset={onHardReset}
         createId={() => `00000000-0000-4000-8000-00000000000${++counter % 10}`}
       >
-        <AppShell contentMode="demo" headerActions={<KioskHeaderActions />}>
+        <AppShell contentMode={content.mode} headerActions={<KioskHeaderActions />}>
           <KioskExperience
             content={content}
             idle={idle}

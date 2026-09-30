@@ -162,7 +162,10 @@ export type LeadService = ReturnType<typeof createLeadService>;
 function checkAgainstContent(s: LeadSubmission, bundle: PublicContentBundle, receivedAt: Date): FieldIssue[] {
   const issues: FieldIssue[] = [];
   const issue = (field: string, code: string, message: string) => issues.push({ field, code, message });
-  if (s.consentVersion !== bundle.consent.version) {
+  if (!bundle.consent || !bundle.report) {
+    // Production without approved consent text or report copy (ADR-060): no lead may be collected.
+    issue("consentVersion", "lead_capture_unavailable", "Lead capture is not available");
+  } else if (s.consentVersion !== bundle.consent.version) {
     issue(
       "consentVersion",
       "consent_version_mismatch",

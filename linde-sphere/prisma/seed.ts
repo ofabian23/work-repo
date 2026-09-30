@@ -38,7 +38,7 @@ async function main() {
     sessionStartedAt: now,
     preferredLanguage: "es",
     phone: null,
-    consentVersion: content.consent.version,
+    consentVersion: content.consent?.version ?? "0.0.0",
     submittedAt: now,
   } as const;
   const leads = [

@@ -3,7 +3,7 @@
 import { PrimaryAction, SecondaryAction } from "@/components/actions/action-button";
 import { ArrowRightIcon } from "@/components/icons";
 import { ProgressIndicator } from "@/components/navigation/progress-indicator";
-import type { Challenge, Persona } from "@/domain/content/taxonomy";
+import type { PublicChallenge as Challenge, PublicPersona as Persona } from "@/domain/content/visibility";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { ChallengePicker } from "./challenge-picker";
 import { ScreenFrame } from "./screen-frame";

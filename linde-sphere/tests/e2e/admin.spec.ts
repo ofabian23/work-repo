@@ -121,10 +121,65 @@ test.describe("admin features", () => {
   }) => {
     await signIn(page);
     await expect(page).toHaveURL(ADMIN);
-    for (const suffix of ["", "/exports", "/content"]) {
+    for (const suffix of ["", "/exports", "/sales", "/content"]) {
       await page.goto(`${ADMIN}${suffix}`);
       await expectNoHorizontalOverflow(page);
     }
+  });
+
+  test("sales validation: every item with its review fields, filters, and a confirmed CSV download", async ({
+    page,
+  }) => {
+    await signIn(page);
+    await expect(page).toHaveURL(ADMIN);
+    await page.getByRole("link", { name: "Validación de ventas" }).click();
+    await expect(page).toHaveURL(`${ADMIN}/sales`);
+    await expect(page.getByTestId("sales-total").locator("span").last()).toHaveText("37");
+    await expect(page.getByTestId("sales-ready").locator("span").last()).toHaveText("0");
+    await expect(page.getByTestId("sales-item")).toHaveCount(37);
+    const first = page.getByTestId("sales-item").first();
+    for (const label of [
+      "Nombre en español",
+      "Nombre en inglés",
+      "Descripción actual",
+      "Estado de mercado",
+      "Estado de validación",
+      "Roles previstos",
+      "Retos previstos",
+      "Áreas de salud previstas",
+      "Prioridad de recomendación",
+      "Disponible en Puerto Rico",
+      "Mantener / eliminar / renombrar",
+      "Corrección requerida",
+      "Material digital faltante",
+      "Responsable de ventas",
+    ]) {
+      await expect(first.getByText(label, { exact: true })).toBeVisible();
+    }
+    await expect(first.getByTestId("sales-approval")).toContainText("no se muestra en producción");
+
+    await page.getByTestId("sales-filter-type").selectOption("solution");
+    await page.getByTestId("sales-filter-approval").selectOption("not-started");
+    await page.getByTestId("sales-filter-apply").click();
+    await expect(page).toHaveURL(`${ADMIN}/sales?type=solution&approval=not-started`);
+    await expect(page.getByTestId("sales-item")).toHaveCount(11);
+    await expect(page.locator('[data-testid="sales-item"]:not([data-record-type="solution"])')).toHaveCount(
+      0,
+    );
+
+    // Unconfirmed: back to the page with an error; confirmed: the worksheet downloads.
+    await page.getByTestId("sales-export-submit").click();
+    await expect(page).toHaveURL(`${ADMIN}/sales?error=confirm`);
+    await expect(page.getByRole("alert").filter({ hasText: "Confirme la descarga" })).toBeVisible();
+    await page.getByTestId("sales-export-confirm").check();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByTestId("sales-export-submit").click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/^linde-sphere-sales-validation-.*\.csv$/);
+    const csv = readFileSync((await download.path())!, "utf8");
+    expect(csv).toContain("record_type,id,current_name,spanish_name,english_name,current_description");
+    expect(csv.trim().split("\r\n")).toHaveLength(38);
   });
 
   test("overview, filters, lead detail, mark exported, confirmed exports and backup", async ({ page }) => {

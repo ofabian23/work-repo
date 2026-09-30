@@ -2,7 +2,7 @@
 
 import { ChallengeCard } from "@/components/cards/challenge-card";
 import { TouchCard } from "@/components/cards/touch-card";
-import type { Challenge } from "@/domain/content/taxonomy";
+import type { PublicChallenge as Challenge } from "@/domain/content/visibility";
 import { useLanguage } from "@/lib/i18n/language-provider";
 
 /**

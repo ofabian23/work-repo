@@ -40,6 +40,10 @@ export const en: Messages = {
       explore: { title: "Explore the hospital", description: "Walk through the areas and discover opportunities." },
     },
     privacyLink: "Privacy",
+    unavailable: {
+      title: "We are preparing this experience",
+      body: "The content is still being reviewed. Our team at the booth will be glad to help you.",
+    },
   },
   summary: {
     title: "Your personalized summary",
@@ -168,7 +172,7 @@ export const en: Messages = {
     subtitle: "Choose the one that best describes your main role.",
     listLabel: "Professional areas",
     or: "or",
-    empty: "Professional areas are not available yet. You can explore the hospital.",
+    empty: "Professional areas are not available yet.",
   },
   roleChallenges: {
     title: "What are your priorities?",
@@ -283,6 +287,8 @@ export const en: Messages = {
       reset: "When you finish, or after a period of inactivity, the screen clears your selections.",
     },
     noticeHeading: "Privacy notice",
+    /** Production before the consent text is approved: no lead capture, so no personal data at all. */
+    noticeUnavailable: "This experience does not currently ask for any personal information.",
   },
   ui: {
     close: "Close",

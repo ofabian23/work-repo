@@ -18,6 +18,8 @@ const E2E_ADMIN_PASSPHRASE_HASH =
 const E2E_EMAIL_PREVIEW_DIR = "data/e2e-email-preview";
 /** Second server on the same production build with the dev tools (gallery, calibration) explicitly enabled. */
 export const GALLERY_PORT = PORT + 1;
+/** Third server on the same build in production content mode: validated content only (ADR-060). */
+export const PRODUCTION_CONTENT_PORT = PORT + 2;
 
 /**
  * Uses a pre-installed Chromium when available (cloud dev container); otherwise the browser installed
@@ -87,6 +89,20 @@ export default defineConfig({
         ADMIN_ENABLED: "true",
         ADMIN_PATH: E2E_ADMIN_PATH,
         ADMIN_PASSPHRASE_HASH: E2E_ADMIN_PASSPHRASE_HASH,
+      },
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+    },
+    {
+      // Production content mode on the same build: the kiosk must show nothing that is not validated.
+      command: `npx next start -H localhost -p ${PRODUCTION_CONTENT_PORT}`,
+      url: `http://localhost:${PRODUCTION_CONTENT_PORT}/api/health`,
+      env: {
+        DATABASE_URL: E2E_DATABASE_URL,
+        EMAIL_PROVIDER: "preview",
+        EMAIL_PREVIEW_DIR: E2E_EMAIL_PREVIEW_DIR,
+        LEAD_RATE_LIMIT_PER_MINUTE: "1000",
+        CONTENT_MODE: "production",
       },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

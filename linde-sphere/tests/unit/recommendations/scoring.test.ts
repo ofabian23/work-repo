@@ -14,7 +14,7 @@ import {
 } from "@/domain/recommendations/recommendation-result";
 import { EMPTY_SIGNALS, type SessionSignals } from "@/domain/session/visitor-session";
 import { INITIAL_KIOSK_STATE, kioskReducer, type KioskAction } from "@/features/kiosk/state/kiosk-state";
-import { emptyWeights } from "../../helpers/fixtures";
+import { approveForProduction, emptyWeights } from "../../helpers/fixtures";
 import { clone, loadSeedBundle } from "../../helpers/schema";
 
 /**
@@ -317,11 +317,11 @@ describe("demo versus production content filtering", () => {
   function validatedBundle(): ContentBundle {
     const bundle = clone(seed);
     for (const id of ["backup-emergency-supply", "talk-to-specialist"]) {
-      bundle.solutions.find((s) => s.id === id)!.validationStatus = "validated";
+      approveForProduction(bundle.solutions.find((s) => s.id === id)!);
     }
     bundle.recommendationRules.find((r) => r.solutionId === "backup-emergency-supply")!.validationStatus =
       "validated";
-    bundle.personas.find((p) => p.id === "government-system")!.validationStatus = "validated";
+    approveForProduction(bundle.personas.find((p) => p.id === "government-system")!);
     return bundle;
   }
 

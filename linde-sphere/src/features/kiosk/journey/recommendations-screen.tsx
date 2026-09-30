@@ -48,7 +48,8 @@ export function RecommendationsScreen({
   summary: RecommendationSummary;
   /** What changed since the visitor last saw their recommendations. */
   changes: RecommendationChanges;
-  onSendSummary: () => void;
+  /** Omitted when lead capture is unavailable (production without approved consent/report copy). */
+  onSendSummary?: () => void;
   onContinueExploring: () => void;
   onReviewPriorities: () => void;
   onStartOver: () => void;
@@ -113,15 +114,17 @@ export function RecommendationsScreen({
       }
       actions={
         <div className="flex w-full flex-col gap-3">
-          <PrimaryAction
-            fullWidth
-            data-testid="send-summary"
-            icon={<ArrowRightIcon />}
-            onClick={onSendSummary}
-            disabled={primary.length === 0}
-          >
-            {t("recommendations.sendSummary")}
-          </PrimaryAction>
+          {onSendSummary && (
+            <PrimaryAction
+              fullWidth
+              data-testid="send-summary"
+              icon={<ArrowRightIcon />}
+              onClick={onSendSummary}
+              disabled={primary.length === 0}
+            >
+              {t("recommendations.sendSummary")}
+            </PrimaryAction>
+          )}
           <div className="grid gap-3 sm:grid-cols-3">
             <SecondaryAction size="md" data-testid="continue-exploring" onClick={onContinueExploring}>
               {t("recommendations.continueExploring")}

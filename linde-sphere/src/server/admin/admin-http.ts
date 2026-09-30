@@ -173,10 +173,17 @@ const attachment = (filename: string, contentType: string, body: string | Buffer
 /** Exports require an explicit confirmation checkbox (the file holds personal data). */
 export function handleExport(request: Request, ctx: AdminHttpContext): Promise<Response> {
   return guarded(request, ctx, async (form) => {
-    if (form.get("confirm") !== "yes") return redirect(`${ctx.config.basePath}/exports?error=confirm`);
     const kind = form.get("kind");
+    if (form.get("confirm") !== "yes") {
+      const page = kind === "sales" ? "sales" : "exports";
+      return redirect(`${ctx.config.basePath}/${page}?error=confirm`);
+    }
     if (kind === "content") {
       const { filename, csv } = ctx.service.contentValidationCsv();
+      return attachment(filename, "text/csv; charset=utf-8", csv);
+    }
+    if (kind === "sales") {
+      const { filename, csv } = ctx.service.salesValidationCsv();
       return attachment(filename, "text/csv; charset=utf-8", csv);
     }
     if (kind !== "leads" && kind !== "interests")

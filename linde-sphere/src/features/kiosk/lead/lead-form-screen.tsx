@@ -7,7 +7,7 @@ import { StatusBanner } from "@/components/feedback/status-banner";
 import { ArrowRightIcon } from "@/components/icons";
 import { ProgressIndicator } from "@/components/navigation/progress-indicator";
 import { Modal } from "@/components/overlay/dialog";
-import type { PublicContentBundle } from "@/domain/content/visibility";
+import type { LeadCaptureContent } from "@/domain/content/visibility";
 import { maskEmailForDisplay } from "@/domain/leads/mask-email";
 import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
 import { useLanguage } from "@/lib/i18n/language-provider";
@@ -60,7 +60,7 @@ export function LeadFormScreen({
   onCancel,
   onFinish,
 }: {
-  content: PublicContentBundle;
+  content: LeadCaptureContent;
   session: SessionContext;
   recommendations: RecommendationResult | null;
   /** Injected in tests; defaults to the real /api/leads client. */

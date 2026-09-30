@@ -11,7 +11,19 @@
     },
     "icon": "continuity",
     "sortOrder": 10,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "emergency-preparedness",
@@ -25,7 +37,19 @@
     },
     "icon": "emergency",
     "sortOrder": 20,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "aging-infrastructure",
@@ -39,7 +63,19 @@
     },
     "icon": "infrastructure",
     "sortOrder": 30,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "facility-expansion",
@@ -53,7 +89,19 @@
     },
     "icon": "expansion",
     "sortOrder": 40,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "visibility-monitoring",
@@ -67,7 +115,19 @@
     },
     "icon": "monitoring",
     "sortOrder": 50,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "cylinder-inventory",
@@ -81,7 +141,19 @@
     },
     "icon": "cylinders",
     "sortOrder": 60,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "operational-complexity",
@@ -95,7 +167,19 @@
     },
     "icon": "simplify",
     "sortOrder": 70,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "patient-staff-safety",
@@ -109,7 +193,19 @@
     },
     "icon": "safety",
     "sortOrder": 80,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "clinical-workflow",
@@ -123,7 +219,19 @@
     },
     "icon": "workflow",
     "sortOrder": 90,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "compliance-readiness",
@@ -137,7 +245,19 @@
     },
     "icon": "compliance",
     "sortOrder": 100,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "lifecycle-costs",
@@ -151,7 +271,19 @@
     },
     "icon": "lifecycle",
     "sortOrder": 110,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "care-outside-hospital",
@@ -165,6 +297,18 @@
     },
     "icon": "home",
     "sortOrder": 120,
-    "validationStatus": "assumed"
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   }
 ]

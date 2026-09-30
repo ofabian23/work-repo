@@ -6,15 +6,19 @@ import {
   renderSalesReviewMarkdown,
   reviewRowsAsTable,
 } from "../../src/domain/review/content-review";
+import { buildSalesValidationRows, salesValidationTable } from "../../src/domain/review/sales-validation";
 import { toCsv } from "../../src/lib/csv";
 import { loadContentFromDirectory, type LoadIssue } from "../../src/server/content/load-content";
 
 export const CSV_PATH = "exports/content-validation.csv";
+/** Sales-validation worksheet (ADR-060, SALES_VALIDATION_GUIDE.md). */
+export const SALES_CSV_PATH = "exports/sales-validation.csv";
 export const DOC_PATH = "CONTENT_VALIDATION.md";
 export const BEGIN_MARKER = "<!-- BEGIN GENERATED: sales-review (npm run content:export) -->";
 export const END_MARKER = "<!-- END GENERATED: sales-review -->";
 
-export type ExportArtifacts = { ok: true; csv: string; doc: string } | { ok: false; issues: LoadIssue[] };
+export type ExportArtifacts =
+  { ok: true; csv: string; salesCsv: string; doc: string } | { ok: false; issues: LoadIssue[] };
 
 /** Builds the CSV and the updated CONTENT_VALIDATION.md text from the seed content (no writes). */
 export async function buildContentExport(projectRoot: string): Promise<ExportArtifacts> {
@@ -23,6 +27,7 @@ export async function buildContentExport(projectRoot: string): Promise<ExportArt
   if (!loaded.bundle || errors.length > 0) return { ok: false, issues: errors };
 
   const csv = toCsv(reviewRowsAsTable(buildReviewRows(loaded.bundle)));
+  const salesCsv = toCsv(salesValidationTable(buildSalesValidationRows(loaded.bundle)));
 
   const docPath = path.join(projectRoot, DOC_PATH);
   const current = readFileSync(docPath, "utf8");
@@ -39,5 +44,5 @@ export async function buildContentExport(projectRoot: string): Promise<ExportArt
     current.slice(end);
   const options = (await prettier.resolveConfig(docPath)) ?? {};
   const doc = await prettier.format(replaced, { ...options, filepath: docPath });
-  return { ok: true, csv, doc };
+  return { ok: true, csv, salesCsv, doc };
 }

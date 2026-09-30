@@ -167,25 +167,26 @@ confirm:
 
 ## 8. Implemented safeguards (for reference)
 
-| Area             | Safeguard                                                                                                             | Verified by                                                |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Input validation | Strict Zod schemas on every route; unknown fields rejected; content-aware checks                                      | Unit and API tests                                         |
-| Body size        | Leads ≤ 16 KB (JSON only); admin forms ≤ 4 KB                                                                         | Unit tests                                                 |
-| Duplicates       | Request token + fingerprint; unique index; UI double-tap guard                                                        | Unit, component and E2E tests                              |
-| Rate limiting    | Leads 10/min per client, 60/min overall; status 120/min; admin sign-in lockout                                        | Unit tests                                                 |
-| Origin / host    | Host allowlist (DNS rebinding); same-origin required for lead and admin POSTs                                         | Unit and E2E tests                                         |
-| Headers          | CSP (self only, no frames), X-Frame-Options, nosniff, no-referrer, COOP/CORP, `no-store` kiosk page, sandboxed assets | Unit and E2E tests (no CSP violations during a full visit) |
-| Errors           | Generic JSON or text bodies; logs keep error name/code only; Next production pages show a digest only                 | Unit and E2E tests                                         |
-| Output encoding  | React escaping; report HTML escapes every value; no raw HTML rendering                                                | Report tests                                               |
-| CSV injection    | Apostrophe before `= + - @`, tab, CR (also after spaces and full-width)                                               | Unit tests                                                 |
-| Logs             | Masked names, emails, phones, organizations, tokens; no exported data                                                 | Unit tests                                                 |
-| Browser          | No storage APIs used; reset hard-reloads; bfcache reload; `no-store`                                                  | Component and E2E tests                                    |
-| Static assets    | Media-type allowlist; SVG scan (no script, handlers, external refs); sandbox CSP                                      | Content check and unit tests                               |
-| Uploads          | None exist. Any future upload must use the same allowlist, re-encode images, and never store into `public/`           | Documented rule                                            |
-| Secrets          | Env validated, values never echoed; plaintext admin credentials rejected; bundle scan                                 | Unit tests and `security:bundle`                           |
-| Dependencies     | `npm run security:audit` (runtime tree); Prisma CLI advisories patched via overrides                                  | Audit: 0 vulnerabilities at time of writing                |
-| Separation       | Admin in its own segment and layout, reachable only via the configured path, off by default                           | Unit and E2E tests                                         |
-| Source control   | `data/`, `*.db*`, `*.sqlite*`, `*.eml`, lead CSVs, `.env*` ignored                                                    | Unit test (`git check-ignore`)                             |
+| Area               | Safeguard                                                                                                                                            | Verified by                                                |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Input validation   | Strict Zod schemas on every route; unknown fields rejected; content-aware checks                                                                     | Unit and API tests                                         |
+| Body size          | Leads ≤ 16 KB (JSON only); admin forms ≤ 4 KB                                                                                                        | Unit tests                                                 |
+| Duplicates         | Request token + fingerprint; unique index; UI double-tap guard                                                                                       | Unit, component and E2E tests                              |
+| Rate limiting      | Leads 10/min per client, 60/min overall; status 120/min; admin sign-in lockout                                                                       | Unit tests                                                 |
+| Origin / host      | Host allowlist (DNS rebinding); same-origin required for lead and admin POSTs                                                                        | Unit and E2E tests                                         |
+| Headers            | CSP (self only, no frames), X-Frame-Options, nosniff, no-referrer, COOP/CORP, `no-store` kiosk page, sandboxed assets                                | Unit and E2E tests (no CSP violations during a full visit) |
+| Errors             | Generic JSON or text bodies; logs keep error name/code only; Next production pages show a digest only                                                | Unit and E2E tests                                         |
+| Output encoding    | React escaping; report HTML escapes every value; no raw HTML rendering                                                                               | Report tests                                               |
+| CSV injection      | Apostrophe before `= + - @`, tab, CR (also after spaces and full-width)                                                                              | Unit tests                                                 |
+| Logs               | Masked names, emails, phones, organizations, tokens; no exported data                                                                                | Unit tests                                                 |
+| Browser            | No storage APIs used; reset hard-reloads; bfcache reload; `no-store`                                                                                 | Component and E2E tests                                    |
+| Static assets      | Media-type allowlist; SVG scan (no script, handlers, external refs); sandbox CSP                                                                     | Content check and unit tests                               |
+| Uploads            | None exist. Any future upload must use the same allowlist, re-encode images, and never store into `public/`                                          | Documented rule                                            |
+| Secrets            | Env validated, values never echoed; plaintext admin credentials rejected; bundle scan                                                                | Unit tests and `security:bundle`                           |
+| Dependencies       | `npm run security:audit` (runtime tree); Prisma CLI advisories patched via overrides                                                                 | Audit: 0 vulnerabilities at time of writing                |
+| Separation         | Admin in its own segment and layout, reachable only via the configured path, off by default                                                          | Unit and E2E tests                                         |
+| Source control     | `data/`, `*.db*`, `*.sqlite*`, `*.eml`, lead CSVs, `.env*` ignored                                                                                   | Unit test (`git check-ignore`)                             |
+| Production content | Only validated, sales-approved content in production; unvalidated consent text and report copy withheld, so no lead capture until approved (ADR-060) | Unit, component and production-mode E2E tests              |
 
 ## 9. Unresolved approvals
 

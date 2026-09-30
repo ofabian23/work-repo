@@ -4,8 +4,10 @@ import type { DigitalAsset, Solution } from "./offering";
 import type { ContentMode, ValidationStatus } from "./primitives";
 import { SIGNAL_TYPES } from "./constants";
 import type { RecommendationRule, SignalWeights } from "./recommendation-rule";
+import type { SalesReview } from "./sales-review";
 import type { Hotspot, Scene } from "./scene";
 import type { ConsentTextSet, ReportCopy } from "./settings";
+import type { Challenge, Persona } from "./taxonomy";
 
 /**
  * Single source of truth for what a visitor may see (CONTENT_VALIDATION.md §3).
@@ -34,6 +36,27 @@ export function isVisibleStatus(
   }
 }
 
+/**
+ * Production guard, second layer (ADR-060): an item with a sales-validation worksheet reaches production
+ * only if the sales team approved it, even if its status says "validated". The content check already
+ * rejects "validated" without "approved"; this keeps the kiosk safe if unchecked content is ever loaded.
+ */
+export function isSalesApprovedForMode(item: { salesReview?: SalesReview }, mode: ContentMode): boolean {
+  if (mode !== "production" || item.salesReview === undefined) return true;
+  return item.salesReview.approvalStatus === "approved" && item.salesReview.decision !== "remove";
+}
+
+/** Content with the consent text and report copy that lead capture needs. */
+export type LeadCaptureContent = PublicContentBundle & {
+  consent: PublicConsentTextSet;
+  report: PublicReportCopy;
+};
+
+/** Lead capture needs approved consent text and report copy (always present in demo mode). */
+export function leadCaptureAvailable(content: PublicContentBundle): content is LeadCaptureContent {
+  return content.consent !== null && content.report !== null;
+}
+
 /** Offering content shown in demo mode that still needs the "pending local validation" indicator. */
 export function needsPendingIndicator(status: ValidationStatus): boolean {
   return status !== "validated";
@@ -44,7 +67,9 @@ type StripGovernance<T> = Omit<
   "internalNotes" | "reviewedBy" | "sourceLabel" | "lastReviewedAt" | "requiresSalesValidation" | "market"
 >;
 export type PublicSolution = Omit<StripGovernance<Solution>, "salesReview">;
-export type PublicDigitalAsset = StripGovernance<DigitalAsset>;
+export type PublicDigitalAsset = Omit<StripGovernance<DigitalAsset>, "salesReview">;
+export type PublicPersona = Omit<Persona, "salesReview">;
+export type PublicChallenge = Omit<Challenge, "salesReview">;
 export type PublicRecommendationRule = Omit<RecommendationRule, "internalNotes" | "exclusions"> & {
   exclusions: Omit<RecommendationRule["exclusions"][number], "reason">[];
 };
@@ -55,15 +80,19 @@ export type PublicReportCopy = Omit<ReportCopy, "internalNotes">;
 export type PublicContentBundle = {
   mode: ContentMode;
   manifest: ContentBundle["manifest"];
-  personas: ContentBundle["personas"];
-  challenges: ContentBundle["challenges"];
+  personas: PublicPersona[];
+  challenges: PublicChallenge[];
   facilityTypes: ContentBundle["facilityTypes"];
   scenes: Scene[];
   solutions: PublicSolution[];
   digitalAssets: PublicDigitalAsset[];
   recommendationRules: PublicRecommendationRule[];
-  consent: PublicConsentTextSet;
-  report: PublicReportCopy;
+  /**
+   * Consent text and report copy. In production they are withheld (null) until legal/marketing validate
+   * them: without approved wording the kiosk shows no privacy text from content and collects no leads.
+   */
+  consent: PublicConsentTextSet | null;
+  report: PublicReportCopy | null;
   /** Engine and readiness settings (configuration, passed through unchanged). */
   settings: EngineSettings;
 };
@@ -73,7 +102,18 @@ function stripSolution(solution: Solution): PublicSolution {
   return stripGovernance(rest);
 }
 
-function stripGovernance<T extends Omit<Solution, "salesReview"> | DigitalAsset>(
+function stripAsset(asset: DigitalAsset): PublicDigitalAsset {
+  const { salesReview: _salesReview, ...rest } = asset;
+  return stripGovernance(rest);
+}
+
+/** Removes the internal sales worksheet from a taxonomy record. */
+function stripReview<T extends { salesReview: SalesReview }>(record: T): Omit<T, "salesReview"> {
+  const { salesReview: _salesReview, ...rest } = record;
+  return rest;
+}
+
+function stripGovernance<T extends Omit<Solution, "salesReview"> | Omit<DigitalAsset, "salesReview">>(
   record: T,
 ): StripGovernance<T> {
   const {
@@ -93,8 +133,10 @@ export function visibleContent(
   mode: ContentMode,
   options: VisibilityOptions = {},
 ): PublicContentBundle {
-  const visible = <T extends { validationStatus: ValidationStatus }>(items: T[]) =>
-    items.filter((i) => isVisibleStatus(i.validationStatus, mode, options));
+  const visible = <T extends { validationStatus: ValidationStatus; salesReview?: SalesReview }>(items: T[]) =>
+    items.filter(
+      (i) => isVisibleStatus(i.validationStatus, mode, options) && isSalesApprovedForMode(i, mode),
+    );
 
   const personasRaw = visible(bundle.personas);
   const challenges = visible(bundle.challenges);
@@ -145,10 +187,12 @@ export function visibleContent(
     }));
   const hotspotIds = new Set(scenes.flatMap((s) => s.hotspots.map((h) => h.id)));
 
-  const personas = personasRaw.map((p) => ({
-    ...p,
-    suggestedChallengeIds: p.suggestedChallengeIds.filter((id) => challengeIds.has(id)),
-  }));
+  const personas = personasRaw.map((p) =>
+    stripReview({
+      ...p,
+      suggestedChallengeIds: p.suggestedChallengeIds.filter((id) => challengeIds.has(id)),
+    }),
+  );
 
   const solutions = solutionsRaw.map((s) =>
     stripSolution({
@@ -182,19 +226,20 @@ export function visibleContent(
 
   const { internalNotes: _consentNotes, ...consent } = bundle.consent;
   const { internalNotes: _reportNotes, ...report } = bundle.report;
+  const legalTextShown = (status: ValidationStatus) => mode === "demo" || status === "validated";
 
   return {
     mode,
     manifest: bundle.manifest,
     personas,
-    challenges,
+    challenges: challenges.map(stripReview),
     facilityTypes,
     scenes,
     solutions,
-    digitalAssets: assets.map(stripGovernance),
+    digitalAssets: assets.map(stripAsset),
     recommendationRules,
-    consent,
-    report,
+    consent: legalTextShown(consent.validationStatus) ? consent : null,
+    report: legalTextShown(report.validationStatus) ? report : null,
     settings: bundle.settings,
   };
 }

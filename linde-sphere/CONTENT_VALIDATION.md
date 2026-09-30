@@ -42,6 +42,20 @@ The content type follows from the file an item lives in; there is no separate `k
 The same filter is applied to the **kiosk UI, the server-side recommendation recomputation, and the
 emailed report**. The report can never contain content the visitor could not see.
 
+**Production guard (ADR-060).** Production has two independent conditions:
+
+- **Sales approval:** a persona, challenge, solution or digital asset appears only if it is `validated`
+  **and** its `salesReview.approvalStatus` is `approved` (not `remove`). The content check already
+  refuses `validated` without approval; the filter enforces it again, so an unchecked file cannot leak.
+- **Legal text:** consent text and report copy are sent to the kiosk only once `validated`. Until then the
+  privacy sheet shows a neutral notice and the kiosk collects no leads (the "send me a summary" step is
+  hidden and the API refuses submissions).
+- **Visitor experience:** entry paths without visible content are hidden. With nothing approved,
+  visitors see "we are preparing this experience".
+
+Tests cover every status × approval × decision combination, the served page (a production-mode E2E
+server), and the lead API.
+
 **Reference pruning:** if a visible item references a hidden one (e.g., a solution links to an unvalidated
 resource), the reference is dropped silently. It is never rendered as a broken or empty element.
 
@@ -75,11 +89,16 @@ Every **solution** and **digital asset** carries these governance fields (flat, 
   "reviewedBy": null, // "Name, Role", required once validated/unavailable
   "sourceLabel": "Linde Sphere seed content - working hypothesis, not a sales catalog",
   "requiresSalesValidation": true,
-  // Solutions only: the sales-review worksheet (§11)
+  // Personas, challenges, solutions and digital assets: the sales-validation worksheet (ADR-060,
+  // SALES_VALIDATION_GUIDE.md)
   "salesReview": {
+    "availableInPuertoRico": "unknown", // yes | no | unknown
     "decision": "pending", // pending | keep | remove | rename
     "proposedName": null, // { es, en } when decision is "rename"
-    "puertoRicoAvailability": "requires-verification", // requires-verification | available | not-available
+    "requiredCorrection": "", // what must change before approval; empty once applied
+    "missingDigitalMaterial": "", // brochure, image, video or technical sheet still missing
+    "salesOwner": null, // accountable sales team member (role or name)
+    "approvalStatus": "not-started", // not-started | in-review | changes-requested | approved | rejected
     "conventionPriority": "high", // high | medium | low | unset
     "priorityConfirmedBySales": false,
     "notes": "Priority proposed by the project team; sales to confirm.",
@@ -93,15 +112,22 @@ Schema-enforced rules (`npm run content:check` fails otherwise):
 - `validated` ⇒ `market` must be `puerto-rico` and `requiresSalesValidation` must be `false`.
 - `assumed` or `placeholder` ⇒ `requiresSalesValidation` must be `true`.
 - A validated digital asset cannot point to a reserved `example.com/.org/.net` URL.
-- Sales review and status must agree: `validated` ⇒ `puertoRicoAvailability: "available"` and decision
-  `keep` or `rename`; `not-available` or decision `remove` ⇒ `validationStatus: "unavailable"`;
-  `rename` ⇒ `proposedName` required.
+- Sales review and status must agree (personas, challenges, solutions and assets; ADR-060):
+  - **Validated needs approval:** `validated` ⇔ `approvalStatus: "approved"` (unless the decision is
+    `remove`).
+  - **Approval needs complete answers:** a decision (`keep`, `rename` or `remove`), a `salesOwner`,
+    Puerto Rico availability not `unknown`, and an empty `requiredCorrection`.
+  - **Offerings:** a validated solution or asset needs `availableInPuertoRico: "yes"`.
+  - **Removal:** `availableInPuertoRico: "no"` or decision `remove` ⇒ `validationStatus: "unavailable"`.
+  - **Renames:** `rename` needs `proposedName`, and a validated rename must display exactly the
+    `proposedName`.
 
 `internalNotes`, `reviewedBy`, `sourceLabel`, `lastReviewedAt`, `requiresSalesValidation`, `market` and
 `salesReview` are **internal**. The visibility filter strips them before content reaches the kiosk or a report.
 
-Taxonomy items, scenes, hotspots, rules and consent text carry `validationStatus` (plus `internalNotes`
-on rules and consent). Promoting them to `validated` is recorded in the sign-off log (§9).
+Personas and challenges carry `validationStatus` and the same `salesReview` worksheet. Facility types,
+scenes, hotspots, rules and consent text carry `validationStatus` (plus `internalNotes` on rules and
+consent). Promoting any item to `validated` is recorded in the sign-off log (§9).
 
 ## 6. Running the content check
 
@@ -138,7 +164,8 @@ author drafts (placeholder/assumed)
 content:check passes (schema, translations, references, prohibited claims)
       │
       ▼
-review packet per approver (content:check summary today; a --report export is planned)
+review packet per approver (sales: exports/sales-validation.csv or the admin page "Validación de ventas",
+answered with SALES_VALIDATION_GUIDE.md)
       │
       ▼
 approver decides per record ──► validated (+ reviewedBy/lastReviewedAt/sourceLabel, market puerto-rico)
@@ -202,7 +229,7 @@ these terms, it requires a documented decision (DECISIONS.md) and a code change.
 `content/solutions.json` (content v0.2.0) holds 10 assumed categories plus the "Talk with a specialist"
 fallback. **All are demonstrative assumptions pending Puerto Rico validation, not confirmed Puerto Rico
 offerings.** Each has `validationStatus: "assumed"`, `market: "global-reference"`,
-`requiresSalesValidation: true`, `salesReview.puertoRicoAvailability: "requires-verification"`, and
+`requiresSalesValidation: true`, `salesReview.availableInPuertoRico: "unknown"`, and
 `internalNotes` beginning with "PENDING PUERTO RICO VALIDATION". In demo mode the kiosk and report show
 the "Content pending local validation" indicator on each one; production mode hides them.
 
@@ -273,10 +300,11 @@ Do not edit between the markers by hand. Run `npm run content:export` after chan
 
 The tables below are generated from `content/` by `npm run content:export`, which also writes
 [`exports/content-validation.csv`](./exports/content-validation.csv) (UTF-8, opens in Excel). Every sample
-solution is a **demonstrative assumption pending Puerto Rico validation**. To record a decision, either fill in
-the `sales_*` columns of the CSV and return it, or edit `salesReview` in `content/solutions.json`
-(`decision`, `proposedName`, `puertoRicoAvailability`, `conventionPriority`, `priorityConfirmedBySales`), then run
-`npm run content:export`. Removed or not-available solutions must also be set to `validationStatus: "unavailable"`
+solution is a **demonstrative assumption pending Puerto Rico validation**. The sales team answers in the
+sales-validation worksheet ([`exports/sales-validation.csv`](./exports/sales-validation.csv) or the admin page
+"Validación de ventas"), following [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md). The project team
+records the answers in each item's `salesReview` (personas, challenges, solutions and digital assets), then runs
+`npm run content:export`. Removed or not-available items must also be set to `validationStatus: "unavailable"`
 (the schema enforces this).
 
 ### 11.2 Keep

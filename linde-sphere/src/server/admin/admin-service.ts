@@ -4,6 +4,11 @@ import os from "node:os";
 import path from "node:path";
 import type { ContentBundle } from "@/domain/content";
 import { buildReviewRows, reviewRowsAsTable, type ReviewRow } from "@/domain/review/content-review";
+import {
+  buildSalesValidationRows,
+  salesValidationTable,
+  summarizeSalesValidation,
+} from "@/domain/review/sales-validation";
 import { toCsv } from "@/lib/csv";
 import { backupSqliteFile } from "@/server/db/sqlite-backup";
 import type { EmailOutbox } from "@/server/email/email-outbox";
@@ -169,6 +174,18 @@ export function createAdminService({
       const csv = toCsv(reviewRowsAsTable(buildReviewRows(loadContent())));
       logger.info("admin.export", { kind: "content-validation" });
       return { filename: `linde-sphere-content-validation-${stamp(now())}.csv`, csv };
+    },
+
+    /** Sales-validation worksheet: every persona, challenge, solution and asset (ADR-060). */
+    salesValidation() {
+      const rows = buildSalesValidationRows(loadContent());
+      return { rows, summary: summarizeSalesValidation(rows) };
+    },
+
+    salesValidationCsv() {
+      const csv = toCsv(salesValidationTable(buildSalesValidationRows(loadContent())));
+      logger.info("admin.export", { kind: "sales-validation" });
+      return { filename: `linde-sphere-sales-validation-${stamp(now())}.csv`, csv };
     },
 
     /** Content items still pending validation (Puerto Rico sales, legal or marketing). */

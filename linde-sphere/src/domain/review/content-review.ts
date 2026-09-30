@@ -87,7 +87,7 @@ export function buildReviewRows(bundle: ContentBundle): ReviewRow[] {
       validation_status: s.validationStatus,
       market: s.market,
       requires_sales_validation: yesNo(s.requiresSalesValidation),
-      pr_availability: r.puertoRicoAvailability,
+      pr_availability: r.availableInPuertoRico,
       review_decision: r.decision,
       proposed_name_es: r.proposedName?.es ?? "",
       proposed_name_en: r.proposedName?.en ?? "",
@@ -225,10 +225,11 @@ export function renderSalesReviewMarkdown(bundle: ContentBundle): string {
     "",
     "The tables below are generated from `content/` by `npm run content:export`, which also writes",
     "[`exports/content-validation.csv`](./exports/content-validation.csv) (UTF-8, opens in Excel). Every sample",
-    "solution is a **demonstrative assumption pending Puerto Rico validation**. To record a decision, either fill in",
-    "the `sales_*` columns of the CSV and return it, or edit `salesReview` in `content/solutions.json`",
-    "(`decision`, `proposedName`, `puertoRicoAvailability`, `conventionPriority`, `priorityConfirmedBySales`), then run",
-    '`npm run content:export`. Removed or not-available solutions must also be set to `validationStatus: "unavailable"`',
+    "solution is a **demonstrative assumption pending Puerto Rico validation**. The sales team answers in the",
+    "sales-validation worksheet ([`exports/sales-validation.csv`](./exports/sales-validation.csv) or the admin page",
+    '"Validación de ventas"), following [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md). The project team',
+    "records the answers in each item's `salesReview` (personas, challenges, solutions and digital assets), then runs",
+    '`npm run content:export`. Removed or not-available items must also be set to `validationStatus: "unavailable"`',
     "(the schema enforces this).",
     "",
     "### 11.2 Keep",
@@ -264,7 +265,7 @@ export function renderSalesReviewMarkdown(bundle: ContentBundle): string {
     "",
     table(
       ["ID", "Name (EN)", "Name (ES)"],
-      by((s) => s.salesReview.puertoRicoAvailability === "available").map(nameCells),
+      by((s) => s.salesReview.availableInPuertoRico === "yes").map(nameCells),
       NONE,
     ),
     "",
@@ -272,7 +273,7 @@ export function renderSalesReviewMarkdown(bundle: ContentBundle): string {
     "",
     table(
       ["ID", "Name (EN)", "Name (ES)"],
-      by((s) => s.salesReview.puertoRicoAvailability === "not-available").map(nameCells),
+      by((s) => s.salesReview.availableInPuertoRico === "no").map(nameCells),
       NONE,
     ),
     "",
@@ -283,7 +284,7 @@ export function renderSalesReviewMarkdown(bundle: ContentBundle): string {
     "",
     table(
       ["ID", "Name (EN)", "Name (ES)", "Summary shown to visitors (EN)"],
-      by((s) => s.salesReview.puertoRicoAvailability === "requires-verification").map((s) => [
+      by((s) => s.salesReview.availableInPuertoRico === "unknown").map((s) => [
         ...nameCells(s),
         s.summary.en,
       ]),

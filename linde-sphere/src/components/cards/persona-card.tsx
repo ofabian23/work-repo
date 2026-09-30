@@ -1,6 +1,6 @@
 "use client";
 
-import type { Persona } from "@/domain/content/taxonomy";
+import type { PublicPersona as Persona } from "@/domain/content/visibility";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { TouchCard } from "./touch-card";
 

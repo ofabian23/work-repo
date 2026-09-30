@@ -25,7 +25,8 @@ export function PrivacySheet({
 }: {
   open: boolean;
   onClose: () => void;
-  privacyNotice: LocalizedText;
+  /** Null in production until legal approves the consent text (ADR-060). */
+  privacyNotice: LocalizedText | null;
 }) {
   const { t, localize } = useLanguage();
   return (
@@ -45,7 +46,9 @@ export function PrivacySheet({
         ))}
       </ul>
       <h3 className="text-label text-ink-muted mt-8 font-semibold">{t("privacy.noticeHeading")}</h3>
-      <p className="text-body text-ink-muted mt-2">{localize(privacyNotice)}</p>
+      <p className="text-body text-ink-muted mt-2" data-testid="privacy-notice">
+        {privacyNotice ? localize(privacyNotice) : t("privacy.noticeUnavailable")}
+      </p>
     </Sheet>
   );
 }

@@ -182,6 +182,8 @@ test.describe("accessibility — admin utility", () => {
     await expectNoViolations(page, "admin leads");
     await page.goto(`${ADMIN}/exports`);
     await expectNoViolations(page, "admin exports");
+    await page.goto(`${ADMIN}/sales`);
+    await expectNoViolations(page, "admin sales validation");
     await page.goto(`${ADMIN}/content`);
     await expectNoViolations(page, "admin pending content");
   });

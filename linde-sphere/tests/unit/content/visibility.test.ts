@@ -1,19 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { isVisibleStatus, visibleContent, type ContentBundle } from "@/domain/content";
+import { approveForProduction } from "../../helpers/fixtures";
 import { clone, loadSeedBundle } from "../../helpers/schema";
 
-const validate = <T extends { validationStatus: string }>(record: T) => {
-  const r = record as Record<string, unknown>;
-  r.validationStatus = "validated";
-  if ("market" in r) {
-    Object.assign(r, {
-      market: "puerto-rico",
-      reviewedBy: "Sales PR",
-      lastReviewedAt: "2026-10-15",
-      requiresSalesValidation: false,
-    });
-  }
-};
+const validate = approveForProduction;
 
 describe("isVisibleStatus (CONTENT_VALIDATION.md §3)", () => {
   it.each([

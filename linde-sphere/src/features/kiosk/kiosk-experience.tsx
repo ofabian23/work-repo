@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { SecondaryAction } from "@/components/actions/action-button";
+import { EmptyState } from "@/components/feedback/empty-state";
 import { InactivityWarning } from "@/components/overlay/inactivity-warning";
-import type { PublicContentBundle } from "@/domain/content/visibility";
+import { leadCaptureAvailable, type PublicContentBundle } from "@/domain/content/visibility";
 import { recommend } from "@/domain/recommendations/engine";
 import { RecommendationReadiness } from "@/domain/recommendations/recommendation-readiness";
 import { primaryItems } from "@/domain/recommendations/recommendation-items";
@@ -25,7 +27,7 @@ import { ExplorerScreen } from "../explorer/explorer-screen";
 import { ConversionPrompt } from "./conversion/conversion-prompt";
 import type { ConversionPromptConfig } from "./conversion/conversion-policy";
 import { useConversionPrompt } from "./conversion/use-conversion-prompt";
-import { labelsFor, relevantSceneIds, suggestedChallengeIds } from "./journey/journey-view";
+import { availablePaths, labelsFor, relevantSceneIds, suggestedChallengeIds } from "./journey/journey-view";
 import { NextStepsScreen } from "./journey/next-steps-screen";
 import { PersonaScreen } from "./journey/persona-screen";
 import { RecommendationsScreen } from "./journey/recommendations-screen";
@@ -70,7 +72,7 @@ export function KioskExperience({
   confirmationResetMs?: number;
 }) {
   const { state, dispatch, startSession, choosePath, goToWelcome, reset } = useKioskSession();
-  const { localize } = useLanguage();
+  const { localize, t } = useLanguage();
   const ready = useHydrated();
   const session = state.session;
   const signals = session?.signals ?? EMPTY_SIGNALS;
@@ -186,7 +188,13 @@ export function KioskExperience({
       screen = <AttractScreen onStart={startSession} {...attractTimings} />;
       break;
     case "welcome":
-      screen = <WelcomeScreen onChoosePath={choose} privacyNotice={content.consent.privacyNotice} />;
+      screen = (
+        <WelcomeScreen
+          onChoosePath={choose}
+          privacyNotice={content.consent?.privacyNotice ?? null}
+          paths={availablePaths(content)}
+        />
+      );
       break;
     case "role":
       screen = (
@@ -255,7 +263,10 @@ export function KioskExperience({
             exploredLabels: labelsFor(evidence.visitedSceneIds, content.scenes),
           }}
           changes={recommendationChanges(lastSeen, displayed)}
-          onSendSummary={() => dispatch({ type: "REQUEST_SUMMARY" })}
+          // No summary (lead capture) without approved consent text and report copy (ADR-060).
+          onSendSummary={
+            leadCaptureAvailable(content) ? () => dispatch({ type: "REQUEST_SUMMARY" }) : undefined
+          }
           onContinueExploring={() => chooseStep("explore-areas")}
           onReviewPriorities={() => chooseStep("refine-challenges")}
           onStartOver={() => reset("explicit")}
@@ -275,7 +286,7 @@ export function KioskExperience({
       );
       break;
     case "lead-form":
-      screen = session && (
+      screen = session && leadCaptureAvailable(content) && (
         <LazyLeadFormScreen
           content={content}
           session={{ sessionId: session.id, sessionStartedAt: session.startedAt, signals }}
@@ -343,7 +354,8 @@ export function KioskExperience({
       );
       break;
     case "explore":
-      screen = rootSceneId && (
+      // Defensive: the welcome screen hides this path when there is no top-level scene (availablePaths).
+      screen = rootSceneId ? (
         <ExplorerScreen
           content={content}
           sceneId={session?.currentSceneId ?? rootSceneId}
@@ -363,6 +375,13 @@ export function KioskExperience({
           trayResult={displayed}
           traySeen={snapshot}
           onTrayOpen={commitRecommendations}
+        />
+      ) : (
+        <EmptyState
+          headingLevel={1}
+          title={t("welcome.unavailable.title")}
+          body={t("welcome.unavailable.body")}
+          action={<SecondaryAction onClick={goToWelcome}>{t("journey.back")}</SecondaryAction>}
         />
       );
       break;

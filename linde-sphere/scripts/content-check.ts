@@ -49,12 +49,17 @@ if (result.bundle && mode === "production") {
   const pub = visibleContent(result.bundle, "production");
   const readiness = (message: string) =>
     issues.push({ severity: "error", file: "content", path: "", message: `[production] ${message}` });
-  if (pub.personas.length === 0) readiness("No validated personas; the 'I work in…' path would be empty");
-  if (pub.challenges.length === 0) readiness("No validated challenges; the 'I need to…' path would be empty");
+  if (pub.personas.length === 0)
+    readiness("No validated, sales-approved personas; the 'I work in…' path would be empty");
+  if (pub.challenges.length === 0)
+    readiness("No validated, sales-approved challenges; the 'I need to…' path would be empty");
   if (pub.scenes.length === 0) readiness("No validated scenes; the hospital explorer would be empty");
-  if (!pub.solutions.some((s) => s.isFallback)) readiness("The fallback solution is not validated");
+  if (!pub.solutions.some((s) => s.isFallback))
+    readiness("The fallback solution is not validated and sales-approved");
   if (pub.recommendationRules.length === 0)
-    readiness("No validated rule with a validated solution; only the fallback could be recommended");
+    readiness(
+      "No validated rule with a validated, sales-approved solution; only the fallback could be recommended",
+    );
   if (result.bundle.consent.validationStatus !== "validated")
     readiness("Consent text is not validated by legal/compliance");
   if (result.bundle.report.validationStatus !== "validated")

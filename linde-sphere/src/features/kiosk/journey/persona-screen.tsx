@@ -5,7 +5,7 @@ import { PersonaCard } from "@/components/cards/persona-card";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { ArrowRightIcon } from "@/components/icons";
 import { ProgressIndicator } from "@/components/navigation/progress-indicator";
-import type { Persona } from "@/domain/content/taxonomy";
+import type { PublicPersona as Persona } from "@/domain/content/visibility";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { splitPersonas } from "./journey-view";
 import { ScreenFrame } from "./screen-frame";

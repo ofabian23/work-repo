@@ -235,6 +235,9 @@ describe("admin exports", () => {
     await seed();
     const { service } = setup();
     expect(service.contentValidationCsv().csv).toContain("record_type,id,parent_id");
+    const { rows, summary } = service.salesValidation();
+    expect(summary.total).toBe(rows.length);
+    expect(rows.some((r) => r.recordType === "persona")).toBe(true);
     const backup = await service.createBackup();
     expect(backup.filename).toMatch(/\.db$/);
     expect(backup.bytes.subarray(0, 15).toString("latin1")).toBe("SQLite format 3");
@@ -345,6 +348,18 @@ describe("admin HTTP: authorization", () => {
       ctx,
     );
     expect(await content.text()).toContain("record_type");
+
+    // Sales-validation worksheet (ADR-060): confirmed download, no visitor data, back to its own page.
+    const salesUnconfirmed = await handleExport(post("/x", { kind: "sales" }, { cookie: token }), ctx);
+    expect(salesUnconfirmed.headers.get("location")).toBe("/gestion-local/sales?error=confirm");
+    const sales = await handleExport(post("/x", { kind: "sales", confirm: "yes" }, { cookie: token }), ctx);
+    expect(sales.headers.get("content-disposition")).toMatch(
+      /^attachment; filename="linde-sphere-sales-validation-.*\.csv"$/,
+    );
+    const salesCsv = await sales.text();
+    expect(salesCsv).toContain("record_type,id,current_name,spanish_name,english_name");
+    expect(salesCsv).not.toContain("persona1@hospital.example");
+
     const backup = await handleBackup(post("/x", { confirm: "yes" }, { cookie: token }), ctx);
     expect(backup.headers.get("content-type")).toBe("application/vnd.sqlite3");
   });

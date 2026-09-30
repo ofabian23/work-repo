@@ -21,7 +21,19 @@
     "lastReviewedAt": null,
     "reviewedBy": null,
     "sourceLabel": "Linde Sphere seed content - placeholder",
-    "requiresSalesValidation": true
+    "requiresSalesValidation": true,
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "asset-emergency-planning-checklist",
@@ -45,7 +57,19 @@
     "lastReviewedAt": null,
     "reviewedBy": null,
     "sourceLabel": "Linde Sphere seed content - placeholder",
-    "requiresSalesValidation": true
+    "requiresSalesValidation": true,
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   },
   {
     "id": "asset-homecare-guide",
@@ -69,6 +93,18 @@
     "lastReviewedAt": null,
     "reviewedBy": null,
     "sourceLabel": "Linde Sphere seed content - placeholder",
-    "requiresSalesValidation": true
+    "requiresSalesValidation": true,
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
   }
 ]

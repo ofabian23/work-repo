@@ -73,7 +73,7 @@ describe("seed content", () => {
       expect(s.market, s.id).not.toBe("puerto-rico");
       expect(s.internalNotes, s.id).toMatch(/^PENDING PUERTO RICO VALIDATION/);
       expect(s.internalNotes, s.id).toMatch(/requires puerto rico sales validation/i);
-      expect(s.salesReview.puertoRicoAvailability, s.id).toBe("requires-verification");
+      expect(s.salesReview.availableInPuertoRico, s.id).toBe("unknown");
       expect(s.salesReview.decision, s.id).toBe("pending");
       expect(s.salesReview.priorityConfirmedBySales, s.id).toBe(false);
     }

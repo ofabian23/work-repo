@@ -1,10 +1,24 @@
 import type { LocalizedText } from "@/domain/content/primitives";
-import type { Persona } from "@/domain/content/taxonomy";
+import type { PublicPersona as Persona } from "@/domain/content/visibility";
 import type { PublicContentBundle } from "@/domain/content/visibility";
 import { primaryItems } from "@/domain/recommendations/recommendation-items";
 import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
+import type { EntryPath } from "@/domain/session/visitor-session";
 
 /** At most this many challenges are suggested after choosing a role (quick to scan on the kiosk). */
+/**
+ * Entry paths that have something to show. In production mode only validated content is visible
+ * (ADR-060), so a path is offered only once the content behind it exists: roles, challenges, or a
+ * top-level hospital scene.
+ */
+export function availablePaths(content: PublicContentBundle): EntryPath[] {
+  const paths: EntryPath[] = [];
+  if (content.personas.length > 0) paths.push("role");
+  if (content.challenges.length > 0) paths.push("challenge");
+  if (content.scenes.some((s) => s.parentSceneId === null)) paths.push("explore");
+  return paths;
+}
+
 export const MAX_SUGGESTED_CHALLENGES = 4;
 
 /** Areas mentioned on the next-steps screen and listed as relevant to explore. */

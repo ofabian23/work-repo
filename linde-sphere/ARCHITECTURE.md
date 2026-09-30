@@ -571,7 +571,11 @@ It also:
 - hides scenes whose ancestors are hidden, and prunes hotspots, rule weights and cross-references that
   point to hidden items, so nothing renders as a broken link;
 - strips internal fields (`internalNotes`, `reviewedBy`, `sourceLabel`, `lastReviewedAt`,
-  `requiresSalesValidation`, `market`, exclusion reasons) so they never reach the kiosk client.
+  `requiresSalesValidation`, `market`, `salesReview`, exclusion reasons) so they never reach the kiosk
+  client;
+- in production, requires an approved sales review on personas, challenges, solutions and assets on top of
+  `validated`, and withholds consent text and report copy until they are validated (then
+  `leadCaptureAvailable` is false and no lead can be collected). See ADR-060.
 
 The page loader, server-side recomputation and report renderer all use it, so the UI and the report can
 never disagree.

@@ -10,6 +10,7 @@ export const persona = () => ({
   sortOrder: 10,
   suggestedChallengeIds: ["supply-continuity"],
   validationStatus: "assumed",
+  salesReview: pendingReview(),
 });
 
 export const challenge = () => ({
@@ -19,6 +20,7 @@ export const challenge = () => ({
   icon: "continuity",
   sortOrder: 10,
   validationStatus: "assumed",
+  salesReview: pendingReview(),
 });
 
 export const facilityType = () => ({
@@ -101,10 +103,15 @@ export const validatedGovernance = () => ({
   requiresSalesValidation: false,
 });
 
+/** Sales-validation worksheet with nothing answered yet (ADR-060). */
 export const pendingReview = () => ({
+  availableInPuertoRico: "unknown",
   decision: "pending",
   proposedName: null,
-  puertoRicoAvailability: "requires-verification",
+  requiredCorrection: "",
+  missingDigitalMaterial: "",
+  salesOwner: null,
+  approvalStatus: "not-started",
   conventionPriority: "unset",
   priorityConfirmedBySales: false,
   notes: "",
@@ -124,11 +131,15 @@ export const solution = () => ({
   salesReview: pendingReview(),
 });
 
-/** Sales review of a solution that sales has confirmed for Puerto Rico. */
+/** Sales review of an item that sales has approved for Puerto Rico. */
 export const confirmedReview = () => ({
+  availableInPuertoRico: "yes",
   decision: "keep",
   proposedName: null,
-  puertoRicoAvailability: "available",
+  requiredCorrection: "",
+  missingDigitalMaterial: "",
+  salesOwner: "Ventas PR (ejemplo)",
+  approvalStatus: "approved",
   conventionPriority: "high",
   priorityConfirmedBySales: true,
   notes: "",
@@ -144,6 +155,7 @@ export const digitalAsset = () => ({
   ...assumedGovernance(),
   validationStatus: "placeholder",
   market: "unknown",
+  salesReview: pendingReview(),
 });
 
 export const emptyWeights = () => ({
@@ -180,3 +192,28 @@ export const signals = () => ({
   engagedHotspotIds: ["icu-info"],
   explicitInterestIds: [],
 });
+
+/**
+ * Makes a content record production-ready in place, the way the project team records a sales approval:
+ * validated status, Puerto Rico governance on offerings, and an approved sales review where there is one.
+ */
+export function approveForProduction<T extends { validationStatus: string }>(record: T): T {
+  const r = record as Record<string, unknown>;
+  r.validationStatus = "validated";
+  if ("market" in r) {
+    Object.assign(r, {
+      market: "puerto-rico",
+      reviewedBy: "Sales PR",
+      lastReviewedAt: "2026-10-15",
+      requiresSalesValidation: false,
+    });
+  }
+  if ("salesReview" in r) {
+    const current = r.salesReview as { conventionPriority: string };
+    r.salesReview = {
+      ...confirmedReview(),
+      conventionPriority: current.conventionPriority === "unset" ? "medium" : current.conventionPriority,
+    };
+  }
+  return record;
+}

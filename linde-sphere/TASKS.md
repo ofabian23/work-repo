@@ -320,6 +320,28 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] On the event laptop: Windows PowerShell 5.1 run, Mobile Hotspot, firewall behavior, physical kiosk
       connection (not verifiable in the development container)
 
+## Phase 10c — Sales-validation workflow and production-content guard (ADR-060) ✅
+
+- [x] `salesReview` worksheet on personas, challenges, solutions and digital assets:
+  - PR availability yes/no/unknown, keep/remove/rename, correction, missing material, owner, approval
+    status, priority;
+  - schema rules tie approval to validation
+- [x] Admin page "Validación de ventas": all 16 fields per item, summary, filters, confirmed CSV download;
+      `exports/sales-validation.csv` from `content:export`
+- [x] SALES_VALIDATION_GUIDE.md: the ten reviewer questions mapped to worksheet columns, and the approval
+      flow
+- [x] Production guard:
+  - validated **and** approved required (filter layer + content check);
+  - consent and report copy withheld until validated, so no lead capture;
+  - empty paths hidden; neutral "being prepared" state
+- [x] Tests:
+  - exhaustive visibility combinations, internal-field stripping, loader refusal, lead refusal;
+  - component tests;
+  - production-mode E2E server
+- [ ] Import of returned worksheets (answers are applied to `content/` by hand today)
+- [ ] Sales review itself: owners, answers and approvals (**[Linde Marketing]** with PR sales, PRIVACY_REVIEW
+      A13)
+
 ## Phase 10 — Hardening, accessibility, deployment
 
 - [ ] E2E: full quick/discovery/explore journeys; post-reset storage/DOM/history assertions; no external requests

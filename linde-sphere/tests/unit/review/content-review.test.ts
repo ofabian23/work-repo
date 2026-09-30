@@ -61,7 +61,7 @@ describe("content review rows", () => {
     for (const r of solutions) {
       expect(r.validation_status).toBe("assumed");
       expect(r.requires_sales_validation).toBe("yes");
-      expect(r.pr_availability).toBe("requires-verification");
+      expect(r.pr_availability).toBe("unknown");
       expect(r.review_decision).toBe("pending");
       expect(r.missing_asset).toBe("yes");
       expect(r.internal_notes).toMatch(/^PENDING PUERTO RICO VALIDATION/);

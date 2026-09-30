@@ -30,6 +30,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <a className="text-primary text-label font-semibold underline" href={`${base}/exports`}>
                 Exportaciones y respaldo
               </a>
+              <a className="text-primary text-label font-semibold underline" href={`${base}/sales`}>
+                Validación de ventas
+              </a>
               <a className="text-primary text-label font-semibold underline" href={`${base}/content`}>
                 Contenido pendiente
               </a>

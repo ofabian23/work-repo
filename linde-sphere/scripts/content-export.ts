@@ -1,6 +1,7 @@
 /**
  * Generates the sales content-validation artifacts from the seed content:
  *   - exports/content-validation.csv      (every content item; blank sales_* columns to fill in)
+ *   - exports/sales-validation.csv        (sales worksheet: personas, challenges, solutions, assets)
  *   - CONTENT_VALIDATION.md §11           (Keep / Remove / Rename / Available / Not available /
  *                                          Requires verification / Missing asset / Priority / coverage)
  *
@@ -10,7 +11,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CSV_PATH, DOC_PATH, buildContentExport } from "./lib/content-export";
+import { CSV_PATH, DOC_PATH, SALES_CSV_PATH, buildContentExport } from "./lib/content-export";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const check = process.argv.includes("--check");
@@ -25,6 +26,7 @@ async function main(): Promise<void> {
 
   const targets = [
     { file: CSV_PATH, content: result.csv },
+    { file: SALES_CSV_PATH, content: result.salesCsv },
     { file: DOC_PATH, content: result.doc },
   ];
 

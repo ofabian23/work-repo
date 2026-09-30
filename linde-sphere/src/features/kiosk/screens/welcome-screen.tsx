@@ -22,9 +22,12 @@ const PATHS: { path: EntryPath; icon: ReactNode }[] = [
 export function WelcomeScreen({
   onChoosePath,
   privacyNotice,
+  paths = PATHS.map((p) => p.path),
 }: {
   onChoosePath: (path: EntryPath) => void;
-  privacyNotice: LocalizedText;
+  privacyNotice: LocalizedText | null;
+  /** Paths with content to show (availablePaths); none renders a neutral "being prepared" message. */
+  paths?: EntryPath[];
 }) {
   const { t } = useLanguage();
   const heading = useScreenHeading();
@@ -47,37 +50,47 @@ export function WelcomeScreen({
           tabIndex={-1}
           className="text-headline text-ink font-bold tracking-tight outline-none"
         >
-          {t("welcome.title")}
+          {paths.length > 0 ? t("welcome.title") : t("welcome.unavailable.title")}
         </h1>
-        <p className="text-lead text-ink-muted max-w-3xl text-pretty">{t("welcome.subtitle")}</p>
-        <ul className="flex flex-wrap gap-3" data-testid="welcome-promises">
-          {promises.map(({ key, icon }) => (
-            <li
-              key={key}
-              className="bg-info-surface text-info text-label inline-flex items-center gap-2 rounded-full px-4 py-2 font-semibold"
-            >
-              {icon}
-              {t(`welcome.promises.${key}`)}
-            </li>
-          ))}
-        </ul>
+        {paths.length === 0 ? (
+          <p className="text-lead text-ink-muted max-w-3xl text-pretty" data-testid="welcome-unavailable">
+            {t("welcome.unavailable.body")}
+          </p>
+        ) : (
+          <p className="text-lead text-ink-muted max-w-3xl text-pretty">{t("welcome.subtitle")}</p>
+        )}
+        {paths.length > 0 && (
+          <ul className="flex flex-wrap gap-3" data-testid="welcome-promises">
+            {promises.map(({ key, icon }) => (
+              <li
+                key={key}
+                className="bg-info-surface text-info text-label inline-flex items-center gap-2 rounded-full px-4 py-2 font-semibold"
+              >
+                {icon}
+                {t(`welcome.promises.${key}`)}
+              </li>
+            ))}
+          </ul>
+        )}
       </header>
 
-      <nav aria-label={t("welcome.pathsLabel")}>
-        <ul className="flex flex-col gap-5">
-          {PATHS.map(({ path, icon }) => (
-            <li key={path}>
-              <ActionCard
-                testId={`path-${path}`}
-                icon={icon}
-                title={t(`welcome.paths.${path}.title`)}
-                description={t(`welcome.paths.${path}.description`)}
-                onActivate={() => onChoosePath(path)}
-              />
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {paths.length > 0 && (
+        <nav aria-label={t("welcome.pathsLabel")}>
+          <ul className="flex flex-col gap-5">
+            {PATHS.filter(({ path }) => paths.includes(path)).map(({ path, icon }) => (
+              <li key={path}>
+                <ActionCard
+                  testId={`path-${path}`}
+                  icon={icon}
+                  title={t(`welcome.paths.${path}.title`)}
+                  description={t(`welcome.paths.${path}.description`)}
+                  onActivate={() => onChoosePath(path)}
+                />
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
 
       <div className="mt-auto flex justify-start">
         <button

@@ -2,7 +2,7 @@
 
 import { PrimaryAction, SecondaryAction } from "@/components/actions/action-button";
 import { ArrowRightIcon } from "@/components/icons";
-import type { Challenge } from "@/domain/content/taxonomy";
+import type { PublicChallenge as Challenge } from "@/domain/content/visibility";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { ChallengePicker } from "./challenge-picker";
 import { ScreenFrame } from "./screen-frame";

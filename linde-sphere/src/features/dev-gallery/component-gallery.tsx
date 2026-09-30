@@ -364,14 +364,14 @@ export function ComponentGallery({ content }: { content: PublicContentBundle }) 
           error="Ingrese un correo electrónico válido."
         />
         <ConsentCheckbox
-          label={localize(content.consent.reportDelivery)}
+          label={localize(content.consent!.reportDelivery) /* the gallery always uses demo content */}
           checked={consentReport}
           onChange={setConsentReport}
           required
           testId="consent-report"
         />
         <ConsentCheckbox
-          label={localize(content.consent.salesFollowUp)}
+          label={localize(content.consent!.salesFollowUp)}
           checked={consentFollowUp}
           onChange={setConsentFollowUp}
         />

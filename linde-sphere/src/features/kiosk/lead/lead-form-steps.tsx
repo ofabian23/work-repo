@@ -7,7 +7,7 @@ import { SelectField } from "@/components/forms/select-field";
 import { StatusBanner } from "@/components/feedback/status-banner";
 import { CheckIcon, ShieldIcon } from "@/components/icons";
 import type { Language } from "@/domain/content/primitives";
-import type { PublicContentBundle } from "@/domain/content/visibility";
+import type { LeadCaptureContent } from "@/domain/content/visibility";
 import { cn } from "@/lib/cn";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import type { FieldErrors, InterestOption, LeadFormField, LeadFormValues } from "./lead-form-model";
@@ -175,7 +175,7 @@ export function PreferencesStep({
   onChange,
   content,
   interests,
-}: StepProps & { content: PublicContentBundle; interests: InterestOption[] }) {
+}: StepProps & { content: LeadCaptureContent; interests: InterestOption[] }) {
   const { t, localize } = useLanguage();
   const errorText = useErrorText();
   const personas = [...content.personas].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -287,7 +287,7 @@ export function ReviewStep({
   interests,
 }: {
   values: LeadFormValues;
-  content: PublicContentBundle;
+  content: LeadCaptureContent;
   interests: InterestOption[];
 }) {
   const { t, localize } = useLanguage();

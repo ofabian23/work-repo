@@ -75,6 +75,27 @@ export const LEAD_STATUS_LABELS: Record<string, string> = {
   erasure_requested: "Borrado solicitado",
 };
 
+export const RECORD_TYPE_LABELS: Record<string, string> = {
+  persona: "Rol",
+  challenge: "Reto",
+  solution: "Solución",
+  "digital-asset": "Material digital",
+};
+export const APPROVAL_LABELS: Record<string, string> = {
+  "not-started": "Sin iniciar",
+  "in-review": "En revisión",
+  "changes-requested": "Cambios solicitados",
+  approved: "Aprobado",
+  rejected: "Rechazado",
+};
+export const DECISION_LABELS: Record<string, string> = {
+  pending: "Pendiente",
+  keep: "Mantener",
+  remove: "Eliminar",
+  rename: "Renombrar",
+};
+export const AVAILABILITY_LABELS: Record<string, string> = { yes: "Sí", no: "No", unknown: "Por confirmar" };
+
 export const formatDate = (d: Date | null) =>
   d
     ? new Intl.DateTimeFormat("es-PR", {

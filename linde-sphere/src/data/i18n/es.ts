@@ -42,6 +42,10 @@ export const es = {
       explore: { title: "Explorar el hospital", description: "Recorra las áreas y descubra oportunidades." },
     },
     privacyLink: "Privacidad",
+    unavailable: {
+      title: "Estamos preparando esta experiencia",
+      body: "El contenido todavía se está revisando. Nuestro equipo en el stand con gusto le atiende.",
+    },
   },
   summary: {
     title: "Su resumen personalizado",
@@ -173,7 +177,7 @@ export const es = {
     subtitle: "Elija la que mejor describa su función principal.",
     listLabel: "Áreas profesionales",
     or: "o",
-    empty: "Las áreas profesionales todavía no están disponibles. Puede explorar el hospital.",
+    empty: "Las áreas profesionales todavía no están disponibles.",
   },
   roleChallenges: {
     title: "¿Cuáles son sus prioridades?",
@@ -288,6 +292,8 @@ export const es = {
       reset: "Al terminar, o tras un tiempo sin actividad, la pantalla borra sus selecciones.",
     },
     noticeHeading: "Aviso de privacidad",
+    /** Production before the consent text is approved: no lead capture, so no personal data at all. */
+    noticeUnavailable: "En este momento esta experiencia no solicita ningún dato personal.",
   },
   ui: {
     close: "Cerrar",

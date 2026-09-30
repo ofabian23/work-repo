@@ -98,7 +98,7 @@ describe("Solution sales review", () => {
   it("requires unavailable status when sales marks a solution not available or removed", () => {
     expectInvalid(
       SolutionSchema,
-      { ...solution(), salesReview: review({ puertoRicoAvailability: "not-available" }) },
+      { ...solution(), salesReview: review({ availableInPuertoRico: "no" }) },
       "validationStatus",
       "not available",
     );
@@ -113,25 +113,26 @@ describe("Solution sales review", () => {
       validationStatus: "unavailable",
       reviewedBy: "Sales PR",
       lastReviewedAt: "2026-10-15",
-      salesReview: review({ decision: "remove", puertoRicoAvailability: "not-available" }),
+      salesReview: review({ decision: "remove", availableInPuertoRico: "no" }),
     });
   });
 
-  it("requires validated solutions to be available and kept", () => {
+  it("requires validated solutions to be approved by sales and available in Puerto Rico", () => {
     expectInvalid(
       SolutionSchema,
       { ...solution(), ...validatedGovernance(), salesReview: review({ decision: "keep" }) },
-      "salesReview.puertoRicoAvailability",
+      "salesReview.approvalStatus",
     );
     expectInvalid(
       SolutionSchema,
       {
         ...solution(),
         ...validatedGovernance(),
-        salesReview: review({ puertoRicoAvailability: "available" }),
+        salesReview: { ...confirmedReview(), availableInPuertoRico: "no" },
       },
-      "salesReview.decision",
+      "salesReview.availableInPuertoRico",
     );
+    expectValid(SolutionSchema, { ...solution(), ...validatedGovernance(), salesReview: confirmedReview() });
   });
 
   it("rejects a confirmed but unset convention priority", () => {
@@ -153,6 +154,7 @@ describe("DigitalAssetSchema", () => {
       ...digitalAsset(),
       ...validatedGovernance(),
       access: { kind: "local-file", path: "/resources/overview.pdf" },
+      salesReview: confirmedReview(),
     });
   });
 

@@ -17,6 +17,7 @@ The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md
 | [TASKS.md](./TASKS.md)                                               | Phased implementation plan and progress                     |
 | [CONTENT_VALIDATION.md](./CONTENT_VALIDATION.md)                     | Content statuses, visibility rules, validation workflow     |
 | [PRIVACY_REVIEW.md](./PRIVACY_REVIEW.md)                             | Data, storage, transmission, consent, open approvals        |
+| [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md)             | How the Puerto Rico sales team reviews and approves content |
 | [CONVENTION_STARTUP_CHECKLIST.md](./CONVENTION_STARTUP_CHECKLIST.md) | Daily startup, test and shutdown checklist at the booth     |
 | [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md)                       | Physical-device test of the Android kiosk                   |
 
@@ -40,34 +41,34 @@ npm run dev                 # open http://localhost:3000
 
 ## Scripts
 
-| Command                                      | What it does                                                                       |
-| -------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)                    |
-| `npm run dev:network`                        | Development server reachable from **other devices** on the network                 |
-| `npm run build`                              | Production build                                                                   |
-| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)                |
-| `npm run start:network`                      | Serve the production build to the network (kiosk use)                              |
-| `npm run lint`                               | ESLint (zero warnings allowed)                                                     |
-| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                                  |
-| `npm run test`                               | Unit tests (Vitest)                                                                |
-| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes                     |
-| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                          |
-| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                         |
-| `npm run content:export`                     | Regenerate the sales CSV (`exports/`) and CONTENT_VALIDATION.md §11                |
-| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests          |
-| `npm run format`                             | Format all files with Prettier                                                     |
-| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)              |
-| `npm run db:migrate`                         | Development only: create a new migration after editing the schema                  |
-| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`)          |
-| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                               |
-| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)                    |
-| `npm run email:status`                       | Email deliveries by status, and those needing attention (ids and codes)            |
-| `npm run email:retry -- --delivery <id>`     | One immediate attempt for a delivery (`--all-failed` for every failed one)         |
-| `npm run security:bundle`                    | After `build`: fail if server secrets or server-only code reach the browser bundle |
-| `npm run security:audit`                     | `npm audit` of the runtime dependency tree (high severity fails)                   |
-| `npm run email:preview`                      | Sample reports (ES and EN, synthetic data) in `data/email-preview/`                |
-| `scripts\windows\start-kiosk-server.ps1`     | Windows: checks, then production server on the network, with kiosk URLs            |
-| `scripts\windows\start-dev-network.ps1`      | Windows: checks, then development server on the network (not for the event)        |
+| Command                                      | What it does                                                                                |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)                             |
+| `npm run dev:network`                        | Development server reachable from **other devices** on the network                          |
+| `npm run build`                              | Production build                                                                            |
+| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)                         |
+| `npm run start:network`                      | Serve the production build to the network (kiosk use)                                       |
+| `npm run lint`                               | ESLint (zero warnings allowed)                                                              |
+| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                                           |
+| `npm run test`                               | Unit tests (Vitest)                                                                         |
+| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes                              |
+| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                                   |
+| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                                  |
+| `npm run content:export`                     | Regenerate the content and sales-validation CSVs (`exports/`) and CONTENT_VALIDATION.md §11 |
+| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests                   |
+| `npm run format`                             | Format all files with Prettier                                                              |
+| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)                       |
+| `npm run db:migrate`                         | Development only: create a new migration after editing the schema                           |
+| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`)                   |
+| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                                        |
+| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)                             |
+| `npm run email:status`                       | Email deliveries by status, and those needing attention (ids and codes)                     |
+| `npm run email:retry -- --delivery <id>`     | One immediate attempt for a delivery (`--all-failed` for every failed one)                  |
+| `npm run security:bundle`                    | After `build`: fail if server secrets or server-only code reach the browser bundle          |
+| `npm run security:audit`                     | `npm audit` of the runtime dependency tree (high severity fails)                            |
+| `npm run email:preview`                      | Sample reports (ES and EN, synthetic data) in `data/email-preview/`                         |
+| `scripts\windows\start-kiosk-server.ps1`     | Windows: checks, then production server on the network, with kiosk URLs                     |
+| `scripts\windows\start-dev-network.ps1`      | Windows: checks, then development server on the network (not for the event)                 |
 
 Use another port with `-- -p <port>`, for example `npm run dev -- -p 4000`.
 
@@ -450,8 +451,10 @@ admin consent. The code is structured so a Graph provider can be added later.
 
 A small admin area on the laptop lets the event team see lead counts, filter leads, open a lead's
 business contact details, interests and email status, retry a failed email, mark leads as exported,
-download CSV exports (leads, interests, content validation) and a database backup, and review content still
-pending Puerto Rico validation. There is no delete function.
+download CSV exports (leads, interests, content validation) and a database backup, review content still
+pending Puerto Rico validation, and run the **sales validation** of every role, challenge, solution and
+digital asset ("Validación de ventas", with a CSV worksheet; see
+[SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md)). There is no delete function.
 
 > **This is simple MVP protection, not enterprise authentication.** It uses one passphrase and an
 > in-memory sign-in. A production deployment requires approved authentication and a security review.
@@ -494,5 +497,10 @@ Good practice:
 
 Content lives in `content/` as JSON. Spanish and English are required for every visitor-facing string.
 All sample solutions are **demonstrative assumptions pending Puerto Rico validation**. Run
-`npm run content:check` and `npm run content:export` after every edit. The sales team reviews
-`exports/content-validation.csv` or CONTENT_VALIDATION.md §11.
+`npm run content:check` and `npm run content:export` after every edit.
+
+The Puerto Rico sales team reviews `exports/sales-validation.csv` (or the admin page "Validación de
+ventas") following [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md). Their answers are recorded in
+each item's `salesReview`. **Production mode shows only content that is validated and approved by sales**,
+and collects no leads until the consent text and report copy are validated (ADR-060).
+`npm run content:check -- --mode production` lists what is still missing.

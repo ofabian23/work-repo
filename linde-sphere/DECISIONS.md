@@ -413,7 +413,8 @@ entry here — architecture is never changed silently.
 
 ## ADR-042 — Sales-review worksheet stored with each solution; CSV export generated from seed data
 
-- **Date:** 2026-09-30 · **Status:** Accepted
+- **Date:** 2026-09-30 · **Status:** Amended by ADR-060 (the worksheet now covers personas, challenges and
+  assets too; availability is yes/no/unknown)
 - **Decision:** `Solution.salesReview` holds `decision` (pending/keep/remove/rename), `proposedName`,
   `puertoRicoAvailability` (requires-verification/available/not-available), `conventionPriority` and
   `priorityConfirmedBySales`. The schema enforces consistency with `validationStatus`: validated ⇒ available
@@ -1114,3 +1115,55 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
   - Settings that need IT stay visible and manual.
   - Physical Windows behavior (5.1 host, Mobile Hotspot, firewall prompt, console Ctrl+C) is verified only
     by hand, using CONVENTION_STARTUP_CHECKLIST.md and MANUAL_KIOSK_TEST.md.
+
+## ADR-060 — Sales-validation workflow and a two-layer production-content guard
+
+- **Date:** 2026-09-30 · **Status:** Accepted (amends ADR-042)
+- **Context:**
+  - Every role, problem, solution and resource is an assumption until the Puerto Rico sales team confirms
+    it.
+  - Sales needs one efficient review of all of it.
+  - Production must never show anything unconfirmed. That includes consent and report wording, which
+    were previously sent to the kiosk in every mode.
+- **Decision:**
+  - **One worksheet per item:** `salesReview` is attached to personas, challenges, solutions and digital
+    assets (`src/domain/content/sales-review.ts`), kept next to the content it describes. Fields:
+    - `availableInPuertoRico` (yes/no/unknown);
+    - `decision` (pending/keep/remove/rename) and `proposedName`;
+    - `requiredCorrection` and `missingDigitalMaterial`;
+    - `salesOwner` and `approvalStatus` (not-started/in-review/changes-requested/approved/rejected);
+    - `conventionPriority`, `priorityConfirmedBySales` and `notes`.
+  - **Schema rules:**
+    - Approval needs a decision, an owner, known availability and no open correction.
+    - `validated` ⇔ approved (unless removed).
+    - A validated offering needs availability "yes".
+    - "no" or "remove" ⇒ `unavailable`.
+    - A validated rename must display the proposed name.
+  - **Worksheet builder:** `src/domain/review/sales-validation.ts` builds the 16 requested fields per item.
+    Intended personas, challenges and areas are derived from rules, links and hotspots. It feeds:
+    - the admin page `ADMIN_PATH/sales` (summary counts, type and approval filters, a confirmed CSV
+      download, no visitor data);
+    - `exports/sales-validation.csv` from `npm run content:export`, checked for freshness.
+  - **Production guard, layer 1 (content check):** unapproved validation fails `content:check`, and loading
+    refuses it.
+  - **Production guard, layer 2 (visibility filter):** in production, items with a worksheet also need
+    `approvalStatus: approved` (not removed). Consent text and report copy are withheld (`null`) until
+    validated. Then `leadCaptureAvailable` is false: no "send me a summary" step, the privacy sheet shows a
+    neutral notice, and the lead API refuses submissions (`lead_capture_unavailable`).
+  - **Graceful empty production:** paths without visible content are hidden. With nothing approved,
+    visitors see "we are preparing this experience". The explorer shows an empty state rather than a blank
+    screen.
+  - **Tests:**
+    - every status × approval × decision combination per type (mutation-checked);
+    - no internal fields in the served bundle;
+    - the loader refusing unapproved validation;
+    - the lead service in production;
+    - kiosk component tests;
+    - a third E2E server on the same build with `CONTENT_MODE=production`, walking the kiosk and the page
+      source for assumed names and placeholder legal text.
+- **Consequences:**
+  - Demo mode is unchanged: assumed content is shown, with the pending indicator and the demo notice.
+  - Production mode shows nothing today, by design, until sales approvals and legal/marketing validation
+    are recorded (PRIVACY_REVIEW A1, A11, A13).
+  - Answers are recorded by the project team in the content files. There is no in-browser editing or CSV
+    import yet, so returned worksheets are applied by hand and checked by `content:check`.
