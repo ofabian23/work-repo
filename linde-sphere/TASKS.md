@@ -248,9 +248,17 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 ## Phase 9 — Admin and data operations
 
 - [~] CLI: `db:export` ✅, `db:backup` ✅ (Phase 7a), `email:status` / `email:retry` ✅ (Phase 8); `leads:purge` (needs Q7)
-- [ ] Optional `/admin` (disabled by default, Basic auth, `noindex`): outbox status, retry, export, content readiness
-- [ ] `proxy.ts` guard + handler-level checks; audit log entries
-- [ ] Tests: admin disabled → 404; wrong credentials → 401; CSV columns and encoding
+- [x] Local administration utility (ADR-056): off by default, configurable `ADMIN_PATH`, internal segment
+      hidden by the proxy, scrypt passphrase hash (`admin:passphrase`), in-memory session cookie, sign-in
+      throttle, same-origin checks, `noindex` / `no-store`; separate layout from the kiosk (`(kiosk)` group)
+- [x] Counts, filters (date, lead status, delivery, exported), lead detail with interests and delivery
+      history, retry failed email, mark exported (migration 3), confirmed CSV exports (leads / interests /
+      content validation), database backup download, pending-validation list; no delete
+- [x] Shared CSV writer hardened (leading spaces, full-width formula characters); audit log lines without data
+- [x] Tests: passphrase, sessions, throttle, proxy gating, filters, CSV escaping, authorization (disabled,
+      unauthenticated, forged cookie, cross-site), confirmation, retry, mark exported, exports, backup; E2E on
+      an admin-enabled server
+- [ ] Persistent audit log table (log lines only for now)
 - **Done when:** AC-29, AC-34 pass.
 
 ## Phase 10 — Hardening, accessibility, deployment

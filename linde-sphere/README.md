@@ -266,6 +266,42 @@ These commands run only on the laptop (there is no web page for them) and use th
 Microsoft Graph (Microsoft 365) sending is not available: it needs an organizational app registration and
 admin consent. The code is structured so a Graph provider can be added later.
 
+## Local administration (optional)
+
+A small admin area on the laptop lets the event team see lead counts, filter leads, open a lead's
+business contact details, interests and email status, retry a failed email, mark leads as exported,
+download CSV exports (leads, interests, content validation) and a database backup, and review content still
+pending Puerto Rico validation. There is no delete function.
+
+> **This is simple MVP protection, not enterprise authentication.** It uses one passphrase and an
+> in-memory sign-in. A production deployment requires approved authentication and a security review.
+
+1. Create the passphrase hash (the passphrase is typed twice and never shown or stored):
+
+   ```bash
+   npm run admin:passphrase
+   ```
+
+2. In `.env`, set (dummy values shown):
+
+   ```dotenv
+   ADMIN_ENABLED=true
+   ADMIN_PATH=/gestion-equipo
+   ADMIN_PASSPHRASE_HASH=scrypt:32768:8:1:…:…   # the line printed in step 1
+   ```
+
+3. Restart the server and open `http://localhost:3000/gestion-equipo` on the laptop. The path is not linked
+   anywhere in the kiosk; choose your own and share it only with the admin.
+
+Good practice:
+
+- Keep `ADMIN_ENABLED=false` at the event unless someone needs the admin area.
+- Sign out when done ("Cerrar sesión"); the sign-in also expires after 30 minutes without activity
+  (`ADMIN_SESSION_MINUTES`) and whenever the server restarts.
+- Every export and backup asks for confirmation. The files contain personal data: keep them on
+  encrypted storage, share them only through the approved channel and delete local copies after use.
+- Five wrong passphrases in a row lock sign-in for a minute (longer after further failures).
+
 ## Configuration
 
 - Environment variables: see [`.env.example`](./.env.example) (names only, no secrets). They are

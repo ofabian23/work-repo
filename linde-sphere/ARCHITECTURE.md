@@ -984,21 +984,21 @@ interface EmailProvider {
 
 ## 10. Privacy and security boundaries
 
-| Boundary           | Rule                                                                                                                          | Enforcement                                                                                                           |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Client persistence | No PII or session data in `localStorage`/`sessionStorage`/IndexedDB/cookies                                                   | Code review + E2E assertion after reset (AC-28)                                                                       |
-| Client memory      | Lead draft exists only while the form is mounted; cleared once stored; hard reload on reset                                   | `LeadFormScreen` local state; component + E2E tests assert no contact data after reset                                |
-| Browser history    | No history entries; reset uses `location.replace`                                                                             | Single-route design                                                                                                   |
-| Autofill           | Disabled/discouraged on lead form; kiosk Chrome autofill off                                                                  | Form attributes + runbook                                                                                             |
-| Commercial data    | Lead score/tier/factors never leave the server except admin/CSV                                                               | `server-only` imports; response schema test; bundle grep in CI                                                        |
-| Admin surface      | Disabled unless `ADMIN_ENABLED=true`; HTTP Basic auth with env credentials; not linked; `noindex`                             | `proxy.ts` guard + handler-level check (defense in depth)                                                             |
-| Logs               | Never log names, emails, phones, or payload bodies; log IDs and status codes only                                             | `src/server/logging/logger.ts` masks personal keys and any email-looking string; tests assert no contact data in logs |
-| Secrets            | `.env` only, git-ignored; nothing sensitive in `NEXT_PUBLIC_*`                                                                | `env.ts` Zod schema; `.env.example`                                                                                   |
-| PHI                | Not collected; no free-text fields in visitor flow                                                                            | Form design (ADR-020)                                                                                                 |
-| External requests  | Kiosk loads only same-origin assets                                                                                           | Self-hosted fonts; E2E network assertion (AC-31)                                                                      |
-| Data at rest       | SQLite file on an encrypted laptop disk                                                                                       | Runbook (BitLocker)                                                                                                   |
-| Retention          | Export then purge after the agreed period — period **not decided** (Q7)                                                       | `LEAD_RETENTION_DAYS` placeholder (unset = none configured); no automatic deletion; purge script later                |
-| Input abuse        | Zod strict schemas, 16 KB limit, JSON-only (forces a CORS preflight cross-site), idempotency; per-IP rate limit still planned | `lead-http.ts`; `lead-service.ts`                                                                                     |
+| Boundary           | Rule                                                                                                                                                       | Enforcement                                                                                                           |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Client persistence | No PII or session data in `localStorage`/`sessionStorage`/IndexedDB/cookies                                                                                | Code review + E2E assertion after reset (AC-28)                                                                       |
+| Client memory      | Lead draft exists only while the form is mounted; cleared once stored; hard reload on reset                                                                | `LeadFormScreen` local state; component + E2E tests assert no contact data after reset                                |
+| Browser history    | No history entries; reset uses `location.replace`                                                                                                          | Single-route design                                                                                                   |
+| Autofill           | Disabled/discouraged on lead form; kiosk Chrome autofill off                                                                                               | Form attributes + runbook                                                                                             |
+| Commercial data    | Lead score/tier/factors never leave the server except admin/CSV                                                                                            | `server-only` imports; response schema test; bundle grep in CI                                                        |
+| Admin surface      | Disabled unless `ADMIN_ENABLED=true`; configurable path; scrypt-hashed passphrase + in-memory session cookie (MVP only); not linked; `noindex`, `no-store` | `proxy.ts` rewrite/404 + `requireAdmin` in pages + guarded handlers (same origin, session, confirmation)              |
+| Logs               | Never log names, emails, phones, or payload bodies; log IDs and status codes only                                                                          | `src/server/logging/logger.ts` masks personal keys and any email-looking string; tests assert no contact data in logs |
+| Secrets            | `.env` only, git-ignored; nothing sensitive in `NEXT_PUBLIC_*`                                                                                             | `env.ts` Zod schema; `.env.example`                                                                                   |
+| PHI                | Not collected; no free-text fields in visitor flow                                                                                                         | Form design (ADR-020)                                                                                                 |
+| External requests  | Kiosk loads only same-origin assets                                                                                                                        | Self-hosted fonts; E2E network assertion (AC-31)                                                                      |
+| Data at rest       | SQLite file on an encrypted laptop disk                                                                                                                    | Runbook (BitLocker)                                                                                                   |
+| Retention          | Export then purge after the agreed period — period **not decided** (Q7)                                                                                    | `LEAD_RETENTION_DAYS` placeholder (unset = none configured); no automatic deletion; purge script later                |
+| Input abuse        | Zod strict schemas, 16 KB limit, JSON-only (forces a CORS preflight cross-site), idempotency; per-IP rate limit still planned                              | `lead-http.ts`; `lead-service.ts`                                                                                     |
 
 ---
 
@@ -1138,18 +1138,40 @@ Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebG
 
 ## 14. Administration and operations
 
-| Capability            | Primary (no network exposure)                              | Secondary (optional, guarded web UI) |
-| --------------------- | ---------------------------------------------------------- | ------------------------------------ |
-| CSV export            | `npm run db:export -- --out leads.csv` ✅                  | `/admin` → Export                    |
-| Database backup       | `npm run db:backup` ✅ (SQLite online backup)              | —                                    |
-| Outbox status / retry | `npm run outbox:retry`                                     | `/admin` → Outbox                    |
-| Purge after retention | `npm run leads:purge -- --before 2026-12-31`               | —                                    |
-| Content readiness     | `npm run content:check -- --mode production`               | `/admin` → Content status            |
-| Sales review export   | `npm run content:export` (CSV + CONTENT_VALIDATION.md §11) | —                                    |
+| Capability            | Primary (no network exposure)                              | Secondary (optional, guarded web UI)             |
+| --------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| CSV export            | `npm run db:export -- --out leads.csv` ✅                  | Admin → Exportaciones ✅ (confirmation required) |
+| Database backup       | `npm run db:backup` ✅ (SQLite online backup)              | Admin → Descargar respaldo ✅                    |
+| Outbox status / retry | `npm run email:status` / `email:retry` ✅                  | Admin → lead detail → Reintentar ✅              |
+| Purge after retention | `npm run leads:purge` (needs Q7)                           | — (no delete in the MVP)                         |
+| Content readiness     | `npm run content:check -- --mode production`               | Admin → Contenido pendiente ✅                   |
+| Sales review export   | `npm run content:export` (CSV + CONTENT_VALIDATION.md §11) | Admin → Exportaciones ✅                         |
 
-CSV: UTF-8 with BOM, one row per lead, columns for contact fields, consents + version, language,
-persona, challenges, interests, recommended solution ids/titles, scenes explored, lead score/tier, email
-status, timestamps.
+### 14.1 Local administration utility (ADR-056)
+
+- **Boundary:** off unless `ADMIN_ENABLED=true` and `ADMIN_PASSPHRASE_HASH` is set. The public path is
+  `ADMIN_PATH` (default `/admin-local`); `proxy.ts` rewrites it to the internal `src/app/admin-console`
+  segment and answers 404 for `/admin-console` itself, so the pages are reachable only through the
+  configured path. Never linked from visitor screens; responses are `no-store` and `noindex`. The kiosk shell
+  lives in `(kiosk)/layout.tsx`, so admin pages share nothing with the visitor experience but the root document.
+- **Protection (MVP, not enterprise authentication):** one passphrase, configured only as an scrypt hash
+  (`npm run admin:passphrase`); sign-in sets a random 256-bit token (only its SHA-256 kept in memory) in an
+  `HttpOnly; SameSite=Strict` cookie scoped to `ADMIN_PATH` (`Secure` over HTTPS), 30 min idle / 8 h absolute.
+  Five consecutive failures lock sign-in (1 min, doubling to 15 min). Every POST must be same-origin (Origin/
+  Referer vs Host, or `Sec-Fetch-Site: same-origin` when the browser sends `Origin: null` under
+  `Referrer-Policy: no-referrer`). **Production requires approved authentication and a security review.**
+- **Features:** aggregate counts; filters (date range in Puerto Rico time, lead status, delivery state,
+  exported) in the query string — dates and statuses only; lead detail (business contact, interests,
+  delivery state and history); retry of a failed or retrying delivery (one manual outbox attempt); mark as
+  exported (`Lead.exportedAt`, migration 3); confirmed CSV exports (one row per lead, or one per interest;
+  optionally mark as exported) and the content-validation list; database backup (SQLite online backup into
+  a private temp file, streamed, deleted); content items pending validation. **No delete.**
+- **Privacy:** no raw database route (the file lives in `data/`, never under `public/`); exports and
+  backups are generated per request as `no-store` attachments after a confirmation checkbox; lead ids are
+  opaque UUIDs, so URLs carry no personal data; audit log lines (`admin.login`, `admin.export`,
+  `admin.retry`, `admin.backup`, `admin.mark_exported`) contain counts, filters and ids only.
+- **CSV:** one writer (`src/lib/csv.ts`): RFC 4180 quoting, UTF-8 BOM, CRLF, and an apostrophe before any
+  cell a spreadsheet could evaluate (`= + - @`, tab, CR — also after leading spaces and in full-width forms).
 
 ---
 
@@ -1168,8 +1190,10 @@ status, timestamps.
 | `EMAIL_PREVIEW_DIR`                                                   | `data/email-preview`          | Development preview output                                        |
 | `EMAIL_WORKER_INTERVAL_MS`                                            | `15000`                       | Retry worker tick                                                 |
 | `LEAD_RETENTION_DAYS`                                                 | — (undecided)                 | Retention placeholder; nothing is deleted automatically (ADR-052) |
-| `ADMIN_ENABLED`                                                       | `false`                       | Enable admin pages/APIs                                           |
-| `ADMIN_USER` / `ADMIN_PASSWORD`                                       | —                             | Basic auth credentials (required if enabled)                      |
+| `ADMIN_ENABLED`                                                       | `false`                       | Enable the local administration utility                           |
+| `ADMIN_PATH`                                                          | `/admin-local`                | Public admin path (one segment)                                   |
+| `ADMIN_PASSPHRASE_HASH`                                               | —                             | scrypt hash (`npm run admin:passphrase`); required if enabled     |
+| `ADMIN_SESSION_MINUTES`                                               | `30`                          | Admin idle sign-out                                               |
 | `DEV_ALLOWED_ORIGINS`                                                 | —                             | Extra dev-server HMR hostnames (comma list)                       |
 | `ENABLE_COMPONENT_GALLERY`                                            | `false`                       | Allow `/dev/components` in production builds                      |
 | `ENABLE_SCENE_CALIBRATION`                                            | `false`                       | Allow `/dev/scenes` (coordinate calibration) in production builds |

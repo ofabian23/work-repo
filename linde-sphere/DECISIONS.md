@@ -209,7 +209,7 @@ entry here — architecture is never changed silently.
 
 ## ADR-024 — Admin: CLI first; web admin disabled by default and credential-protected
 
-- **Date:** 2026-09-29 · **Status:** Accepted
+- **Date:** 2026-09-29 · **Status:** Accepted (web admin protection superseded by ADR-056)
 - **Context:** Admin functions must not be exposed through the visitor interface. The server listens on
   all interfaces, so any web route is reachable from the hotspot network.
 - **Decision:** CSV export, outbox retry, purge, and content checks are CLI scripts run on the laptop (no
@@ -909,3 +909,52 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
   - Every exit from a session goes through the same pipeline, and states are observable for tests and
     support.
   - The anonymous session summary on reset (`POST /api/sessions`) is still open.
+
+## ADR-056 — Local administration utility: configurable hidden path, hashed passphrase, confirmed exports
+
+- **Date:** 2026-09-30 · **Status:** Accepted (supersedes ADR-024's HTTP Basic auth plan)
+- **Context:** The event team needs a minimal local admin experience. It covers lead counts and filters,
+  lead detail and interests, delivery state and retry, CSV exports, a content-validation export, a database
+  backup, marking leads exported, and the content pending Puerto Rico validation. It must not be linked from
+  visitor screens and must use a configurable route. Protection must be simple and appropriate for an MVP,
+  with only a hash stored, no destructive delete, no personal data in URLs or logs, and confirmation before
+  export.
+- **Decision:**
+  - **Routing:**
+    - The pages live in an internal segment (`src/app/admin-console`). `proxy.ts` rewrites the configured
+      `ADMIN_PATH` to it when admin is enabled and always answers 404 for the internal path. The proxy
+      matcher therefore covers all non-static paths.
+    - The kiosk providers and shell move to a `(kiosk)` route group, so the admin gets a plain layout
+      without the visitor session store.
+  - **Protection:**
+    - One passphrase, configured only as an scrypt hash (`N=2^15, r=8, p=1`, 16-byte salt; `:`-separated
+      so `.env` expansion cannot break it). It is created with `npm run admin:passphrase`, which reads it
+      from the terminal. The old plaintext `ADMIN_USER`/`ADMIN_PASSWORD` are rejected at startup.
+    - Sessions are random 256-bit tokens held in memory (hashed) in an `HttpOnly; SameSite=Strict` cookie
+      scoped to the admin path, with 30 min idle and 8 h absolute expiry. A restart signs everyone out.
+    - Five consecutive failures lock sign-in, starting at 1 min.
+    - State changes are POST-only, same-origin and session-checked, and redirect with 303. Because the site
+      uses `Referrer-Policy: no-referrer`, browsers send `Origin: null` on same-origin form posts, so
+      `Sec-Fetch-Site: same-origin` is accepted in that case.
+    - This is labelled everywhere as MVP protection, not enterprise authentication. A production deployment
+      requires approved authentication (for example, the organization's SSO) and a security review.
+  - **Features:**
+    - Server-rendered pages with plain forms and no client JavaScript.
+    - Filters are query-string dates and statuses only.
+    - Lead detail uses opaque UUIDs.
+    - Retry runs one manual outbox attempt and only for failed or retrying deliveries.
+    - "Exported" is a new nullable `Lead.exportedAt` (migration 3, plain `ADD COLUMN`); the first export
+      time is kept. There is no delete.
+  - **Exports:**
+    - Every download requires a confirmation checkbox (checked on the server too).
+    - Files are built in memory and returned as `no-store` attachments, never written under `public/`.
+    - Backups use SQLite's online backup into a private temp file that is deleted after reading.
+    - Audit lines carry counts, filters and ids only.
+  - **CSV:** a single writer, extended to neutralize formula characters after leading spaces and in their
+    full-width forms. The CLI lead export now uses the same writer.
+- **Consequences:**
+  - The admin surface is invisible unless deliberately enabled, and needs a secret known only to the
+    operator.
+  - Exports are a deliberate act, and nothing in URLs or logs identifies a visitor.
+  - Sessions do not survive restarts. There is no role separation or persistent audit table; both are
+    left to the approved production authentication.

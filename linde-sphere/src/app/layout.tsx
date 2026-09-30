@@ -1,13 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { connection } from "next/server";
-import { AppShell } from "@/components/shell/app-shell";
-import { KioskHeaderActions } from "@/features/kiosk/kiosk-header-actions";
-import { KioskSessionProvider } from "@/features/kiosk/state/kiosk-session-provider";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
 import { appConfig } from "@/lib/config/app-config";
 import { brandConfig, brandCssVariables } from "@/lib/config/brand-config";
 import { es } from "@/data/i18n/es";
-import { getServerEnv } from "@/server/env";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -25,21 +20,15 @@ export const viewport: Viewport = {
   themeColor: brandConfig.colors.surface,
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
-  // Render per request so CONTENT_MODE is read from the running server's environment, not the build.
-  await connection();
-  const env = getServerEnv();
-
+/**
+ * Root layout: document, global styles, brand variables and language. The kiosk shell lives in
+ * `(kiosk)/layout.tsx`; the local administration utility has its own plain layout (ADR-056).
+ */
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang={appConfig.defaultLanguage} style={brandCssVariables()} className="h-full antialiased">
       <body className="min-h-full">
-        <LanguageProvider>
-          <KioskSessionProvider>
-            <AppShell contentMode={env.CONTENT_MODE} headerActions={<KioskHeaderActions />}>
-              {children}
-            </AppShell>
-          </KioskSessionProvider>
-        </LanguageProvider>
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

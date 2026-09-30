@@ -112,6 +112,8 @@ model Lead {
   /// SHA-256 of the opaque status token returned to the kiosk.
   statusTokenHash    String     @unique
   contentVersion     String
+  /// Set by the local administration utility when the lead was exported (ADR-056). Never cleared.
+  exportedAt         DateTime?
 
   session         VisitorSessionSummary @relation(fields: [sessionId], references: [sessionId])
   interests       LeadInterest[]
@@ -119,6 +121,7 @@ model Lead {
   report          Report?
 
   @@index([createdAt])
+  @@index([exportedAt])
   @@index([sessionId])
   @@index([businessEmail])
 }

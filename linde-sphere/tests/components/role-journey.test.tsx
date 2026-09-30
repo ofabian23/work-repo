@@ -21,7 +21,8 @@ function allKeys(value: unknown): string[] {
 const screenId = () => screen.getByTestId("probe").dataset.screen;
 
 /** A short transition keeps these tests fast; its timing is covered by a dedicated fake-timer test. */
-const renderJourney = () => renderKiosk({ tailoringMs: 20 });
+// Long enough that the transition is still visible right after the last click, even on a busy machine.
+const renderJourney = () => renderKiosk({ tailoringMs: 300 });
 
 /** Welcome → "Trabajo en…" → persona → suggested challenges → tailoring → next steps. */
 async function walkRoleJourney(personaId: string, challengeId?: string) {

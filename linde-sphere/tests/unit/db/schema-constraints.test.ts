@@ -127,7 +127,7 @@ describe("database constraints (defence in depth behind Prisma's enums)", () => 
     expect(() =>
       raw
         .prepare(
-          "INSERT INTO Lead SELECT 'other-id', createdAt, updatedAt, firstName, lastName, organization, roleLabel, businessEmail, optionalPhone, preferredLanguage, sessionId, reportConsent, followUpConsent, consentTextVersion, source, status, idempotencyKey, requestFingerprint, 'other-hash', contentVersion FROM Lead",
+          "INSERT INTO Lead SELECT 'other-id', createdAt, updatedAt, firstName, lastName, organization, roleLabel, businessEmail, optionalPhone, preferredLanguage, sessionId, reportConsent, followUpConsent, consentTextVersion, source, status, idempotencyKey, requestFingerprint, 'other-hash', contentVersion, exportedAt FROM Lead",
         )
         .run(),
     ).toThrow(/UNIQUE constraint failed: Lead.idempotencyKey/);

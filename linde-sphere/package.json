@@ -28,7 +28,8 @@
     "db:export": "tsx --conditions=react-server scripts/db-export.ts",
     "email:status": "tsx --conditions=react-server scripts/email-admin.ts status",
     "email:retry": "tsx --conditions=react-server scripts/email-admin.ts retry",
-    "email:preview": "tsx --conditions=react-server scripts/email-admin.ts preview"
+    "email:preview": "tsx --conditions=react-server scripts/email-admin.ts preview",
+    "admin:passphrase": "tsx --conditions=react-server scripts/admin-passphrase.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "7.10.0",

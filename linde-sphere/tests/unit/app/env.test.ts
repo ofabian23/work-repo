@@ -48,12 +48,20 @@ describe("parseServerEnv", () => {
     if (result.ok) expect(result.env.SMTP_PORT).toBe(587);
   });
 
-  it("requires admin credentials with a strong password when admin is enabled", () => {
+  it("requires a passphrase hash (never a plain password) when admin is enabled", () => {
     const missing = parseServerEnv({ ADMIN_ENABLED: "true" });
     expect(missing.ok).toBe(false);
-    const weak = parseServerEnv({ ADMIN_ENABLED: "true", ADMIN_USER: "ops", ADMIN_PASSWORD: "short" });
-    expect(weak.ok).toBe(false);
-    if (!weak.ok) expect(weak.issues[0]?.variable).toBe("ADMIN_PASSWORD");
+    if (!missing.ok) expect(missing.issues[0]?.variable).toBe("ADMIN_PASSPHRASE_HASH");
+    const plain = parseServerEnv({
+      ADMIN_ENABLED: "true",
+      ADMIN_USER: "ops",
+      ADMIN_PASSWORD: "long-enough-pass",
+    });
+    expect(plain.ok).toBe(false);
+    if (!plain.ok)
+      expect(plain.issues.map((i) => i.variable)).toEqual(
+        expect.arrayContaining(["ADMIN_USER", "ADMIN_PASSWORD"]),
+      );
   });
 
   it("forces placeholder preview off in production", () => {
@@ -73,8 +81,7 @@ describe("parseServerEnv", () => {
     const result = parseServerEnv({
       DATABASE_URL: `postgres://admin:${secret}@db`,
       ADMIN_ENABLED: "true",
-      ADMIN_USER: "ops",
-      ADMIN_PASSWORD: "tiny",
+      ADMIN_PASSPHRASE_HASH: "tiny",
       SMTP_PORT: secret,
     });
     expect(result.ok).toBe(false);

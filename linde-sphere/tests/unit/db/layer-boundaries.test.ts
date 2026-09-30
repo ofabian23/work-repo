@@ -25,6 +25,7 @@ describe("layer boundaries (ADR-052)", () => {
       "server/db/client.ts",
       "server/leads/lead-repository.ts",
       "server/leads/email-delivery-repository.ts",
+      "server/admin/admin-repository.ts",
     ];
     const offenders = all.filter(
       (f) =>

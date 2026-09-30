@@ -114,13 +114,13 @@ describe("getHealthReport", () => {
   it("reports invalid configuration by variable name only", () => {
     const secret = "p4ssw0rd-that-must-not-leak";
     const report = getHealthReport({
-      rawEnv: { EMAIL_PROVIDER: "smtp", SMTP_PASS: secret, ADMIN_ENABLED: "true", ADMIN_PASSWORD: "x" },
+      rawEnv: { EMAIL_PROVIDER: "smtp", SMTP_PASS: secret, ADMIN_ENABLED: "true", ADMIN_PASSWORD: secret },
       projectRoot: withContent(),
     });
     expect(report.status).toBe("error");
     expect(report.configuration.status).toBe("invalid");
     expect(report.configuration.invalidVariables).toEqual(
-      expect.arrayContaining(["SMTP_HOST", "ADMIN_USER", "ADMIN_PASSWORD"]),
+      expect.arrayContaining(["SMTP_HOST", "ADMIN_PASSPHRASE_HASH", "ADMIN_PASSWORD"]),
     );
     expect(JSON.stringify(report)).not.toContain(secret);
   });

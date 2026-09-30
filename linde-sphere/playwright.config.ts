@@ -4,6 +4,14 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 /** E2E servers use their own database so test leads never mix with development data. */
 const E2E_DATABASE_URL = "file:./data/e2e.db";
+/**
+ * Local administration on the second server only (ADR-056). The passphrase is a dummy used by the E2E
+ * tests ("prueba e2e frase de acceso"); only its hash is configured, as in production.
+ */
+export const E2E_ADMIN_PATH = "/gestion-local";
+export const E2E_ADMIN_PASSPHRASE = "prueba e2e frase de acceso";
+const E2E_ADMIN_PASSPHRASE_HASH =
+  "scrypt:32768:8:1:-BdpZarNsBhD33dVJQ4MYw:kVItykXgWDF9eh-I3PtfdAo7C521uDhGnmLKSBfs5rE";
 /** …and their own email preview folder (the preview provider never sends). */
 const E2E_EMAIL_PREVIEW_DIR = "data/e2e-email-preview";
 /** Second server on the same production build with the dev tools (gallery, calibration) explicitly enabled. */
@@ -71,6 +79,9 @@ export default defineConfig({
         KIOSK_IDLE_WARNING_SECONDS: "10",
         KIOSK_IDLE_COUNTDOWN_SECONDS: "5",
         KIOSK_COMPLETION_SECONDS: "5",
+        ADMIN_ENABLED: "true",
+        ADMIN_PATH: E2E_ADMIN_PATH,
+        ADMIN_PASSPHRASE_HASH: E2E_ADMIN_PASSPHRASE_HASH,
       },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

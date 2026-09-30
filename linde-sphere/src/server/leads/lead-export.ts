@@ -1,4 +1,5 @@
 import "server-only";
+import { toCsv as sharedToCsv } from "@/lib/csv";
 import type { Database } from "@/server/db/client";
 
 /**
@@ -60,11 +61,7 @@ export async function exportLeadRows(db: Database): Promise<string[][]> {
   });
 }
 
-/** RFC 4180 quoting plus spreadsheet formula-injection protection (cells starting with = + - @ tab CR). */
+/** Lead export CSV: header + rows, escaped by the shared writer (formula-injection safe, UTF-8 BOM). */
 export function toCsv(header: readonly string[], rows: string[][]): string {
-  const cell = (value: string) => {
-    const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-    return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-  };
-  return [header, ...rows].map((row) => row.map(cell).join(",")).join("\r\n") + "\r\n";
+  return sharedToCsv([[...header], ...rows], { bom: false });
 }

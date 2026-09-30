@@ -20,6 +20,12 @@ const booleanFlag = z.preprocess(
     .transform((v) => v === "true" || v === "1"),
 );
 
+/** Paths the admin utility may never take over. */
+const RESERVED_ADMIN_PATHS = ["/api", "/dev", "/admin-console", "/assets", "/_next"];
+
+/** Plain-text credentials are no longer accepted (ADR-056): only a passphrase hash may be configured. */
+const RETIRED_VARIABLES = ["ADMIN_USER", "ADMIN_PASSWORD"] as const;
+
 const ServerEnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -79,8 +85,28 @@ const ServerEnvSchema = z
     ENABLE_COMPONENT_GALLERY: booleanFlag,
     /** Dev-only scene coordinate calibration at /dev/scenes; in production it is disabled unless this is true. */
     ENABLE_SCENE_CALIBRATION: booleanFlag,
-    ADMIN_USER: optional(z.string().min(3)),
-    ADMIN_PASSWORD: optional(z.string().min(12, { error: "Must be at least 12 characters" })),
+    /**
+     * Local administration (ADR-056). Public path of the admin pages; the pages themselves live at an
+     * internal segment that is never served directly.
+     */
+    ADMIN_PATH: optional(
+      z
+        .string()
+        .regex(/^\/[a-z0-9][a-z0-9-]{2,39}$/, {
+          error: "Use one path segment of 3-40 lowercase letters, digits or hyphens, e.g. /gestion-local",
+        })
+        .refine((p) => !RESERVED_ADMIN_PATHS.includes(p), {
+          error: "This path is reserved by the application",
+        }),
+    ).transform((v) => v ?? "/admin-local"),
+    /** scrypt hash of the admin passphrase (`npm run admin:passphrase`); the passphrase itself is never stored. */
+    ADMIN_PASSPHRASE_HASH: optional(
+      z.string().regex(/^scrypt:\d+:\d+:\d+:[A-Za-z0-9_-]{16,}:[A-Za-z0-9_-]{32,}$/, {
+        error: "Generate it with npm run admin:passphrase",
+      }),
+    ),
+    /** Admin sign-in expires after this many minutes without activity. */
+    ADMIN_SESSION_MINUTES: optional(z.coerce.number().int().min(5).max(240)).transform((v) => v ?? 30),
   })
   .superRefine((env, ctx) => {
     const require = (key: keyof typeof env, reason: string) => {
@@ -115,10 +141,7 @@ const ServerEnvSchema = z
         });
       }
     }
-    if (env.ADMIN_ENABLED) {
-      require("ADMIN_USER", "when ADMIN_ENABLED=true");
-      require("ADMIN_PASSWORD", "when ADMIN_ENABLED=true");
-    }
+    if (env.ADMIN_ENABLED) require("ADMIN_PASSPHRASE_HASH", "when ADMIN_ENABLED=true");
   })
   .transform((env) => ({
     ...env,
@@ -144,14 +167,25 @@ export class EnvValidationError extends Error {
 export function parseServerEnv(
   raw: Record<string, string | undefined>,
 ): { ok: true; env: ServerEnv } | { ok: false; issues: EnvIssue[] } {
+  const retired: EnvIssue[] = RETIRED_VARIABLES.filter((name) => (raw[name] ?? "").trim() !== "").map(
+    (variable) => ({
+      variable,
+      message: "No longer supported: remove it and set ADMIN_PASSPHRASE_HASH (npm run admin:passphrase)",
+    }),
+  );
   const result = ServerEnvSchema.safeParse(raw);
-  if (result.success) return { ok: true, env: result.data };
+  if (result.success && retired.length === 0) return { ok: true, env: result.data };
   return {
     ok: false,
-    issues: result.error.issues.map((i) => ({
-      variable: String(i.path[0] ?? "(environment)"),
-      message: i.message,
-    })),
+    issues: [
+      ...retired,
+      ...(result.success
+        ? []
+        : result.error.issues.map((i) => ({
+            variable: String(i.path[0] ?? "(environment)"),
+            message: i.message,
+          }))),
+    ],
   };
 }
 
