@@ -11,6 +11,8 @@ export const appConfig = {
   defaultLanguage: "es" satisfies Language,
   supportedLanguages: LANGUAGES,
   kiosk: {
+    /** Attract screen: interval between rotating value phrases. */
+    attractRotationMs: 4_500,
     /** Primary design target: portrait touchscreen. */
     designViewport: { width: 1080, height: 1920 },
     /** WCAG 2.2 minimum; primary actions use the larger size. */
@@ -22,6 +24,8 @@ export const appConfig = {
       leadFormWarningAfterMs: 120_000,
       leadFormCountdownMs: 20_000,
       confirmationResetMs: 15_000,
+      /** On the attract screen, a language changed by a passer-by reverts to Spanish after this idle time. */
+      attractRevertMs: 30_000,
     },
   },
   recommendations: {

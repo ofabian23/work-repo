@@ -44,6 +44,18 @@ svg {
   }
 }
 
+/* Visitor accessibility preferences (set per session from the Accessibility sheet, cleared on reset). */
+html[data-text-size="large"] {
+  font-size: calc(clamp(16px, 0.75rem + 1vmin, 24px) * 1.18);
+}
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
 /* Native <dialog> backdrop for Modal/Sheet. */
 dialog::backdrop {
   background: var(--color-overlay, rgb(19 35 47 / 0.55));

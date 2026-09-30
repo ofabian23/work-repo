@@ -82,3 +82,40 @@ export const SparkIcon = (p: IconProps) => (
     <path d="M12 4v4M12 16v4M4 12h4M16 12h4M6.5 6.5l2.5 2.5M15 15l2.5 2.5M17.5 6.5L15 9M9 15l-2.5 2.5" />
   </Icon>
 );
+export const PersonIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" />
+  </Icon>
+);
+export const TargetIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="12" cy="12" r="0.8" fill="currentColor" />
+  </Icon>
+);
+export const HospitalIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 20V9l8-5 8 5v11" />
+    <path d="M9 20v-5h6v5" />
+    <path d="M12 7.5v3M10.5 9h3" />
+  </Icon>
+);
+export const AccessibilityIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="4.5" r="1.5" />
+    <path d="M5 8.5l7 1.5 7-1.5M12 10v4l-3 6M12 14l3 6" />
+  </Icon>
+);
+export const ShieldIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" />
+  </Icon>
+);
+export const ClockIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </Icon>
+);

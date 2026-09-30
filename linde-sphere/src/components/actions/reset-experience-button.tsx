@@ -26,10 +26,11 @@ export function ResetExperienceButton({
         type="button"
         data-testid="reset-experience"
         onClick={() => (requireConfirmation ? setConfirming(true) : onReset())}
-        className="focus-ring border-line text-ink-muted text-label active:bg-surface-muted inline-flex min-h-14 items-center gap-2 rounded-full border px-5 font-semibold"
+        className="focus-ring border-line text-ink-muted text-label active:bg-surface-muted inline-flex min-h-14 min-w-14 items-center justify-center gap-2 rounded-full border px-4 font-semibold sm:px-5"
       >
         <ResetIcon size="size-6" />
-        {t("reset.button")}
+        {/* Icon-only on narrow screens (label kept for assistive tech); full label on the kiosk. */}
+        <span className="max-sm:sr-only sm:not-sr-only">{t("reset.button")}</span>
       </button>
       <Modal
         open={confirming}

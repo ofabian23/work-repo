@@ -3,8 +3,9 @@
 Interactive healthcare discovery experience for a portrait touchscreen kiosk at a healthcare convention
 in Puerto Rico (internal codename _Mockup Vision_).
 
-**Status:** foundation (Phase 1) and content model (Phase 2) implemented. The home screen is an
-informational placeholder; the interactive kiosk flow starts in Phase 4.
+**Status:** foundation, content model, convention seed content, recommendation engine, touchscreen design
+system and the kiosk shell (attract → welcome, session store, inactivity reset) are implemented (Phases 1–4).
+The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md](./TASKS.md).
 
 ## Documentation
 

@@ -1,46 +1,24 @@
-import { expectNoHorizontalOverflow, expectTouchTargets, gotoHydrated } from "./helpers";
+import { expectNoHorizontalOverflow, expectTouchTargets, gotoKiosk } from "./helpers";
 import { expect, test } from "@playwright/test";
 
 test.describe("foundation shell", () => {
-  test("home renders in Spanish with visible product naming", async ({ page }, testInfo) => {
+  test("opens on the attract screen in Spanish with visible product naming", async ({ page }, testInfo) => {
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("lang", "es");
     await expect(page.getByRole("banner")).toContainText("Linde Sphere");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Linde Sphere");
-    await expect(page.getByText("Tres maneras de comenzar")).toBeVisible();
+    await expect(page.getByTestId("attract-screen")).toContainText("Toque para comenzar");
     await expect(page.getByTestId("demo-mode-indicator")).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expectTouchTargets(page);
     await page.screenshot({
-      path: testInfo.outputPath(`home-es-${testInfo.project.name}.png`),
-      fullPage: true,
+      path: testInfo.outputPath(`attract-es-${testInfo.project.name}.png`),
+      animations: "disabled",
     });
-  });
-
-  test("switches between Spanish and English", async ({ page }, testInfo) => {
-    await gotoHydrated(page, "/");
-    const es = page.getByTestId("language-es");
-    const en = page.getByTestId("language-en");
-    await expect(es).toHaveAttribute("aria-pressed", "true");
-
-    await en.click();
-    await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await expect(en).toHaveAttribute("aria-pressed", "true");
-    await expect(page.getByText("Three ways to begin")).toBeVisible();
-    await expect(page.getByText("Discover opportunities for your healthcare organization")).toBeVisible();
-    await expect(page.getByText("Tres maneras de comenzar")).toHaveCount(0);
-    await page.screenshot({
-      path: testInfo.outputPath(`home-en-${testInfo.project.name}.png`),
-      fullPage: true,
-    });
-
-    await es.click();
-    await expect(page.locator("html")).toHaveAttribute("lang", "es");
-    await expect(page.getByText("Tres maneras de comenzar")).toBeVisible();
   });
 
   test("a new page load starts in Spanish again (no persisted language)", async ({ page }) => {
-    await gotoHydrated(page, "/");
+    await gotoKiosk(page);
     await page.getByTestId("language-en").click();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await page.reload();
@@ -60,18 +38,20 @@ test.describe("foundation shell", () => {
     await expectTouchTargets(page);
     await page.getByRole("button", { name: "Volver al inicio" }).click();
     await expect(page).toHaveURL("/");
-    await expect(page.getByTestId("home-screen")).toBeVisible();
+    await expect(page.getByTestId("attract-screen")).toBeVisible();
   });
 });
 
 test.describe("portrait kiosk composition", () => {
-  test("fits the 1080 × 1920 screen without scrolling", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "kiosk-portrait", "kiosk viewport only");
-    await page.goto("/");
-    const overflowY = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
-    expect(overflowY).toBeLessThanOrEqual(0);
-    const shellWidth = await page.locator("main").evaluate((el) => el.getBoundingClientRect().width);
-    expect(shellWidth).toBe(1080);
+  test("attract and welcome fit the 1080 × 1920 screen without scrolling", async ({ page }) => {
+    test.skip(test.info().project.name !== "kiosk-portrait", "kiosk viewport only");
+    await gotoKiosk(page);
+    const overflowY = () => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+    expect(await overflowY()).toBeLessThanOrEqual(0);
+    expect(await page.locator("main").evaluate((el) => el.getBoundingClientRect().width)).toBe(1080);
+    await page.getByTestId("attract-start").click();
+    await expect(page.getByTestId("welcome-screen")).toBeVisible();
+    expect(await overflowY()).toBeLessThanOrEqual(0);
   });
 });
 

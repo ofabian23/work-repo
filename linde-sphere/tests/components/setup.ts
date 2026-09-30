@@ -14,3 +14,6 @@ if (typeof HTMLDialogElement !== "undefined" && !HTMLDialogElement.prototype.sho
     this.dispatchEvent(new Event("close"));
   };
 }
+
+// jsdom does not implement scrolling; the kiosk scrolls to the top on every screen change.
+window.scrollTo = () => {};

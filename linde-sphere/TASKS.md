@@ -46,7 +46,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] Seed content: 10 personas, 12 challenges, 7 facility types, 8 scenes with 24 hotspots, 13 solutions (all `assumed`, requiring PR sales validation), 12 rules, 3 placeholder assets, draft consent, manifest
 - [x] Loader with per-file errors (`src/server/content/load-content.ts`) + `npm run content:check` (demo/production/strict, exit codes)
 - [x] 171 unit tests covering schema success/failure, cross-checks, loader errors, visibility, seed content
-- **Moved to later phases:** `settings.json`, `report.json`, `sales-contacts.json` (Phases 3–8); brand config and ES/EN dictionaries with `t()` were delivered in Phase 1; cached server loader that refuses to boot on invalid content (Phase 4, first page that reads content); placeholder SVG files (Phase 6)
+- **Moved to later phases:** `settings.json`, `report.json`, `sales-contacts.json` (Phases 3–8); brand config and ES/EN dictionaries with `t()` were delivered in Phase 1; cached server loader that refuses to boot on invalid content (delivered in Phase 4: `public-content.ts` + `instrumentation.ts`); placeholder SVG files (Phase 6)
 
 ## Phase 2b — Convention-focused content seed ✅
 
@@ -64,7 +64,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] `recommend()` with weights, exclusions, thresholds, tie-breakers, top-N, fallback; output validated against `RecommendationResultSchema`
 - [x] "Why this appeared" generation (ES/EN, quoted labels) + relevance template rendering with placeholder fallback
 - [x] Unit tests: five journey types, full persona/challenge/hotspot coverage, determinism and order independence, exclusions, thresholds, tie-breaks, caps, fallback, production mode
-- [ ] `hasMinimumInfo` / prompt selectors (with the kiosk state machine, Phase 4–5)
+- [ ] `hasMinimumInfo` / prompt selectors (Phase 5, with the recommendations UI)
 - [ ] `lead-scoring.ts` (server-only) + `config/lead-scoring.json` + tests
 - **Done when:** lead scoring is implemented and tested; the engine suite already passes with no I/O in `src/domain`.
 
@@ -76,16 +76,28 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] Dev-only gallery `/dev/components`, 404 in production unless `ENABLE_COMPONENT_GALLERY=true` (proxy + page gate) (ADR-045)
 - [x] Component tests (Testing Library + jsdom) and gallery E2E at kiosk, laptop and phone sizes (ADR-046)
 
-## Phase 4 — Kiosk shell
+## Phase 4 — Kiosk shell (attraction and welcome) ✅
 
-- [ ] State machine (reducer, actions, context, selectors) with reducer unit tests
-- [ ] Root layout: viewport, `lang`, brand CSS variables, fonts
-- [ ] Attract screen (motion loop, ES/EN toggle, fullscreen request on first touch)
-- [ ] Entry screen with three paths
-- [ ] Idle timer + "Are you still there?" overlay + reset controller (sendBeacon + hard reload)
-- [x] Shared components (delivered in Phase 3b)
-- [ ] E2E: attract → entry; idle reset returns to attract; language resets to ES
-- **Done when:** the shell runs at 1080×1920 and reset guarantees are verified by E2E.
+- [x] Session store: pure reducer + context in `src/features/kiosk/state/` (no global state library), opaque
+      UUID v4 session id (HTTP-safe fallback), no personal data; tracks entry path, role, challenges, facility,
+      scenes, hotspots (opened/engaged), interests, recommendations and per-visit accessibility (ADR-047)
+- [x] Reducer unit tests (start, paths, selections, caps, reset, no leakage between visitors)
+- [x] Root layout: viewport, `lang`, brand CSS variables, fonts (Phase 1) + session provider and header actions
+- [x] Attract screen: product name, rotating ES value phrase, bilingual "touch to begin", calm motion,
+      whole screen is the target; returns to Spanish after 30 s idle; remounts to its initial state on reset
+- [x] Welcome screen: three paths (Trabajo en… / Necesito… / Explorar el hospital), language switch,
+      accessibility options (larger text, reduced motion), discreet reset, privacy link, recommendations
+      promise, no contact fields
+- [x] Idle timer + "¿Sigue ahí?" overlay + reset controller (in-memory reset, language back to ES, hard reload)
+- [x] Component tests (start, reset, timeout reset, language, each entry path, back to welcome, accessibility)
+- [x] E2E at kiosk, laptop and phone sizes: attract → welcome, language, three paths and back, explicit reset
+      with real reload, privacy sheet, reduced motion, 1080 × 1920 fit without scrolling
+- [x] Shared components (delivered in Phase 3b) + `ActionCard` for navigation choices
+- [ ] Path screens are honest placeholders ("se completa en la próxima fase") → replaced in Phases 5–6
+- [ ] Anonymous session summary via `sendBeacon` on reset → Phase 7 (needs `/api/sessions`)
+- [ ] Fullscreen request on first touch → Phase 10 (kiosk hardening; Fully Kiosk Browser already runs fullscreen)
+- [ ] `hasMinimumInfo` / prompt selectors → Phase 5
+- **Done when:** the shell runs at 1080×1920 and reset guarantees are verified by E2E. ✅
 
 ## Phase 5 — Entry paths and recommendations UI
 

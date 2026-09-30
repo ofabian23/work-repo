@@ -477,3 +477,34 @@ entry here — architecture is never changed silently.
   marker via `useHydrated()`. Earlier intermittent E2E failures came from key presses sent before hydration.
 - **Consequences:** Interaction tests are deterministic. Phase 4 can use `useHydrated()` to ignore taps made
   during hydration.
+
+## ADR-047 — Kiosk session store, reset flow and per-visit accessibility
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Context:** The attract and welcome phase needs a session store that never carries one visitor's
+  selections to the next. The kiosk LAN is plain HTTP, and a passer-by may leave the screen in English or
+  with large text on.
+- **Decision:**
+  - The session store is a pure reducer (`src/features/kiosk/state/kiosk-state.ts`) behind a React
+    context (`KioskSessionProvider`), with no global state library (ADR-005). A session exists only after
+    the first touch.
+  - Actions other than `START_SESSION` are ignored while there is no session.
+  - `RESET` returns the initial state with a new `resetCount`, used as a remount key.
+  - Session ids are opaque UUID v4 values. `crypto.randomUUID` is used when available. Otherwise the id is
+    built from `crypto.getRandomValues`, because `randomUUID` is missing in insecure (HTTP) contexts.
+  - Reset order: dispatch `RESET`, restore Spanish, clear accessibility attributes, then
+    `window.location.replace("/")`. The hard reload is injectable for tests. The anonymous `sendBeacon`
+    summary is added in Phase 7, where `/api/sessions` exists.
+  - The idle timer ignores global activity while the "¿Sigue ahí?" warning is open, so only the warning's
+    own buttons decide.
+  - Accessibility options (larger text, reduced motion) belong to the session and are applied as
+    `data-*` attributes on `<html>`. The system `prefers-reduced-motion` setting is honoured regardless.
+  - The attract screen reverts to Spanish and its first phrase after 30 s without touches.
+  - Navigation choices use a new `ActionCard` (a button without `aria-pressed`, unlike the selectable
+    `TouchCard`).
+  - Public content is loaded once per mode through `getPublicContent()` and validated at server boot in
+    `instrumentation.ts`.
+  - The attract motion uses CSS keyframes rather than the Motion library.
+- **Consequences:** Leak-free resets are covered at three levels: reducer unit tests, component tests and
+  E2E with a real reload. Path screens remain placeholders until Phases 5–6. Invalid content now stops the
+  server at boot instead of failing on the first request.

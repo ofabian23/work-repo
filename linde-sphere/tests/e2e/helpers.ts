@@ -40,3 +40,9 @@ export async function gotoHydrated(page: Page, url: string) {
   await expect(page.locator("html")).toHaveAttribute("data-hydrated", "true");
   return response;
 }
+
+/** Opens the kiosk route and waits until the experience (inside the root Suspense boundary) is interactive. */
+export async function gotoKiosk(page: Page) {
+  await gotoHydrated(page, "/");
+  await expect(page.locator('[data-testid="kiosk-experience"][data-ready="true"]')).toBeVisible();
+}

@@ -14,13 +14,14 @@ export function KioskHeader({ actions }: { actions?: ReactNode }) {
   return (
     <header
       aria-label={t("shell.header")}
-      className="border-line px-gutter flex flex-wrap items-center justify-between gap-4 border-b py-5"
+      className="border-line px-gutter flex flex-col gap-3 border-b py-4"
     >
-      <BrandWordmark />
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        {actions}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <BrandWordmark />
         <LanguageToggle />
       </div>
+      {/* Session controls get their own row; it collapses when no session is active. */}
+      <div className="flex flex-wrap items-center justify-end gap-3 empty:hidden">{actions}</div>
     </header>
   );
 }

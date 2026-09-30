@@ -218,12 +218,13 @@ contains every content item.
 
 ### 9.4 Legal
 
-| Item                                  | Status        | Notes                                                                               |
-| ------------------------------------- | ------------- | ----------------------------------------------------------------------------------- |
-| Report consent text (ES/EN)           | `placeholder` | `content/consent.json` v0.1.0, marked [BORRADOR]/[DRAFT]; needs legal approval (Q3) |
-| Follow-up consent text (ES/EN)        | `placeholder` | Needs legal approval (Q3)                                                           |
-| Privacy notice (short, shown on form) | `placeholder` | Must state purpose, controller, and contact for data requests                       |
-| Report disclaimer (ES/EN)             | `assumed`     | "Final applicability requires consultation with a qualified representative."        |
+| Item                                  | Status        | Notes                                                                                                                                                                                |
+| ------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Report consent text (ES/EN)           | `placeholder` | `content/consent.json` v0.1.0, marked [BORRADOR]/[DRAFT]; needs legal approval (Q3)                                                                                                  |
+| Follow-up consent text (ES/EN)        | `placeholder` | Needs legal approval (Q3)                                                                                                                                                            |
+| Privacy notice (short, shown on form) | `placeholder` | Must state purpose, controller, and contact for data requests                                                                                                                        |
+| Report disclaimer (ES/EN)             | `assumed`     | "Final applicability requires consultation with a qualified representative."                                                                                                         |
+| Privacy summary sheet (UI, ES/EN)     | `assumed`     | `src/data/i18n` `privacy.points.*`: four plain-language statements shown from the welcome screen before any data is collected; legal review pending together with the privacy notice |
 
 ### 9.5 Brand and contacts
 

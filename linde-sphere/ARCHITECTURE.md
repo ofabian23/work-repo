@@ -64,10 +64,11 @@ during Phase 1.
 | E2E tests                | Playwright                                            | version compatible with installed Chromium            | Portrait viewport + touch emulation                    |
 | Lint / format            | ESLint (flat config, `eslint-config-next`) + Prettier | latest stable                                         | `prettier-plugin-tailwindcss`                          |
 
-**Installed so far (Phases 1–2):** Next.js 16.3.7, React 19.2, TypeScript 5.9, Tailwind 4, Zod 4.6,
-`server-only`, Vitest 5, Playwright 1.63, tsx, ESLint 9 (`eslint-config-next`), Prettier 3. Prisma (Phase 7,
-ADR-038), Motion (Phase 4/6), Nodemailer (Phase 8) and Testing Library (first component tests) are added in
-the phases that first need them.
+**Installed so far (Phases 1–4):** Next.js 16.3.7, React 19.2, TypeScript 5.9, Tailwind 4, Zod 4.6,
+`server-only`, Vitest 5, Testing Library + jsdom, Playwright 1.63, tsx, ESLint 9 (`eslint-config-next`),
+Prettier 3. Prisma (Phase 7, ADR-038), Motion (Phase 6, only if CSS keyframes prove insufficient for scene
+transitions; the attract loop uses CSS keyframes) and Nodemailer (Phase 8) are added in the phases that first
+need them.
 
 **Explicitly not used:** real-time 3D libraries (three.js, Babylon, etc.), global state libraries
 (Redux, Zustand, MobX), i18n frameworks, CMS, analytics SDKs, external CDNs, paid services.
@@ -115,19 +116,23 @@ linde-sphere/
 ├─ src/
 │  ├─ app/
 │  │  ├─ layout.tsx               # brand CSS vars, viewport, LanguageProvider, AppShell    ✅
-│  │  ├─ page.tsx                 # home (foundation placeholder → Attract in Phase 4)      ✅
+│  │  ├─ page.tsx                 # kiosk route: loads public content → KioskExperience      ✅
 │  │  ├─ error.tsx · global-error.tsx · not-found.tsx · loading.tsx                        ✅
 │  │  ├─ api/health/route.ts      # readiness JSON                                           ✅
 │  │  └─ dev/components/page.tsx  # dev-only design-system gallery (gated, ADR-045)          ✅
 │  ├─ components/                 # design system (§12.1)                                    ✅
 │  │  ├─ shell/ (app-shell, kiosk-header, language-toggle, brand-wordmark)
 │  │  ├─ actions/ (action-button: Primary/SecondaryAction, bottom-action-bar, reset-experience-button)
-│  │  ├─ cards/ (touch-card, persona-card, challenge-card, recommendation-card)
+│  │  ├─ cards/ (touch-card, action-card, persona-card, challenge-card, recommendation-card)
 │  │  ├─ navigation/ (progress-indicator, scene-breadcrumb) · explorer/ (hotspot-button)
 │  │  ├─ content/ (solution-panel, pending-validation-badge) · overlay/ (dialog: Modal/Sheet, inactivity-warning)
 │  │  ├─ forms/ (form-field, consent-checkbox) · feedback/ (status-banner, loading/empty/error-state)
 │  │  └─ icons.tsx
-│  ├─ features/home/ · features/status/ · features/dev-gallery/                              ✅
+│  ├─ features/kiosk/             # visitor experience (§5)                                  ✅
+│  │  ├─ kiosk-experience.tsx · kiosk-header-actions.tsx · privacy-sheet.tsx
+│  │  ├─ screens/ (attract-screen, welcome-screen, path-screen, use-screen-heading)
+│  │  └─ state/ (kiosk-state reducer, kiosk-session-provider, use-idle-timer, session-id)
+│  ├─ features/status/ · features/dev-gallery/                                              ✅
 │  ├─ lib/config/{app-config,brand-config}.ts · lib/i18n/{translate,language-provider} · lib/{cn,csv,use-hydrated}.ts ✅
 │  ├─ data/i18n/{es,en}.ts                                                                  ✅
 │  ├─ types/{i18n,health}.ts                                                                ✅
@@ -138,15 +143,16 @@ linde-sphere/
 │  ├─ server/
 │  │  ├─ env.ts · health.ts · database-probe.ts                                             ✅
 │  │  ├─ content/load-content.ts  # fs loader (no `server-only` so CLI scripts can use it)  ✅
+│  │  ├─ content/public-content.ts # validated, visibility-filtered bundle per mode (cached in prod) ✅
 │  │  └─ db.ts · lead-scoring.ts · leads.ts · report/ · email/ · outbox/ · log.ts  (Phases 3–9)
-│  ├─ instrumentation.ts          # validates env at server boot (outbox worker: Phase 8)   ✅
+│  ├─ instrumentation.ts          # validates env + content at server boot (outbox worker: Phase 8) ✅
 │  └─ proxy.ts                    # /dev/* gate (404 in production unless enabled) ✅; admin guard (Phase 9)
 ├─ scripts/content-check.ts · content-export.ts (+ lib/)   ✅ · leads-export / leads-purge / outbox-retry (Phase 9)
 ├─ exports/content-validation.csv # generated sales worksheet (UTF-8 BOM, CRLF; `.gitattributes -text`) ✅
 ├─ tests/
 │  ├─ helpers/ · unit/content · unit/runtime · unit/app                                     ✅
 │  ├─ components/                 # Testing Library + jsdom component tests                   ✅
-│  ├─ e2e/{foundation,gallery}.spec.ts # Playwright: kiosk 1080×1920, laptop 1440×900, phone 390×844 ✅
+│  ├─ e2e/{foundation,gallery,kiosk}.spec.ts # Playwright: kiosk 1080×1920, laptop 1440×900, phone 390×844 ✅
 │  └─ integration/                (Phase 7)
 └─ data/                          # SQLite db + dev email output (git-ignored)
 ```
@@ -201,9 +207,9 @@ React context (ADR-004, ADR-005).
 - Screen transitions are explicit reducer actions, making flows testable without rendering.
 
 ```
-            ┌────────┐ touch  ┌───────┐
-  (boot) ──►│ATTRACT │──────►│ ENTRY │
-            └────────┘        └─┬─┬─┬─┘
+            ┌────────┐ touch  ┌─────────┐
+  (boot) ──►│ATTRACT │──────►│ WELCOME │
+            └────────┘        └─┬─┬─┬───┘
                ▲        A: role │ │ │ C: explore
                │  ┌─────────────┘ │ └──────────────┐
                │  ▼       B: need ▼                ▼
@@ -220,46 +226,77 @@ React context (ADR-004, ADR-005).
 
 ### 5.2 Session state (client)
 
+Implemented in `src/features/kiosk/state/` with React only (`useReducer` + context, no global state
+library, ADR-047). `kiosk-state.ts` is a pure reducer, unit-tested without rendering.
+
 ```ts
 type KioskState = {
-  sessionId: string; // random UUID, created on first touch
-  language: "es" | "en"; // default "es"
-  screen: Screen;
-  entryPath: "role" | "challenge" | "explore" | null;
-  signals: SessionSignals; // C1 anonymous signals (see §7.2)
-  ui: { promptShown: boolean; activeSceneId: string | null; openHotspotId: string | null };
-  lead: LeadDraft | null; // C2 — exists only while LEAD_FORM is mounted
+  screen: "attract" | "welcome" | "role" | "challenges" | "explore"; // grows in Phases 5–7
+  session: ActiveSession | null; // null on the attract screen
+  resetCount: number; // remount key: every reset renders fresh components
+  lastResetReason: "explicit" | "timeout" | "completed" | null;
+};
+type ActiveSession = {
+  id: string; // opaque random UUID v4, created on first touch (HTTP-safe fallback, see session-id.ts)
+  startedAt: string;
+  entryPath: "role" | "challenge" | "explore" | null; // first path chosen
+  signals: SessionSignals; // C1 anonymous signals: role, challenges (max 3), facility, scenes, hotspots, interests
+  recommendations: string[]; // solution ids last shown (filled in Phase 5)
+  accessibility: { largeText: boolean; reduceMotion: boolean }; // this visitor only
 };
 ```
 
-Derived via selectors (not stored): `recommendations = recommend(signals, visibleContent)`,
-`hasMinimumInfo`, `shouldShowPrompt`.
+- The language lives in `LanguageProvider` (not persisted); reset sets it back to Spanish.
+- Every action except `START_SESSION` is ignored while there is no session, so nothing is recorded on the
+  attract screen. The session never contains names, contact details or free text.
+- `toSessionSummary()` converts a session into the anonymous `VisitorSession` schema (sent on reset from
+  Phase 7).
+- Accessibility preferences are applied as `html[data-text-size="large"]` (font scale ×1.18) and
+  `html[data-motion="reduce"]` (animations and transitions off), and removed on reset.
+- Each screen change scrolls to the top and moves focus to the screen's `h1` (without scrolling).
+
+Planned derived selectors: `recommendations = recommend(signals, publicContent)`, `hasMinimumInfo`,
+`shouldShowPrompt` (Phase 5). The lead draft (C2) will live only inside the lead form (Phase 7).
+
+The page (`src/app/page.tsx`) renders at request time and passes the visibility-filtered
+`PublicContentBundle` from `src/server/content/public-content.ts`, cached per content mode in production.
+Content is also validated at server boot in `instrumentation.ts`, so invalid content stops the server
+before the first visitor.
 
 ### 5.3 Reset and privacy guarantees
 
-Reset is triggered by: completion (confirmation auto-timeout, default 15 s), inactivity countdown expiry,
-or the discreet "Start over" action.
+Reset is triggered by: the discreet "Empezar de nuevo" action (with confirmation), inactivity countdown
+expiry or the warning's "Empezar de nuevo" button, and (Phase 7) completion (confirmation auto-timeout,
+default 15 s).
 
-Reset procedure:
+Reset procedure (`KioskSessionProvider.reset`):
 
-1. Send an anonymous session summary via `navigator.sendBeacon('/api/sessions', …)` (C1 only).
-2. Clear the lead draft and all form refs; blur inputs (dismisses the on-screen keyboard).
-3. `window.location.replace("/")` — a **hard reload** that discards all JS memory and replaces the
-   history entry.
+1. _(Phase 7)_ Send an anonymous session summary via `navigator.sendBeacon('/api/sessions', …)` (C1 only).
+2. Dispatch `RESET`: the state returns to `INITIAL_KIOSK_STATE` (new `resetCount` remounts every screen).
+3. Set the language back to Spanish and remove the accessibility attributes from `<html>`.
+4. `window.location.replace("/")`, a **hard reload** that discards all JS memory and replaces the history
+   entry (injectable for tests).
+5. _(Phase 7)_ Clear the lead draft and blur inputs (dismisses the on-screen keyboard) before step 4.
 
 The client never writes to `localStorage`, `sessionStorage`, IndexedDB, or cookies. Form inputs use
 `autocomplete="off"` and non-standard `name` attributes to discourage browser autofill on the shared device.
 
 ### 5.4 Idle timer
 
-| Context                                        | Idle before warning | Countdown             | Configurable in |
-| ---------------------------------------------- | ------------------- | --------------------- | --------------- |
-| Attract                                        | none                | —                     | —               |
-| Entry / selection / explorer / recommendations | 60 s                | 15 s ("¿Sigue ahí?")  | `app-config.ts` |
-| Lead form                                      | 120 s               | 20 s                  | `app-config.ts` |
-| Confirmation                                   | —                   | auto-reset after 15 s | `app-config.ts` |
+| Context                                          | Idle before warning         | Countdown             | Configurable in |
+| ------------------------------------------------ | --------------------------- | --------------------- | --------------- |
+| Attract                                          | none (language revert 30 s) | —                     | `app-config.ts` |
+| Welcome / selection / explorer / recommendations | 60 s                        | 15 s ("¿Sigue ahí?")  | `app-config.ts` |
+| Lead form                                        | 120 s                       | 20 s                  | `app-config.ts` |
+| Confirmation                                     | —                           | auto-reset after 15 s | `app-config.ts` |
 
-Any `pointerdown`/`keydown` resets the timer. The warning overlay has a large "Continue" button.
+`useIdleTimer` runs only while a session exists. Any `pointerdown`, `keydown`, `touchstart` or `wheel`
+(capture phase) restarts it. While the warning is open, global activity is ignored: only "Continuar" keeps
+the session, so tapping "Empezar de nuevo" in the warning is never swallowed. The warning has large
+buttons and a live seconds countdown.
+
+On the attract screen, if a passer-by switches to English and walks away, the screen returns to Spanish and
+to its first phrase after 30 s without touches.
 
 ### 5.5 Kiosk hardening (CSS/HTML)
 

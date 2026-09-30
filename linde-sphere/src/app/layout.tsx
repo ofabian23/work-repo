@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import { AppShell } from "@/components/shell/app-shell";
+import { KioskHeaderActions } from "@/features/kiosk/kiosk-header-actions";
+import { KioskSessionProvider } from "@/features/kiosk/state/kiosk-session-provider";
 import { LanguageProvider } from "@/lib/i18n/language-provider";
 import { appConfig } from "@/lib/config/app-config";
 import { brandConfig, brandCssVariables } from "@/lib/config/brand-config";
@@ -32,7 +34,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang={appConfig.defaultLanguage} style={brandCssVariables()} className="h-full antialiased">
       <body className="min-h-full">
         <LanguageProvider>
-          <AppShell contentMode={env.CONTENT_MODE}>{children}</AppShell>
+          <KioskSessionProvider>
+            <AppShell contentMode={env.CONTENT_MODE} headerActions={<KioskHeaderActions />}>
+              {children}
+            </AppShell>
+          </KioskSessionProvider>
         </LanguageProvider>
       </body>
     </html>

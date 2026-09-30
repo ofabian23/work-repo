@@ -16,26 +16,53 @@ export const en: Messages = {
     footerVersion: "Version {version}",
     demoMode: "Demo mode · content pending local validation",
   },
-  home: {
-    eyebrow: "Interactive experience for healthcare",
-    intro:
-      "Explore a hospital, identify your priorities and receive recommendations tailored to your organization.",
-    pathsHeading: "Three ways to begin",
-    paths: {
-      role: {
-        title: "I work in…",
-        description: "Select your professional area.",
-      },
-      challenge: {
-        title: "I need to…",
-        description: "Choose the challenges you want to solve.",
-      },
-      explore: {
-        title: "Explore the hospital",
-        description: "Walk through the areas and discover opportunities.",
-      },
+  attract: {
+    touchToBegin: "Touch to begin",
+    startLabel: "Start the Linde Sphere experience",
+    phrases: {
+      explore: "Explore a hospital in minutes",
+      discover: "Discover opportunities for your priorities",
+      recommend: "Get personalized recommendations",
     },
-    status: "Experience in preparation",
+  },
+  welcome: {
+    title: "How would you like to begin?",
+    subtitle: "Choose a path. At the end you will see personalized recommendations for your organization.",
+    promises: {
+      personalized: "Personalized recommendations",
+      duration: "2 to 5 minutes",
+      noContact: "No contact details needed to explore",
+    },
+    pathsLabel: "Ways to begin",
+    paths: {
+      role: { title: "I work in…", description: "Choose your professional area and see what usually matters to it." },
+      challenge: { title: "I need to…", description: "Choose up to three challenges you want to solve." },
+      explore: { title: "Explore the hospital", description: "Walk through the areas and discover opportunities." },
+    },
+    privacyLink: "Privacy",
+  },
+  pathScreen: {
+    comingNext: "This part of the experience is completed in the next development phase.",
+    backToWelcome: "Back to start",
+  },
+  accessibility: {
+    button: "Accessibility",
+    title: "Accessibility options",
+    description: "They apply only to your visit and reset when you finish.",
+    largeText: "Larger text",
+    reduceMotion: "Reduce motion",
+    on: "On",
+    off: "Off",
+  },
+  privacy: {
+    title: "Privacy",
+    points: {
+      noContact: "We don't ask for contact details to explore or to see recommendations.",
+      purpose: "Your selections are used only to prepare recommendations during this visit.",
+      consent: "If you request a report, we will ask for your consent separately.",
+      reset: "When you finish, or after a period of inactivity, the screen clears your selections.",
+    },
+    noticeHeading: "Privacy notice",
   },
   ui: {
     close: "Close",
