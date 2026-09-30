@@ -1,0 +1,112 @@
+{
+  "id": "emergency",
+  "slug": "emergency",
+  "title": {
+    "es": "Sala de emergencias",
+    "en": "Emergency department"
+  },
+  "description": {
+    "es": "Un área que debe responder a lo inesperado, a cualquier hora.",
+    "en": "An area that must respond to the unexpected, at any hour."
+  },
+  "background": {
+    "src": "/assets/scenes/placeholder/emergency-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una sala de emergencias con camillas y estaciones de trabajo.",
+      "en": "Isometric illustration of an emergency department with stretchers and workstations."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "emergency-surge-readiness",
+      "type": "information",
+      "x": 65,
+      "y": 26.5,
+      "label": {
+        "es": "Aumentos repentinos",
+        "en": "Patient surges"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre la preparación para aumentos repentinos de pacientes",
+        "en": "Information about readiness for sudden patient surges"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["emergency-preparedness", "supply-continuity"],
+        "solutionIds": ["backup-emergency-supply"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Preparación para aumentos repentinos",
+          "en": "Readiness for sudden surges"
+        },
+        "body": {
+          "es": "Durante huracanes, apagones o eventos con múltiples víctimas, la demanda de recursos críticos puede cambiar rápidamente. La planificación anticipada ayuda a los equipos a responder.",
+          "en": "During hurricanes, power outages or mass-casualty events, demand for critical resources can change quickly. Planning ahead helps teams respond."
+        },
+        "bullets": [
+          {
+            "es": "Inventario de recursos críticos",
+            "en": "Critical resource inventory"
+          },
+          {
+            "es": "Planes de contingencia",
+            "en": "Contingency plans"
+          }
+        ]
+      }
+    },
+    {
+      "id": "emergency-critical-gases",
+      "type": "solution",
+      "x": 59.5,
+      "y": 51,
+      "width": 16,
+      "height": 10,
+      "label": {
+        "es": "Oxígeno en emergencias",
+        "en": "Oxygen in emergency care"
+      },
+      "accessibleLabel": {
+        "es": "Ver categorías relacionadas con el oxígeno y el suministro de respaldo en emergencias",
+        "en": "View categories related to oxygen and backup supply in the emergency department"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["patient-staff-safety", "emergency-preparedness"],
+        "solutionIds": ["clinical-oxygen-support", "backup-emergency-supply"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["clinical-oxygen-support", "backup-emergency-supply"]
+    },
+    {
+      "id": "emergency-to-icu",
+      "type": "navigation",
+      "x": 17,
+      "y": 42.5,
+      "label": {
+        "es": "Hacia la UCI",
+        "en": "To the ICU"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la unidad de cuidado intensivo",
+        "en": "Go to the intensive care unit"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "icu"
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "emergency"],
+  "validationStatus": "assumed",
+  "sortOrder": 10
+}

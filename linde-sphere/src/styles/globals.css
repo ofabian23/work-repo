@@ -1,0 +1,71 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * Fluid base size: ~23 px on the 1080 × 1920 kiosk, ~21 px on a laptop, 16 px on phones.
+ * All rem-based sizes (text, touch targets) scale with it.
+ */
+html {
+  font-size: clamp(16px, 0.75rem + 1vmin, 24px);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--brand-background);
+  color: var(--brand-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
+  /* Kiosk hardening (ARCHITECTURE §5.5) */
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Kiosk screens only (ADR-058): no accidental text selection, callouts or image dragging on the shared
+ * touchscreen. Form fields and anything marked [data-selectable] (e.g. the visitor's own entries on the
+ * review step) stay selectable; the admin utility is outside .kiosk-surface and behaves like a normal page.
+ */
+.kiosk-surface
+  :where(:not(input, textarea, select, [contenteditable="true"], [data-selectable], [data-selectable] *)) {
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* `user-select: auto` resolves to none under a none parent, so opted-in text must say `text` explicitly. */
+.kiosk-surface :where(input, textarea, [contenteditable="true"], [data-selectable]) {
+  user-select: text;
+}
+
+.kiosk-surface :where(img, svg) {
+  -webkit-user-drag: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visitor accessibility preferences (set per session from the Accessibility sheet, cleared on reset). */
+html[data-text-size="large"] {
+  font-size: calc(clamp(16px, 0.75rem + 1vmin, 24px) * 1.18);
+}
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Native <dialog> backdrop for Modal/Sheet. */
+dialog::backdrop {
+  background: var(--color-overlay, rgb(19 35 47 / 0.55));
+}

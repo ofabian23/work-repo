@@ -1,0 +1,72 @@
+[
+  {
+    "id": "acute-hospital",
+    "label": { "es": "Hospital general o de cuidado agudo", "en": "General or acute-care hospital" },
+    "description": {
+      "es": "Hospital con servicios de emergencia, cirugía y cuidado intensivo.",
+      "en": "Hospital with emergency, surgical and intensive care services."
+    },
+    "sortOrder": 10,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "academic-medical-center",
+    "label": { "es": "Centro médico académico", "en": "Academic medical center" },
+    "description": {
+      "es": "Hospital con funciones de enseñanza e investigación.",
+      "en": "Hospital with teaching and research functions."
+    },
+    "sortOrder": 20,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "ambulatory-center",
+    "label": { "es": "Centro ambulatorio", "en": "Ambulatory or outpatient center" },
+    "description": {
+      "es": "Servicios de diagnóstico, cirugía ambulatoria o tratamiento sin hospitalización.",
+      "en": "Diagnostic, same-day surgery or treatment services without admission."
+    },
+    "sortOrder": 30,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "homecare-organization",
+    "label": { "es": "Organización de cuidado en el hogar", "en": "Homecare organization" },
+    "description": {
+      "es": "Servicios clínicos y de apoyo para pacientes en su hogar.",
+      "en": "Clinical and support services for patients at home."
+    },
+    "sortOrder": 40,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "laboratory",
+    "label": { "es": "Laboratorio clínico o de investigación", "en": "Clinical or research laboratory" },
+    "description": {
+      "es": "Laboratorio independiente o de investigación.",
+      "en": "Independent or research laboratory."
+    },
+    "sortOrder": 50,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "public-health-system",
+    "label": { "es": "Gobierno o sistema de salud público", "en": "Government or public health system" },
+    "description": {
+      "es": "Entidad gubernamental o red de salud con múltiples instalaciones.",
+      "en": "Government entity or health network with multiple facilities."
+    },
+    "sortOrder": 60,
+    "validationStatus": "assumed"
+  },
+  {
+    "id": "other-facility",
+    "label": { "es": "Otro tipo de organización", "en": "Other organization" },
+    "description": {
+      "es": "Otra organización relacionada con el cuidado de la salud.",
+      "en": "Another healthcare-related organization."
+    },
+    "sortOrder": 70,
+    "validationStatus": "assumed"
+  }
+]

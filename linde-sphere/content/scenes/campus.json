@@ -1,0 +1,246 @@
+{
+  "id": "campus",
+  "slug": "campus",
+  "title": {
+    "es": "Campus hospitalario",
+    "en": "Hospital campus"
+  },
+  "description": {
+    "es": "Explore las áreas del hospital y descubra dónde se encuentran sus prioridades.",
+    "en": "Explore the hospital's areas and discover where your priorities come to life."
+  },
+  "background": {
+    "src": "/assets/scenes/placeholder/campus-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de un campus hospitalario con sus edificios principales.",
+      "en": "Isometric illustration of a hospital campus and its main buildings."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [
+    {
+      "src": "/assets/scenes/placeholder/campus-foreground.svg",
+      "alt": {
+        "es": "Árboles en primer plano.",
+        "en": "Trees in the foreground."
+      },
+      "depth": 0.4,
+      "assetStatus": "placeholder"
+    }
+  ],
+  "hotspots": [
+    {
+      "id": "campus-to-emergency",
+      "type": "navigation",
+      "x": 26.5,
+      "y": 29,
+      "label": {
+        "es": "Sala de emergencias",
+        "en": "Emergency department"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Sala de emergencias",
+        "en": "Go to: Emergency department"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "emergency"
+    },
+    {
+      "id": "campus-to-icu",
+      "type": "navigation",
+      "x": 71,
+      "y": 15,
+      "label": {
+        "es": "Unidad de cuidado intensivo",
+        "en": "Intensive care unit"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Unidad de cuidado intensivo",
+        "en": "Go to: Intensive care unit"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "icu"
+    },
+    {
+      "id": "campus-to-operating-room",
+      "type": "navigation",
+      "x": 51.5,
+      "y": 30.5,
+      "label": {
+        "es": "Sala de operaciones",
+        "en": "Operating room"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Sala de operaciones",
+        "en": "Go to: Operating room"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "operating-room"
+    },
+    {
+      "id": "campus-to-patient-care",
+      "type": "navigation",
+      "x": 13,
+      "y": 39.5,
+      "label": {
+        "es": "Área de cuidado al paciente",
+        "en": "Patient-care area"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Área de cuidado al paciente",
+        "en": "Go to: Patient-care area"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "patient-care"
+    },
+    {
+      "id": "campus-to-laboratory",
+      "type": "navigation",
+      "x": 83.5,
+      "y": 45.5,
+      "label": {
+        "es": "Laboratorio",
+        "en": "Laboratory"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Laboratorio",
+        "en": "Go to: Laboratory"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "laboratory"
+    },
+    {
+      "id": "campus-to-gas-plant",
+      "type": "navigation",
+      "x": 11.5,
+      "y": 58.5,
+      "label": {
+        "es": "Planta de gases medicinales",
+        "en": "Medical-gas plant"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Planta de gases medicinales",
+        "en": "Go to: Medical-gas plant"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "gas-plant"
+    },
+    {
+      "id": "campus-to-utilities",
+      "type": "navigation",
+      "x": 63,
+      "y": 66.5,
+      "label": {
+        "es": "Área de utilidades e infraestructura",
+        "en": "Utility and infrastructure area"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Área de utilidades e infraestructura",
+        "en": "Go to: Utility and infrastructure area"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "utilities"
+    },
+    {
+      "id": "campus-expansion",
+      "type": "information",
+      "x": 53,
+      "y": 63.5,
+      "label": {
+        "es": "Nuevas áreas",
+        "en": "New areas"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre el crecimiento del campus y nuevas áreas",
+        "en": "Information about campus growth and new areas"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["facility-expansion", "supply-continuity"],
+        "solutionIds": ["medical-gas-supply-planning"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Crecimiento del campus",
+          "en": "Campus growth"
+        },
+        "body": {
+          "es": "Cuando se añaden camas, áreas o edificios, también cambian las necesidades de servicios como los gases medicinales. Considerarlas desde el inicio ayuda a coordinar a los equipos.",
+          "en": "When beds, areas or buildings are added, needs for services such as medical gases change too. Considering them early helps teams coordinate."
+        },
+        "bullets": [
+          {
+            "es": "Planificación de capacidad",
+            "en": "Capacity planning"
+          },
+          {
+            "es": "Coordinación con proyectos de construcción",
+            "en": "Coordination with construction projects"
+          }
+        ]
+      }
+    },
+    {
+      "id": "campus-supply-network",
+      "type": "solution",
+      "x": 26,
+      "y": 57,
+      "label": {
+        "es": "Red de suministro",
+        "en": "Supply network"
+      },
+      "accessibleLabel": {
+        "es": "Solución: planificación del suministro de gases medicinales para el campus",
+        "en": "Solution: medical gas supply planning for the campus"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["supply-continuity", "facility-expansion"],
+        "solutionIds": ["medical-gas-supply-planning"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["medical-gas-supply-planning", "bulk-centralized-supply"]
+    }
+  ],
+  "parentSceneId": null,
+  "breadcrumb": ["campus"],
+  "validationStatus": "assumed",
+  "sortOrder": 0
+}

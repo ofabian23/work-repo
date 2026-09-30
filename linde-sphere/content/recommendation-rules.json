@@ -1,0 +1,432 @@
+[
+  {
+    "id": "rule-medical-gas-supply-planning",
+    "solutionId": "medical-gas-supply-planning",
+    "weights": {
+      "personas": {
+        "procurement-supply": 4,
+        "executive": 3,
+        "operations-facilities": 3,
+        "government-system": 3,
+        "finance": 3,
+        "academia-research": 3
+      },
+      "challenges": {
+        "supply-continuity": 5,
+        "facility-expansion": 4,
+        "lifecycle-costs": 3,
+        "operational-complexity": 2
+      },
+      "facilityTypes": {
+        "acute-hospital": 1,
+        "academic-medical-center": 1,
+        "public-health-system": 1
+      },
+      "scenes": {
+        "campus": 1,
+        "gas-plant": 1,
+        "laboratory": 1
+      },
+      "hotspots": {
+        "campus-expansion": 3,
+        "lab-gas-supply": 3
+      },
+      "explicitInterests": {
+        "medical-gas-supply-planning": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Puede ser útil cuando la demanda cambia o se planifican nuevas áreas.",
+      "en": "Can be useful when demand changes or new areas are being planned."
+    },
+    "priority": 80,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-bulk-centralized-supply",
+    "solutionId": "bulk-centralized-supply",
+    "weights": {
+      "personas": {
+        "operations-facilities": 3,
+        "procurement-supply": 3,
+        "executive": 2
+      },
+      "challenges": {
+        "supply-continuity": 4,
+        "facility-expansion": 3,
+        "cylinder-inventory": 2,
+        "operational-complexity": 2
+      },
+      "facilityTypes": {
+        "acute-hospital": 2,
+        "academic-medical-center": 2
+      },
+      "scenes": {
+        "gas-plant": 2
+      },
+      "hotspots": {
+        "gas-plant-bulk-tank": 4
+      },
+      "explicitInterests": {
+        "bulk-centralized-supply": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["homecare-organization"],
+        "reason": "Centralized hospital supply assumed not relevant to homecare-only organizations; sales to confirm."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Puede ser relevante para instalaciones con un consumo constante o en crecimiento.",
+      "en": "May be relevant for facilities with steady or growing consumption."
+    },
+    "priority": 75,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-cylinder-inventory-management",
+    "solutionId": "cylinder-inventory-management",
+    "weights": {
+      "personas": {
+        "procurement-supply": 4,
+        "clinical-respiratory": 3,
+        "operations-facilities": 2,
+        "ambulatory-homecare": 2,
+        "finance": 2
+      },
+      "challenges": {
+        "cylinder-inventory": 5,
+        "operational-complexity": 3,
+        "clinical-workflow": 2,
+        "supply-continuity": 2
+      },
+      "facilityTypes": {
+        "ambulatory-center": 1
+      },
+      "scenes": {
+        "patient-care": 2,
+        "emergency": 1
+      },
+      "hotspots": {
+        "patient-care-inventory": 4,
+        "patient-care-cylinders": 3,
+        "lab-gas-supply": 2
+      },
+      "explicitInterests": {
+        "cylinder-inventory-management": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Puede ser relevante cuando localizar o reponer cilindros consume tiempo del personal.",
+      "en": "May be relevant when locating or replenishing cylinders takes staff time."
+    },
+    "priority": 70,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-backup-emergency-supply",
+    "solutionId": "backup-emergency-supply",
+    "weights": {
+      "personas": {
+        "government-system": 4,
+        "executive": 3,
+        "operations-facilities": 3,
+        "quality-compliance": 2
+      },
+      "challenges": {
+        "emergency-preparedness": 5,
+        "supply-continuity": 3,
+        "patient-staff-safety": 1
+      },
+      "facilityTypes": {
+        "acute-hospital": 1,
+        "public-health-system": 2
+      },
+      "scenes": {
+        "emergency": 2,
+        "gas-plant": 1
+      },
+      "hotspots": {
+        "gas-plant-backup": 4,
+        "emergency-surge-readiness": 3
+      },
+      "explicitInterests": {
+        "backup-emergency-supply": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Relevante para organizaciones que revisan o actualizan su plan de contingencia.",
+      "en": "Relevant for organizations reviewing or updating their contingency plans."
+    },
+    "priority": 90,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-monitoring-telemetry",
+    "solutionId": "monitoring-telemetry",
+    "weights": {
+      "personas": {
+        "technology-biomed": 4,
+        "operations-facilities": 2,
+        "procurement-supply": 2
+      },
+      "challenges": {
+        "visibility-monitoring": 5,
+        "supply-continuity": 2,
+        "operational-complexity": 2
+      },
+      "facilityTypes": {},
+      "scenes": {
+        "gas-plant": 1,
+        "utilities": 1,
+        "icu": 1
+      },
+      "hotspots": {
+        "icu-monitoring": 4,
+        "utilities-alarm-panel": 3,
+        "gas-plant-bulk-tank": 2
+      },
+      "explicitInterests": {
+        "monitoring-telemetry": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Puede ser útil cuando su equipo necesita conocer a tiempo el estado del suministro.",
+      "en": "Can be useful when your team needs to know supply status in time to act."
+    },
+    "priority": 65,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-infrastructure-assessment",
+    "solutionId": "infrastructure-assessment",
+    "weights": {
+      "personas": {
+        "operations-facilities": 4,
+        "executive": 2,
+        "quality-compliance": 2,
+        "technology-biomed": 2
+      },
+      "challenges": {
+        "aging-infrastructure": 5,
+        "facility-expansion": 4,
+        "compliance-readiness": 2,
+        "patient-staff-safety": 1
+      },
+      "facilityTypes": {
+        "acute-hospital": 1,
+        "academic-medical-center": 1
+      },
+      "scenes": {
+        "utilities": 2,
+        "operating-room": 1
+      },
+      "hotspots": {
+        "or-infrastructure": 4,
+        "or-gas-outlets": 3,
+        "utilities-manifold-room": 3
+      },
+      "explicitInterests": {
+        "infrastructure-assessment": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["homecare-organization"],
+        "reason": "No in-building distribution network assumed in homecare settings; sales to confirm."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Relevante al planificar renovaciones, expansiones o la sustitución de equipos antiguos.",
+      "en": "Relevant when planning renovations, expansions or the replacement of aging equipment."
+    },
+    "priority": 85,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-preventive-service-maintenance",
+    "solutionId": "preventive-service-maintenance",
+    "weights": {
+      "personas": {
+        "operations-facilities": 3,
+        "technology-biomed": 3,
+        "quality-compliance": 2,
+        "finance": 3
+      },
+      "challenges": {
+        "lifecycle-costs": 4,
+        "aging-infrastructure": 3,
+        "compliance-readiness": 3,
+        "operational-complexity": 2
+      },
+      "facilityTypes": {},
+      "scenes": {
+        "utilities": 1,
+        "operating-room": 1
+      },
+      "hotspots": {
+        "utilities-maintenance": 4,
+        "utilities-manifold-room": 2
+      },
+      "explicitInterests": {
+        "preventive-service-maintenance": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Puede ser útil para planificar el mantenimiento con anticipación en lugar de reaccionar a imprevistos.",
+      "en": "Can be useful for planning maintenance ahead of time rather than reacting to unexpected issues."
+    },
+    "priority": 60,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-clinical-oxygen-support",
+    "solutionId": "clinical-oxygen-support",
+    "weights": {
+      "personas": {
+        "clinical-respiratory": 4
+      },
+      "challenges": {
+        "clinical-workflow": 4,
+        "patient-staff-safety": 3,
+        "supply-continuity": 2,
+        "care-outside-hospital": 1
+      },
+      "facilityTypes": {
+        "acute-hospital": 1
+      },
+      "scenes": {
+        "icu": 2,
+        "emergency": 1,
+        "patient-care": 1
+      },
+      "hotspots": {
+        "icu-clinical-oxygen": 4,
+        "emergency-critical-gases": 3,
+        "icu-bedside-supply": 3
+      },
+      "explicitInterests": {
+        "clinical-oxygen-support": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["laboratory"],
+        "reason": "Clinical oxygen at the point of care is not relevant to standalone laboratories."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Relevante para equipos clínicos que dependen de oxígeno disponible en el punto de cuidado.",
+      "en": "Relevant for clinical teams that rely on oxygen being available at the point of care."
+    },
+    "priority": 70,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-ambulatory-homecare-support",
+    "solutionId": "ambulatory-homecare-support",
+    "weights": {
+      "personas": {
+        "ambulatory-homecare": 5,
+        "clinical-respiratory": 2
+      },
+      "challenges": {
+        "care-outside-hospital": 5,
+        "clinical-workflow": 1
+      },
+      "facilityTypes": {
+        "homecare-organization": 3,
+        "ambulatory-center": 2
+      },
+      "scenes": {
+        "patient-care": 1
+      },
+      "hotspots": {
+        "patient-care-discharge": 4
+      },
+      "explicitInterests": {
+        "ambulatory-homecare-support": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [
+      {
+        "signalType": "facilityTypes",
+        "ids": ["laboratory"],
+        "reason": "Not relevant to standalone laboratories."
+      }
+    ],
+    "explanationTemplate": {
+      "es": "Relevante al coordinar el alta o el seguimiento de pacientes con terapia respiratoria.",
+      "en": "Relevant when coordinating discharge or follow-up for patients on respiratory therapy."
+    },
+    "priority": 70,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  },
+  {
+    "id": "rule-training-operational-readiness",
+    "solutionId": "training-operational-readiness",
+    "weights": {
+      "personas": {
+        "quality-compliance": 4,
+        "academia-research": 3,
+        "clinical-respiratory": 1,
+        "operations-facilities": 1
+      },
+      "challenges": {
+        "patient-staff-safety": 5,
+        "compliance-readiness": 4,
+        "emergency-preparedness": 2,
+        "clinical-workflow": 1
+      },
+      "facilityTypes": {},
+      "scenes": {
+        "utilities": 1,
+        "laboratory": 1
+      },
+      "hotspots": {
+        "utilities-safety-training": 4,
+        "lab-safe-handling": 3,
+        "patient-care-cylinders": 2
+      },
+      "explicitInterests": {
+        "training-operational-readiness": 6
+      }
+    },
+    "minimumScore": 3,
+    "exclusions": [],
+    "explanationTemplate": {
+      "es": "Puede ser útil al incorporar personal nuevo o actualizar procedimientos.",
+      "en": "Can be useful when onboarding new staff or updating procedures."
+    },
+    "priority": 55,
+    "validationStatus": "assumed",
+    "internalNotes": "Seed weights for demonstration (threshold 3: one primary persona, challenge or hotspot qualifies). Tune after Puerto Rico sales validation."
+  }
+]

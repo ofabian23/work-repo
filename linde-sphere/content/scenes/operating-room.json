@@ -1,0 +1,110 @@
+{
+  "id": "operating-room",
+  "slug": "operating-room",
+  "title": {
+    "es": "Sala de operaciones",
+    "en": "Operating room"
+  },
+  "description": {
+    "es": "Un entorno donde la infraestructura de gases forma parte de cada procedimiento.",
+    "en": "An environment where gas infrastructure is part of every procedure."
+  },
+  "background": {
+    "src": "/assets/scenes/placeholder/operating-room-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una sala de operaciones con salidas de gases en el techo.",
+      "en": "Isometric illustration of an operating room with ceiling-mounted gas outlets."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "or-gas-outlets",
+      "type": "information",
+      "x": 50,
+      "y": 28,
+      "label": {
+        "es": "Salidas de gases",
+        "en": "Gas outlets"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre las salidas y la red de distribución de gases en la sala de operaciones",
+        "en": "Information about gas outlets and the distribution network in the operating room"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["aging-infrastructure", "patient-staff-safety"],
+        "solutionIds": ["infrastructure-assessment"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Salidas y distribución",
+          "en": "Outlets and distribution"
+        },
+        "body": {
+          "es": "Las salidas de gases medicinales y su red de distribución forman parte de la infraestructura que el equipo quirúrgico utiliza en cada procedimiento.",
+          "en": "Medical gas outlets and their distribution network are part of the infrastructure the surgical team uses in every procedure."
+        },
+        "bullets": [
+          {
+            "es": "Estado de las salidas",
+            "en": "Condition of outlets"
+          },
+          {
+            "es": "Planes de renovación",
+            "en": "Renovation plans"
+          }
+        ]
+      }
+    },
+    {
+      "id": "or-infrastructure",
+      "type": "solution",
+      "x": 26,
+      "y": 34.5,
+      "label": {
+        "es": "Infraestructura de gases",
+        "en": "Gas infrastructure"
+      },
+      "accessibleLabel": {
+        "es": "Ver evaluación de infraestructura y servicio preventivo",
+        "en": "View infrastructure assessment and preventive service"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["aging-infrastructure", "compliance-readiness"],
+        "solutionIds": ["infrastructure-assessment", "preventive-service-maintenance"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["infrastructure-assessment", "preventive-service-maintenance"]
+    },
+    {
+      "id": "operating-room-to-icu",
+      "type": "navigation",
+      "x": 89.5,
+      "y": 45.5,
+      "label": {
+        "es": "Hacia la UCI",
+        "en": "To the ICU"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la unidad de cuidado intensivo",
+        "en": "Go to the intensive care unit"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "icu"
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "operating-room"],
+  "validationStatus": "assumed",
+  "sortOrder": 30
+}

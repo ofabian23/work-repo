@@ -1,0 +1,25 @@
+{
+  "scoring": {
+    "sceneCap": 3,
+    "hotspotCap": 8,
+    "engagedHotspotBonus": 1,
+    "hotspotAffinityWeight": 2,
+    "impliedChallengeDivisor": 2,
+    "impliedChallengeCap": 3
+  },
+  "results": {
+    "primary": 3,
+    "secondary": 3,
+    "reorderMargin": 2
+  },
+  "relevance": {
+    "high": 9,
+    "medium": 5
+  },
+  "readiness": {
+    "personaPlusChallenges": 1,
+    "challengesAlone": 2,
+    "distinctScenes": 2,
+    "uniqueHotspots": 3
+  }
+}

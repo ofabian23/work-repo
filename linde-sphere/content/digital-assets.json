@@ -1,0 +1,110 @@
+[
+  {
+    "id": "asset-medical-gas-overview",
+    "title": {
+      "es": "Resumen de gases medicinales",
+      "en": "Medical gas overview"
+    },
+    "description": {
+      "es": "Documento de referencia pendiente de aprobación.",
+      "en": "Reference document pending approval."
+    },
+    "type": "brochure",
+    "access": {
+      "kind": "url",
+      "url": "https://example.com/linde-sphere/placeholder/medical-gas-overview"
+    },
+    "languages": ["es", "en"],
+    "validationStatus": "placeholder",
+    "market": "unknown",
+    "internalNotes": "PLACEHOLDER - no approved asset yet. Replace with an approved, publicly shareable resource before use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - placeholder",
+    "requiresSalesValidation": true,
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "asset-emergency-planning-checklist",
+    "title": {
+      "es": "Lista de verificación para emergencias",
+      "en": "Emergency planning checklist"
+    },
+    "description": {
+      "es": "Lista de verificación pendiente de aprobación.",
+      "en": "Checklist pending approval."
+    },
+    "type": "checklist",
+    "access": {
+      "kind": "url",
+      "url": "https://example.com/linde-sphere/placeholder/emergency-planning-checklist"
+    },
+    "languages": ["es", "en"],
+    "validationStatus": "placeholder",
+    "market": "unknown",
+    "internalNotes": "PLACEHOLDER - no approved asset yet. Replace with an approved, publicly shareable resource before use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - placeholder",
+    "requiresSalesValidation": true,
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "asset-homecare-guide",
+    "title": {
+      "es": "Guía de transición al hogar",
+      "en": "Home transition guide"
+    },
+    "description": {
+      "es": "Guía pendiente de aprobación.",
+      "en": "Guide pending approval."
+    },
+    "type": "guide",
+    "access": {
+      "kind": "url",
+      "url": "https://example.com/linde-sphere/placeholder/homecare-guide"
+    },
+    "languages": ["es", "en"],
+    "validationStatus": "placeholder",
+    "market": "unknown",
+    "internalNotes": "PLACEHOLDER - no approved asset yet. Replace with an approved, publicly shareable resource before use.",
+    "lastReviewedAt": null,
+    "reviewedBy": null,
+    "sourceLabel": "Linde Sphere seed content - placeholder",
+    "requiresSalesValidation": true,
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  }
+]

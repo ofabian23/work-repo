@@ -1,0 +1,314 @@
+[
+  {
+    "id": "supply-continuity",
+    "label": {
+      "es": "Mejorar la continuidad del suministro",
+      "en": "Improve supply continuity"
+    },
+    "description": {
+      "es": "Mantener disponibles los recursos críticos cuando y donde se necesitan.",
+      "en": "Keep critical resources available when and where they are needed."
+    },
+    "icon": "continuity",
+    "sortOrder": 10,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "emergency-preparedness",
+    "label": {
+      "es": "Prepararse para emergencias",
+      "en": "Prepare for emergencies"
+    },
+    "description": {
+      "es": "Planificar para huracanes, apagones y aumentos repentinos de pacientes.",
+      "en": "Plan for hurricanes, power outages and sudden patient surges."
+    },
+    "icon": "emergency",
+    "sortOrder": 20,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "aging-infrastructure",
+    "label": {
+      "es": "Modernizar infraestructura envejecida",
+      "en": "Modernize aging infrastructure"
+    },
+    "description": {
+      "es": "Renovar sistemas y equipos que llevan muchos años en servicio.",
+      "en": "Renew systems and equipment that have been in service for many years."
+    },
+    "icon": "infrastructure",
+    "sortOrder": 30,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "facility-expansion",
+    "label": {
+      "es": "Apoyar la expansión de instalaciones",
+      "en": "Support facility expansion"
+    },
+    "description": {
+      "es": "Planificar nuevas áreas, camas o edificios con los servicios que requieren.",
+      "en": "Plan new areas, beds or buildings with the services they require."
+    },
+    "icon": "expansion",
+    "sortOrder": 40,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "visibility-monitoring",
+    "label": {
+      "es": "Mejorar la visibilidad y el monitoreo",
+      "en": "Improve visibility and monitoring"
+    },
+    "description": {
+      "es": "Conocer a tiempo el estado de los recursos y sistemas críticos.",
+      "en": "Know the status of critical resources and systems in time to act."
+    },
+    "icon": "monitoring",
+    "sortOrder": 50,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "cylinder-inventory",
+    "label": {
+      "es": "Manejar cilindros e inventario",
+      "en": "Manage cylinders and inventory"
+    },
+    "description": {
+      "es": "Saber dónde están los cilindros, cuántos hay y cuándo reponerlos.",
+      "en": "Know where cylinders are, how many there are and when to replenish them."
+    },
+    "icon": "cylinders",
+    "sortOrder": 60,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "operational-complexity",
+    "label": {
+      "es": "Reducir la complejidad operacional",
+      "en": "Reduce operational complexity"
+    },
+    "description": {
+      "es": "Simplificar procesos, proveedores y tareas manuales repetitivas.",
+      "en": "Simplify processes, vendors and repetitive manual tasks."
+    },
+    "icon": "simplify",
+    "sortOrder": 70,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "patient-staff-safety",
+    "label": {
+      "es": "Mejorar la seguridad de pacientes y personal",
+      "en": "Improve patient and staff safety"
+    },
+    "description": {
+      "es": "Reducir riesgos para los pacientes y para el personal que maneja equipos y materiales.",
+      "en": "Reduce risks for patients and for staff who handle equipment and materials."
+    },
+    "icon": "safety",
+    "sortOrder": 80,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "clinical-workflow",
+    "label": {
+      "es": "Mejorar el flujo de trabajo clínico",
+      "en": "Improve clinical workflow"
+    },
+    "description": {
+      "es": "Liberar tiempo del personal clínico para el cuidado del paciente.",
+      "en": "Free up clinical staff time for patient care."
+    },
+    "icon": "workflow",
+    "sortOrder": 90,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "compliance-readiness",
+    "label": {
+      "es": "Fortalecer la preparación regulatoria",
+      "en": "Strengthen compliance readiness"
+    },
+    "description": {
+      "es": "Mantener la documentación y las prácticas listas para inspecciones y acreditaciones.",
+      "en": "Keep documentation and practices ready for inspections and accreditation."
+    },
+    "icon": "compliance",
+    "sortOrder": 100,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "lifecycle-costs",
+    "label": {
+      "es": "Controlar los costos del ciclo de vida",
+      "en": "Control lifecycle costs"
+    },
+    "description": {
+      "es": "Entender el costo total de sistemas y suministros a lo largo del tiempo.",
+      "en": "Understand the total cost of systems and supplies over time."
+    },
+    "icon": "lifecycle",
+    "sortOrder": 110,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "care-outside-hospital",
+    "label": {
+      "es": "Apoyar el cuidado fuera del hospital",
+      "en": "Support care outside the hospital"
+    },
+    "description": {
+      "es": "Dar continuidad al cuidado del paciente después del alta y en el hogar.",
+      "en": "Continue patient care after discharge and at home."
+    },
+    "icon": "home",
+    "sortOrder": 120,
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  }
+]

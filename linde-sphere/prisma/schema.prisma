@@ -1,0 +1,228 @@
+// Linde Sphere local database (SQLite). See ARCHITECTURE.md §9 and ADR-052.
+//
+// Privacy rules enforced by this schema:
+// - No patient information and no free-text fields beyond the visitor's own name and organization.
+// - No behaviour stream: session summaries keep de-duplicated sets (scenes, hotspots, challenges), not events.
+// - Email deliveries keep a status, an attempt count and a sanitized UPPER_SNAKE error code only; never
+//   credentials, recipient copies or raw provider responses.
+// - Status lookups use an opaque token whose SHA-256 hash is stored; the token itself is never stored.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum LeadStatus {
+  active
+  archived
+  erasure_requested
+}
+
+enum LeadSource {
+  kiosk_lead_form
+}
+
+enum Language {
+  es
+  en
+}
+
+enum InterestCategory {
+  role
+  challenge
+  solution
+}
+
+enum InterestSourceType {
+  /// Chosen by the visitor during the journey (role or challenges).
+  session_selection
+  /// Marked "Añadir a mis intereses" while exploring.
+  explicit_interest
+  /// Confirmed on the lead form.
+  form_selection
+  /// Recomputed by the server's recommendation engine (ADR-025).
+  recommendation
+}
+
+enum Relevance {
+  high
+  medium
+  possible
+}
+
+enum SessionItemKind {
+  challenge
+  scene
+  hotspot
+  recommendation
+}
+
+enum EmailProvider {
+  /// DevelopmentPreviewProvider: writes a local preview, never sends.
+  preview
+  smtp
+  /// Reserved for a future Microsoft Graph provider (not implemented).
+  graph
+}
+
+enum EmailEventType {
+  queued
+  attempt_started
+  sent
+  attempt_failed
+  retry_scheduled
+  gave_up
+  manual_retry
+}
+
+enum EmailDeliveryStatus {
+  pending
+  sent
+  failed
+  retrying
+}
+
+model Lead {
+  id                 String     @id @default(cuid())
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  firstName          String
+  lastName           String
+  organization       String
+  /// Display label of the selected role (persona) at submission time, in Spanish.
+  roleLabel          String
+  /// Normalized: trimmed, NFC, lower-case.
+  businessEmail      String
+  optionalPhone      String?
+  preferredLanguage  Language
+  sessionId          String
+  reportConsent      Boolean
+  followUpConsent    Boolean
+  consentTextVersion String
+  source             LeadSource @default(kiosk_lead_form)
+  status             LeadStatus @default(active)
+  /// Client request token; a repeated submission with the same key returns the original result.
+  idempotencyKey     String     @unique
+  /// SHA-256 of the normalized submission, to tell a genuine retry from a reused key.
+  requestFingerprint String
+  /// SHA-256 of the opaque status token returned to the kiosk.
+  statusTokenHash    String     @unique
+  contentVersion     String
+  /// Set by the local administration utility when the lead was exported (ADR-056). Never cleared.
+  exportedAt         DateTime?
+
+  session         VisitorSessionSummary @relation(fields: [sessionId], references: [sessionId])
+  interests       LeadInterest[]
+  emailDeliveries EmailDelivery[]
+  report          Report?
+
+  @@index([createdAt])
+  @@index([exportedAt])
+  @@index([sessionId])
+  @@index([businessEmail])
+}
+
+model LeadInterest {
+  id         String             @id @default(cuid())
+  leadId     String
+  category   InterestCategory
+  /// Content id (persona, challenge or solution).
+  value      String
+  /// Relevance in words for recommendations; null for the visitor's own selections. Never a score.
+  relevance  Relevance?
+  sourceType InterestSourceType
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, category, value, sourceType])
+  @@index([category, value])
+}
+
+model VisitorSessionSummary {
+  id              String    @id @default(cuid())
+  /// Kiosk session id (random UUID, anonymous).
+  sessionId       String    @unique
+  startedAt       DateTime
+  completedAt     DateTime?
+  selectedPersona String?
+  contentVersion  String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  items SessionSummaryItem[]
+  leads Lead[]
+}
+
+/// Normalized, de-duplicated sets of a session: selected challenges, visited scenes, opened hotspots and
+/// recommended solution ids (with their position). Not an event log.
+model SessionSummaryItem {
+  id        String          @id @default(cuid())
+  summaryId String
+  kind      SessionItemKind
+  value     String
+  position  Int
+
+  summary VisitorSessionSummary @relation(fields: [summaryId], references: [id], onDelete: Cascade)
+
+  @@unique([summaryId, kind, value])
+}
+
+model EmailDelivery {
+  id                String              @id @default(cuid())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  leadId            String
+  provider          EmailProvider
+  status            EmailDeliveryStatus @default(pending)
+  attempts          Int                 @default(0)
+  lastAttemptAt     DateTime?
+  nextAttemptAt     DateTime?
+  providerMessageId String?
+  /// Sanitized UPPER_SNAKE_CASE code (e.g. SMTP_TIMEOUT). Never a raw provider message.
+  errorCode         String?
+  /// Set while a worker is sending this message (atomic claim; stale claims expire).
+  claimedAt         DateTime?
+
+  lead   Lead                 @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  events EmailDeliveryEvent[]
+
+  @@index([status, nextAttemptAt])
+  @@index([leadId])
+}
+
+/// Append-only delivery history: codes only, never addresses, message bodies or provider responses.
+model EmailDeliveryEvent {
+  id                String         @id @default(cuid())
+  deliveryId        String
+  eventType         EmailEventType
+  /// 0 for queued/manual_retry; the attempt number otherwise.
+  attempt           Int
+  occurredAt        DateTime       @default(now())
+  errorCode         String?
+  providerMessageId String?
+
+  delivery EmailDelivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryId, occurredAt])
+}
+
+/// The personalized report, rendered once when the lead is stored (ADR-013) so retries send exactly what
+/// the visitor was promised. Contains the visitor's name and organization; deleted with the lead.
+model Report {
+  id             String   @id @default(cuid())
+  leadId         String   @unique
+  createdAt      DateTime @default(now())
+  language       Language
+  subject        String
+  html           String
+  text           String
+  contentVersion String
+  /// Version of content/report.json (report copy) used.
+  copyVersion    String
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}

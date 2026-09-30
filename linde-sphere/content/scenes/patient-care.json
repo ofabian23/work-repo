@@ -1,0 +1,131 @@
+{
+  "id": "patient-care",
+  "slug": "patient-care",
+  "title": {
+    "es": "Área de cuidado al paciente",
+    "en": "Patient-care area"
+  },
+  "description": {
+    "es": "Pisos de hospitalización donde el personal atiende pacientes todo el día.",
+    "en": "Inpatient floors where staff care for patients around the clock."
+  },
+  "background": {
+    "src": "/assets/scenes/placeholder/patient-care-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una sala de hospitalización con camas, almacenamiento de cilindros y un área de alta.",
+      "en": "Isometric illustration of a patient ward with beds, cylinder storage and a discharge area."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "patient-care-cylinders",
+      "type": "information",
+      "x": 77.5,
+      "y": 42,
+      "label": {
+        "es": "Manejo de cilindros",
+        "en": "Cylinder handling"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre el manejo de cilindros en los pisos de hospitalización",
+        "en": "Information about cylinder handling on inpatient floors"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["cylinder-inventory", "patient-staff-safety"],
+        "solutionIds": ["cylinder-inventory-management", "training-operational-readiness"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Cilindros en los pisos",
+          "en": "Cylinders on the floors"
+        },
+        "body": {
+          "es": "Mover, almacenar y localizar cilindros consume tiempo del personal y requiere prácticas de manejo seguras.",
+          "en": "Moving, storing and locating cylinders takes staff time and requires safe handling practices."
+        },
+        "bullets": [
+          {
+            "es": "Almacenamiento seguro",
+            "en": "Safe storage"
+          },
+          {
+            "es": "Localización de inventario",
+            "en": "Locating inventory"
+          }
+        ]
+      }
+    },
+    {
+      "id": "patient-care-inventory",
+      "type": "solution",
+      "x": 89.5,
+      "y": 42.5,
+      "label": {
+        "es": "Inventario de cilindros",
+        "en": "Cylinder inventory"
+      },
+      "accessibleLabel": {
+        "es": "Ver manejo de cilindros e inventario",
+        "en": "View cylinder and inventory management"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["cylinder-inventory", "clinical-workflow"],
+        "solutionIds": ["cylinder-inventory-management"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["cylinder-inventory-management"]
+    },
+    {
+      "id": "patient-care-discharge",
+      "type": "solution",
+      "x": 48.5,
+      "y": 64,
+      "label": {
+        "es": "Del hospital al hogar",
+        "en": "Hospital to home"
+      },
+      "accessibleLabel": {
+        "es": "Ver apoyo para cuidado ambulatorio y en el hogar",
+        "en": "View ambulatory and homecare support"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["care-outside-hospital"],
+        "solutionIds": ["ambulatory-homecare-support"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["ambulatory-homecare-support"]
+    },
+    {
+      "id": "patient-care-to-emergency",
+      "type": "navigation",
+      "x": 58,
+      "y": 31,
+      "label": {
+        "es": "Hacia emergencias",
+        "en": "To the emergency department"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la sala de emergencias",
+        "en": "Go to the emergency department"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "emergency"
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "patient-care"],
+  "validationStatus": "assumed",
+  "sortOrder": 40
+}

@@ -1,0 +1,330 @@
+[
+  {
+    "id": "executive",
+    "label": {
+      "es": "Alta gerencia",
+      "en": "Executive leadership"
+    },
+    "description": {
+      "es": "Estrategia, crecimiento y gestión de riesgos.",
+      "en": "Strategy, growth and risk management."
+    },
+    "icon": "executive",
+    "sortOrder": 10,
+    "suggestedChallengeIds": [
+      "supply-continuity",
+      "emergency-preparedness",
+      "facility-expansion",
+      "lifecycle-costs"
+    ],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "operations-facilities",
+    "label": {
+      "es": "Operaciones e instalaciones",
+      "en": "Operations and facilities"
+    },
+    "description": {
+      "es": "Infraestructura, confiabilidad y mantenimiento.",
+      "en": "Infrastructure, reliability and maintenance."
+    },
+    "icon": "facilities",
+    "sortOrder": 20,
+    "suggestedChallengeIds": [
+      "aging-infrastructure",
+      "emergency-preparedness",
+      "visibility-monitoring",
+      "facility-expansion"
+    ],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "procurement-supply",
+    "label": {
+      "es": "Compras y cadena de suministro",
+      "en": "Procurement and supply chain"
+    },
+    "description": {
+      "es": "Suministro, inventario y proveedores.",
+      "en": "Supply, inventory and vendors."
+    },
+    "icon": "supply-chain",
+    "sortOrder": 30,
+    "suggestedChallengeIds": [
+      "supply-continuity",
+      "cylinder-inventory",
+      "operational-complexity",
+      "lifecycle-costs"
+    ],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "clinical-respiratory",
+    "label": {
+      "es": "Clínica y terapia respiratoria",
+      "en": "Clinical and respiratory care"
+    },
+    "description": {
+      "es": "Seguridad del paciente y flujo clínico.",
+      "en": "Patient safety and clinical workflow."
+    },
+    "icon": "clinical",
+    "sortOrder": 40,
+    "suggestedChallengeIds": [
+      "patient-staff-safety",
+      "clinical-workflow",
+      "cylinder-inventory",
+      "care-outside-hospital"
+    ],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "quality-compliance",
+    "label": {
+      "es": "Calidad, seguridad, riesgo y cumplimiento",
+      "en": "Quality, safety, risk and compliance"
+    },
+    "description": {
+      "es": "Acreditación, estándares y documentación.",
+      "en": "Accreditation, standards and documentation."
+    },
+    "icon": "compliance",
+    "sortOrder": 50,
+    "suggestedChallengeIds": ["compliance-readiness", "patient-staff-safety", "emergency-preparedness"],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "finance",
+    "label": {
+      "es": "Finanzas y reembolsos",
+      "en": "Finance and reimbursement"
+    },
+    "description": {
+      "es": "Costos, eficiencia y sostenibilidad financiera.",
+      "en": "Costs, efficiency and financial sustainability."
+    },
+    "icon": "finance",
+    "sortOrder": 60,
+    "suggestedChallengeIds": ["lifecycle-costs", "operational-complexity", "supply-continuity"],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "technology-biomed",
+    "label": {
+      "es": "Tecnología, biomédica y transformación digital",
+      "en": "Technology, biomedical and digital transformation"
+    },
+    "description": {
+      "es": "Equipos, monitoreo y modernización digital.",
+      "en": "Equipment, monitoring and digital modernization."
+    },
+    "icon": "technology",
+    "sortOrder": 70,
+    "suggestedChallengeIds": ["visibility-monitoring", "aging-infrastructure", "operational-complexity"],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "ambulatory-homecare",
+    "label": {
+      "es": "Cuidado ambulatorio y en el hogar",
+      "en": "Ambulatory care and homecare"
+    },
+    "description": {
+      "es": "Cuidado fuera del hospital y su logística.",
+      "en": "Care outside the hospital and its logistics."
+    },
+    "icon": "homecare",
+    "sortOrder": 80,
+    "suggestedChallengeIds": ["care-outside-hospital", "cylinder-inventory", "supply-continuity"],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "academia-research",
+    "label": {
+      "es": "Academia e investigación",
+      "en": "Academia and research"
+    },
+    "description": {
+      "es": "Laboratorios, investigación y educación.",
+      "en": "Laboratories, research and education."
+    },
+    "icon": "research",
+    "sortOrder": 90,
+    "suggestedChallengeIds": ["supply-continuity", "patient-staff-safety", "facility-expansion"],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "government-system",
+    "label": {
+      "es": "Gobierno o sistema de salud",
+      "en": "Government or healthcare-system stakeholder"
+    },
+    "description": {
+      "es": "Salud pública, preparación y resiliencia.",
+      "en": "Public health, preparedness and resilience."
+    },
+    "icon": "government",
+    "sortOrder": 100,
+    "suggestedChallengeIds": [
+      "emergency-preparedness",
+      "supply-continuity",
+      "compliance-readiness",
+      "facility-expansion"
+    ],
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  },
+  {
+    "id": "multiple-areas",
+    "label": {
+      "es": "Mi función abarca varias áreas",
+      "en": "My role spans several areas"
+    },
+    "description": {
+      "es": "Empezaremos por los retos más comunes.",
+      "en": "We will start with the most common challenges."
+    },
+    "icon": "multiple-areas",
+    "sortOrder": 1000,
+    "suggestedChallengeIds": [
+      "supply-continuity",
+      "emergency-preparedness",
+      "patient-staff-safety",
+      "operational-complexity"
+    ],
+    "scope": "multiple",
+    "validationStatus": "assumed",
+    "salesReview": {
+      "availableInPuertoRico": "unknown",
+      "decision": "pending",
+      "proposedName": null,
+      "requiredCorrection": "",
+      "missingDigitalMaterial": "",
+      "salesOwner": null,
+      "approvalStatus": "not-started",
+      "conventionPriority": "unset",
+      "priorityConfirmedBySales": false,
+      "notes": ""
+    }
+  }
+]

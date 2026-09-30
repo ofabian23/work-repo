@@ -1,0 +1,143 @@
+{
+  "id": "gas-plant",
+  "slug": "gas-plant",
+  "title": {
+    "es": "Planta de gases medicinales",
+    "en": "Medical-gas plant"
+  },
+  "description": {
+    "es": "El punto de origen del suministro de gases medicinales del hospital.",
+    "en": "The starting point of the hospital's medical gas supply."
+  },
+  "background": {
+    "src": "/assets/scenes/placeholder/gas-plant-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una planta de gases medicinales con tanque de almacenamiento.",
+      "en": "Isometric illustration of a medical-gas plant with a storage tank."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [
+    {
+      "src": "/assets/scenes/placeholder/gas-plant-foreground.svg",
+      "alt": {
+        "es": "Cerca y árboles en primer plano.",
+        "en": "Fence and trees in the foreground."
+      },
+      "depth": 0.35,
+      "assetStatus": "placeholder"
+    }
+  ],
+  "hotspots": [
+    {
+      "id": "gas-plant-bulk-tank",
+      "type": "solution",
+      "x": 56.5,
+      "y": 36,
+      "width": 24,
+      "height": 18,
+      "label": {
+        "es": "Tanque de almacenamiento",
+        "en": "Storage tank"
+      },
+      "accessibleLabel": {
+        "es": "Ver suministro centralizado y monitoreo del tanque",
+        "en": "View centralized supply and tank monitoring"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["supply-continuity", "visibility-monitoring"],
+        "solutionIds": ["bulk-centralized-supply", "monitoring-telemetry"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["bulk-centralized-supply", "monitoring-telemetry"]
+    },
+    {
+      "id": "gas-plant-backup",
+      "type": "solution",
+      "x": 51.5,
+      "y": 58.5,
+      "label": {
+        "es": "Suministro de respaldo",
+        "en": "Backup supply"
+      },
+      "accessibleLabel": {
+        "es": "Ver planificación de suministro de respaldo y emergencias",
+        "en": "View backup and emergency supply planning"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["emergency-preparedness"],
+        "solutionIds": ["backup-emergency-supply"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["backup-emergency-supply"]
+    },
+    {
+      "id": "gas-plant-to-utilities",
+      "type": "navigation",
+      "x": 52,
+      "y": 79,
+      "label": {
+        "es": "Área de utilidades e infraestructura",
+        "en": "Utility and infrastructure area"
+      },
+      "accessibleLabel": {
+        "es": "Ir a: Área de utilidades e infraestructura",
+        "en": "Go to: Utility and infrastructure area"
+      },
+      "visualImportance": "tertiary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "utilities"
+    },
+    {
+      "id": "gas-plant-perimeter",
+      "type": "information",
+      "x": 20.5,
+      "y": 47.5,
+      "label": {
+        "es": "Zona restringida",
+        "en": "Restricted area"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre el perímetro de la planta de gases",
+        "en": "Information about the gas plant perimeter"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["patient-staff-safety", "compliance-readiness"],
+        "solutionIds": ["training-operational-readiness"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Perímetro de la planta",
+          "en": "Plant perimeter"
+        },
+        "body": {
+          "es": "El área de almacenamiento de gases suele tener acceso controlado, señalización visible y distancias de seguridad definidas por el equipo de instalaciones.",
+          "en": "Gas storage areas usually have controlled access, visible signage and safety distances defined by the facilities team."
+        },
+        "bullets": [
+          {
+            "es": "Acceso controlado",
+            "en": "Controlled access"
+          },
+          {
+            "es": "Señalización visible",
+            "en": "Visible signage"
+          }
+        ]
+      }
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "gas-plant"],
+  "validationStatus": "assumed",
+  "sortOrder": 60
+}

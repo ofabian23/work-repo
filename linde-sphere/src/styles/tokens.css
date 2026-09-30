@@ -1,0 +1,187 @@
+/*
+ * Linde Sphere design tokens (ADR-044). Single source of truth for the touchscreen design system.
+ * Colors come from brand-config.ts (emitted as --brand-* on <html>); everything else is defined here.
+ * rem values scale with the fluid root size (~23 px on the 1080 × 1920 kiosk, 16 px on phones).
+ */
+@theme inline {
+  /* ---- Color (semantic, brand-driven) ---------------------------------------------------- */
+  --color-canvas: var(--brand-background);
+  --color-surface: var(--brand-surface);
+  --color-surface-muted: var(--brand-surface-muted);
+  --color-ink: var(--brand-text);
+  --color-ink-muted: var(--brand-text-muted);
+  --color-primary: var(--brand-primary);
+  --color-on-primary: var(--brand-on-primary);
+  --color-accent: var(--brand-accent);
+  --color-line: var(--brand-border);
+  --color-focus: var(--brand-focus);
+  --color-notice: var(--brand-notice);
+  --color-notice-surface: var(--brand-notice-surface);
+  --color-info: var(--brand-info);
+  --color-info-surface: var(--brand-info-surface);
+  --color-success: var(--brand-success);
+  --color-success-surface: var(--brand-success-surface);
+  --color-danger: var(--brand-danger);
+  --color-danger-surface: var(--brand-danger-surface);
+  --color-overlay: rgb(19 35 47 / 0.55); /* literal: ::backdrop may not inherit custom properties */
+
+  /* ---- Typography ------------------------------------------------------------------------ */
+  --font-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
+  /* Smallest text in the system is 1rem (≈23 px on the kiosk); nothing smaller is used. */
+  --text-caption: 1rem;
+  --text-caption--line-height: 1.4;
+  --text-label: 1.125rem;
+  --text-label--line-height: 1.35;
+  --text-body: 1.25rem;
+  --text-body--line-height: 1.5;
+  --text-lead: 1.5rem;
+  --text-lead--line-height: 1.4;
+  --text-title: 1.875rem;
+  --text-title--line-height: 1.2;
+  --text-headline: 2.5rem;
+  --text-headline--line-height: 1.1;
+  --text-display: clamp(2.5rem, 7vmin, 5.5rem);
+  --text-display--line-height: 1.05;
+}
+
+@theme {
+  /* ---- Spacing and touch targets ---------------------------------------------------------- */
+  --spacing-touch-min: 3rem; /* ≥ 48 px: WCAG 2.2 minimum, never go below */
+  --spacing-touch: 4rem; /* ≥ 64 px: default for primary actions and hotspots */
+  --spacing-touch-lg: 5rem; /* ≥ 80 px: hero actions */
+  --spacing-gutter: clamp(1rem, 6vw, 4.5rem); /* horizontal page padding */
+  --spacing-stack: clamp(1rem, 2.5vh, 2.5rem); /* vertical rhythm between sections */
+
+  /* ---- Radius ---------------------------------------------------------------------------- */
+  --radius-control: 1rem;
+  --radius-card: 1.5rem;
+  --radius-sheet: 2rem;
+
+  /* ---- Shadow (subtle; no glass or glow effects) ------------------------------------------ */
+  --shadow-card: 0 1px 2px rgb(19 35 47 / 0.06), 0 2px 8px rgb(19 35 47 / 0.06);
+  --shadow-raised: 0 4px 16px rgb(19 35 47 / 0.12);
+  --shadow-sheet: 0 -8px 32px rgb(19 35 47 / 0.18);
+
+  /* ---- Motion (always paired with motion-safe or the reduced-motion override) ------------- */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+  --animate-pulse-ring: pulse-ring 2.4s var(--ease-standard) infinite;
+  --animate-sheet-in: sheet-in 320ms var(--ease-emphasized);
+  --animate-fade-in: fade-in 200ms var(--ease-standard);
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-phrase-in: phrase-in 600ms var(--ease-emphasized);
+  /* Scene changes in the explorer (ADR-049): controlled zoom / pan illusions, never a free camera. */
+  --animate-scene-zoom-in-exit: scene-zoom-in-exit 560ms var(--ease-emphasized) both;
+  --animate-scene-zoom-in-enter: scene-zoom-in-enter 560ms var(--ease-emphasized) both;
+  --animate-scene-zoom-out-exit: scene-zoom-out-exit 560ms var(--ease-emphasized) both;
+  --animate-scene-zoom-out-enter: scene-zoom-out-enter 560ms var(--ease-emphasized) both;
+  --animate-scene-pan-exit: scene-pan-exit 560ms var(--ease-emphasized) both;
+  --animate-scene-pan-enter: scene-pan-enter 560ms var(--ease-emphasized) both;
+  --animate-layer-settle: layer-settle 700ms var(--ease-emphasized) both;
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    70%,
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
+  @keyframes sheet-in {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  @keyframes phrase-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes scene-zoom-in-exit {
+    to {
+      opacity: 0;
+      transform: scale(1.8);
+    }
+  }
+  @keyframes scene-zoom-in-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.86);
+    }
+  }
+  @keyframes scene-zoom-out-exit {
+    to {
+      opacity: 0;
+      transform: scale(0.72);
+    }
+  }
+  @keyframes scene-zoom-out-enter {
+    from {
+      opacity: 0;
+      transform: scale(1.35);
+    }
+  }
+  @keyframes scene-pan-exit {
+    to {
+      opacity: 0;
+      transform: translateX(calc(var(--pan-direction, 1) * -12%));
+    }
+  }
+  @keyframes scene-pan-enter {
+    from {
+      opacity: 0;
+      transform: translateX(calc(var(--pan-direction, 1) * 12%));
+    }
+  }
+  /* Foreground layers settle into place slightly later than the background (depth illusion). */
+  @keyframes layer-settle {
+    from {
+      transform: translateY(calc(var(--layer-depth, 0) * 5%));
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+:root {
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+}
+
+/* Consistent, high-visibility focus ring for keyboard users (never removed without replacement). */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    outline: 4px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+}

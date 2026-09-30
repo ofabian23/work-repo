@@ -1,0 +1,17 @@
+{
+  "version": "0.1.0",
+  "reportDelivery": {
+    "es": "[BORRADOR] Autorizo el envío del informe personalizado que solicité al correo electrónico indicado.",
+    "en": "[DRAFT] I authorize sending the personalized report I requested to the email address provided."
+  },
+  "salesFollowUp": {
+    "es": "[BORRADOR] Deseo que un representante me contacte sobre las oportunidades identificadas. Opcional.",
+    "en": "[DRAFT] I would like a representative to contact me about the opportunities identified. Optional."
+  },
+  "privacyNotice": {
+    "es": "[BORRADOR] Usaremos sus datos de contacto únicamente para los fines que usted autorice. Texto final pendiente de aprobación legal.",
+    "en": "[DRAFT] We will use your contact details only for the purposes you authorize. Final text pending legal approval."
+  },
+  "validationStatus": "placeholder",
+  "internalNotes": "Placeholder wording. Final consent and privacy text requires legal/compliance approval (PROJECT_BRIEF Q3)."
+}

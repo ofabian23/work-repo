@@ -1,0 +1,51 @@
+{
+  "version": "0.1.0",
+  "title": {
+    "es": "Su resumen personalizado de Linde Sphere",
+    "en": "Your personalized Linde Sphere summary"
+  },
+  "subject": {
+    "es": "Su resumen personalizado de Linde Sphere",
+    "en": "Your personalized Linde Sphere summary"
+  },
+  "intro": {
+    "es": "Gracias por visitarnos. Este resumen recoge lo que compartió y exploró durante su visita, para revisarlo con calma o compartirlo con su equipo.",
+    "en": "Thank you for visiting us. This summary gathers what you shared and explored during your visit, to review at your own pace or share with your team."
+  },
+  "callToAction": {
+    "heading": {
+      "es": "Converse con un especialista",
+      "en": "Talk with a specialist"
+    },
+    "body": {
+      "es": "Un especialista puede ayudarle a confirmar qué aplica a su organización y cuáles serían los siguientes pasos.",
+      "en": "A specialist can help you confirm what applies to your organization and what the next steps could be."
+    },
+    "buttonLabel": {
+      "es": "Solicitar una conversación",
+      "en": "Request a conversation"
+    }
+  },
+  "salesContact": {
+    "name": {
+      "es": "Equipo comercial (ejemplo)",
+      "en": "Sales team (example)"
+    },
+    "email": "ventas@example.com",
+    "phone": null
+  },
+  "disclaimer": {
+    "es": "[BORRADOR] Este resumen es un punto de partida basado en lo que compartió durante la visita; no es una evaluación completa ni un consejo clínico. La aplicabilidad final requiere la consulta con un representante calificado.",
+    "en": "[DRAFT] This summary is a starting point based on what you shared during the visit; it is not a complete assessment or clinical advice. Final applicability requires consultation with a qualified representative."
+  },
+  "privacyFooter": {
+    "es": "[BORRADOR] Recibe este mensaje porque solicitó su resumen en nuestro espacio de exhibición y autorizó su envío. Para consultas sobre sus datos, responda a este correo. Texto final pendiente de aprobación legal.",
+    "en": "[DRAFT] You are receiving this message because you requested your summary at our exhibit and authorized sending it. For questions about your data, reply to this email. Final text pending legal approval."
+  },
+  "pendingValidationNotice": {
+    "es": "Algunas recomendaciones son contenido de demostración pendiente de validación para Puerto Rico.",
+    "en": "Some recommendations are demonstration content pending validation for Puerto Rico."
+  },
+  "validationStatus": "placeholder",
+  "internalNotes": "Placeholder report copy and example sales contact. Final wording needs marketing and legal approval (PROJECT_BRIEF Q3); sales contact details come from the sales team (Q4)."
+}

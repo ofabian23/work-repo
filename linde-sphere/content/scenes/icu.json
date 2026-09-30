@@ -1,0 +1,131 @@
+{
+  "id": "icu",
+  "slug": "icu",
+  "title": {
+    "es": "Unidad de cuidado intensivo",
+    "en": "Intensive care unit"
+  },
+  "description": {
+    "es": "Donde la disponibilidad continua de recursos críticos es esencial.",
+    "en": "Where continuous availability of critical resources is essential."
+  },
+  "background": {
+    "src": "/assets/scenes/placeholder/icu-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de una unidad de cuidado intensivo con camas y equipos de monitoreo.",
+      "en": "Isometric illustration of an intensive care unit with beds and monitoring equipment."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "icu-bedside-supply",
+      "type": "information",
+      "x": 63,
+      "y": 30.5,
+      "label": {
+        "es": "Oxígeno junto a la cama",
+        "en": "Bedside oxygen"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre la disponibilidad de oxígeno y gases medicinales junto a la cama",
+        "en": "Information about bedside availability of oxygen and medical gases"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["patient-staff-safety", "supply-continuity"],
+        "solutionIds": ["clinical-oxygen-support"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Disponibilidad junto a la cama",
+          "en": "Availability at the bedside"
+        },
+        "body": {
+          "es": "Los pacientes en cuidado intensivo dependen de oxígeno y otros gases medicinales disponibles junto a la cama. Los equipos suelen querer conocer el estado del suministro antes de que se vuelva urgente.",
+          "en": "Intensive care patients depend on oxygen and other medical gases being available at the bedside. Teams often want to know the supply status before it becomes urgent."
+        },
+        "bullets": [
+          {
+            "es": "Disponibilidad en el punto de cuidado",
+            "en": "Point-of-care availability"
+          },
+          {
+            "es": "Estado del suministro",
+            "en": "Supply status"
+          }
+        ]
+      }
+    },
+    {
+      "id": "icu-clinical-oxygen",
+      "type": "solution",
+      "x": 73,
+      "y": 49.5,
+      "label": {
+        "es": "Oxígeno clínico",
+        "en": "Clinical oxygen"
+      },
+      "accessibleLabel": {
+        "es": "Ver apoyo en oxígeno clínico para cuidado intensivo",
+        "en": "View clinical oxygen support for intensive care"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["clinical-workflow", "patient-staff-safety"],
+        "solutionIds": ["clinical-oxygen-support"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["clinical-oxygen-support"]
+    },
+    {
+      "id": "icu-monitoring",
+      "type": "solution",
+      "x": 88,
+      "y": 34,
+      "label": {
+        "es": "Monitoreo del suministro",
+        "en": "Supply monitoring"
+      },
+      "accessibleLabel": {
+        "es": "Ver monitoreo y telemetría del suministro",
+        "en": "View supply monitoring and telemetry"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["visibility-monitoring"],
+        "solutionIds": ["monitoring-telemetry"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["monitoring-telemetry"]
+    },
+    {
+      "id": "icu-to-operating-room",
+      "type": "navigation",
+      "x": 10.5,
+      "y": 45.5,
+      "label": {
+        "es": "Hacia sala de operaciones",
+        "en": "To the operating room"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la sala de operaciones",
+        "en": "Go to the operating room"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "operating-room"
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "icu"],
+  "validationStatus": "assumed",
+  "sortOrder": 20
+}

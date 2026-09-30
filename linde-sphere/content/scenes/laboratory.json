@@ -1,0 +1,110 @@
+{
+  "id": "laboratory",
+  "slug": "laboratory",
+  "title": {
+    "es": "Laboratorio",
+    "en": "Laboratory"
+  },
+  "description": {
+    "es": "Diagnóstico e investigación que dependen de gases y prácticas de manejo especializadas.",
+    "en": "Diagnostics and research that depend on gases and specialized handling practices."
+  },
+  "background": {
+    "src": "/assets/scenes/placeholder/laboratory-background.svg",
+    "alt": {
+      "es": "Ilustración isométrica de un laboratorio con equipos analíticos y cilindros.",
+      "en": "Isometric illustration of a laboratory with analytical instruments and cylinders."
+    },
+    "depth": 0,
+    "assetStatus": "placeholder"
+  },
+  "foregroundLayers": [],
+  "hotspots": [
+    {
+      "id": "lab-gas-supply",
+      "type": "solution",
+      "x": 68,
+      "y": 33.5,
+      "label": {
+        "es": "Suministro del laboratorio",
+        "en": "Laboratory supply"
+      },
+      "accessibleLabel": {
+        "es": "Ver planificación del suministro y manejo de cilindros para el laboratorio",
+        "en": "View supply planning and cylinder management for the laboratory"
+      },
+      "visualImportance": "primary",
+      "recommendationSignals": {
+        "challengeIds": ["supply-continuity", "cylinder-inventory"],
+        "solutionIds": ["medical-gas-supply-planning", "cylinder-inventory-management"]
+      },
+      "validationStatus": "assumed",
+      "targetSolutionIds": ["medical-gas-supply-planning", "cylinder-inventory-management"]
+    },
+    {
+      "id": "lab-safe-handling",
+      "type": "information",
+      "x": 86,
+      "y": 41.5,
+      "label": {
+        "es": "Manejo seguro",
+        "en": "Safe handling"
+      },
+      "accessibleLabel": {
+        "es": "Información sobre el manejo seguro de gases en el laboratorio",
+        "en": "Information about safe gas handling in the laboratory"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": ["patient-staff-safety"],
+        "solutionIds": ["training-operational-readiness"]
+      },
+      "validationStatus": "assumed",
+      "panel": {
+        "title": {
+          "es": "Manejo seguro en el laboratorio",
+          "en": "Safe handling in the laboratory"
+        },
+        "body": {
+          "es": "Los laboratorios utilizan distintos gases y requieren prácticas claras de almacenamiento, manejo y capacitación del personal.",
+          "en": "Laboratories use a variety of gases and need clear storage, handling and staff training practices."
+        },
+        "bullets": [
+          {
+            "es": "Almacenamiento",
+            "en": "Storage"
+          },
+          {
+            "es": "Capacitación del personal",
+            "en": "Staff training"
+          }
+        ]
+      }
+    },
+    {
+      "id": "lab-to-gas-plant",
+      "type": "navigation",
+      "x": 9.5,
+      "y": 46,
+      "label": {
+        "es": "Hacia la planta de gases",
+        "en": "To the gas plant"
+      },
+      "accessibleLabel": {
+        "es": "Ir a la planta de gases medicinales",
+        "en": "Go to the medical gas plant"
+      },
+      "visualImportance": "secondary",
+      "recommendationSignals": {
+        "challengeIds": [],
+        "solutionIds": []
+      },
+      "validationStatus": "assumed",
+      "targetSceneId": "gas-plant"
+    }
+  ],
+  "parentSceneId": "campus",
+  "breadcrumb": ["campus", "laboratory"],
+  "validationStatus": "assumed",
+  "sortOrder": 50
+}
