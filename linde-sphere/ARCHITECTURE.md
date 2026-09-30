@@ -1272,7 +1272,8 @@ Scripts: `lint`, `typecheck`, `format:check`, `test`, `test:e2e`, `content:check
   motion removes them.
 - **Report:** build and render in < 25 ms, with email HTML < 60 KB (unit test). The report is rendered
   before the storage transaction, never inside it.
-- **Database:** one transaction per submission. SQLite in WAL mode. Content is cached per process in
+- **Database:** one transaction per submission. The rollback journal with a 5 s busy timeout (WAL rejected
+  in ADR-058: deferred Prisma transactions fail instead of waiting). Content is cached per process in
   production.
 - **Re-renders:**
   - Idle tracking uses refs; activity events do not re-render.

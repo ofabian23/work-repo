@@ -10,9 +10,6 @@ export async function register() {
     const env = getServerEnv();
     // Refuse to start with invalid content rather than serving a broken experience.
     getPublicContent(env.CONTENT_MODE, { previewPlaceholders: env.CONTENT_PREVIEW_PLACEHOLDERS });
-    // WAL journal: reads no longer wait behind writes (ADR-058).
-    const { enableWriteAheadLog } = await import("@/server/db/sqlite-pragmas");
-    enableWriteAheadLog(env.DATABASE_URL);
     // Email retries (ADR-054). Deliveries are only attempted for stored leads; see src/server/email.
     const { startEmailWorker } = await import("@/server/email");
     startEmailWorker();

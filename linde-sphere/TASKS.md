@@ -294,7 +294,8 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       neighboring scenes
 - [x] Budgets: first-load JS from the build manifest (E2E); no third-party requests; asset size budget in
       `content:check`; report render time and size (unit)
-- [x] SQLite WAL at start-up; report rendered outside the transaction; idle timer without re-renders
+- [x] Report rendered outside the transaction; idle timer without re-renders; SQLite WAL evaluated and
+      rejected (ADR-058)
 - [x] MANUAL_KIOSK_TEST.md: physical-device checklist
 - Measured on the production build: first-load JS for the kiosk route went from ~277 KB to ~173 KB
   gzipped (~578 KB raw; framework 130 KB and app 43 KB; zod now only in the lazy lead-form chunk); interactive in about READY_MS ms on the local E2E server.

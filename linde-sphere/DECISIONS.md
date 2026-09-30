@@ -1057,10 +1057,14 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
     - No third-party requests. HTML < 400 KB.
     - Each `public/` asset has a size budget (images 1 MB, SVG 512 KB), enforced by `content:check`.
     - Report build and render: < 25 ms, and email HTML < 60 KB.
-  - **SQLite:**
-    - WAL journal mode is set once at start-up, so reads no longer wait behind writes. `synchronous` stays
-      FULL.
-    - Backups keep using the SQLite backup API, which is WAL-safe.
+  - **SQLite: WAL evaluated and rejected.**
+    - With WAL, Prisma's deferred interactive transactions (read the idempotency record, then write) fail
+      immediately with SQLITE_BUSY when another connection has committed in between, instead of waiting on
+      the 5 s busy timeout.
+    - This was observed in the E2E suite (two server processes on one file): a lead was not stored and
+      the visitor saw "try again".
+    - The rollback journal with the busy timeout serializes writes safely. At one kiosk's volume, reads
+      waiting behind a short write cost nothing noticeable.
 - **Consequences:**
   - Zoom works for visitors who need it, and a pinch on the scene can no longer break its layout.
   - First-load JavaScript went from ~277 KB to ~173 KB compressed (~415 KB less to parse) before the first screen.
