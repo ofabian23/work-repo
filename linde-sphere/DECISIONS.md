@@ -640,3 +640,41 @@ entry here — architecture is never changed silently.
     meaningfully, but they can still open preliminary recommendations from the role journey.
   - The recommendation snapshot's shape changed (tiers and extra fields). No stored data existed yet
     (Phase 7), so no migration is needed.
+
+## ADR-051 — Value screen, evidence-based stable recommendations, path B and the explorer tray
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Context:** The visitor-facing recommendations must show value before any form, never pressure the
+  visitor or overclaim, mark demo content, preserve progress, update when there is new meaningful evidence,
+  and not reshuffle cards after trivial interactions.
+- **Decision:**
+  - **Value screen:** the heading, a summary, a disclaimer (not a complete assessment or clinical advice), a
+    demo notice, 3 primary plus ≤ 3 secondary cards and a single primary action, "Enviarme mi resumen
+    personalizado".
+    - That action leads to a summary-request screen that explains the summary and how contact details and
+      consent are handled. It records the `summary-requested` event. The lead form stays in Phase 7.
+    - The secondary actions are continue exploring, review my priorities and start over (with confirmation).
+    - A unit test enforces the copy rules on every UI string.
+  - **Recommendation evidence:** only evidence drives recommendations: choices, content opened and the scenes
+    where content was opened. Navigation and passing through scenes never do.
+    - `recommendationEvidence` defines evidence and `evidenceKey` decides when to recalculate.
+    - The Phase 7 server recomputation must use the same evidence function.
+  - **Order stability:** `stabilizeRecommendations` keeps the order the visitor last saw unless the set changed
+    or a swap is backed by ≥ `results.reorderMargin` points (seed 2, in `engine-settings.json`).
+    - `recommendationChanges` drives the "Nuevo" marks and the "updated" notice. It covers new cards and
+      changed order, relevance or reasons.
+  - **Resources:** they now include demo-status (assumed) assets in demo mode, marked "pendiente de
+    validación". Placeholder or unavailable assets are never offered, and production offers validated
+    assets only. This relaxes ADR-050's validated-only rule, as the prompt asked for "approved or demo-status
+    resources".
+  - **Path B "Necesito…":** all challenges (≤ 3, or "Algo más"), then an optional role, then the tailoring
+    transition, then recommendations. `PathScreen` placeholders are removed.
+  - **Explorer tray:** a compact "Vista rápida" sheet with the current primary recommendations and new marks.
+    Opening it commits the snapshot.
+  - **Conversion prompt screens:** now only the explorer; selection screens count as the visitor "still
+    choosing".
+- **Consequences:**
+  - Exploration adds weight to recommendations only through content the visitor actually opened. Scenes merely
+    visited no longer score, which is a deliberate change from the engine's raw-signal tests (those still pass
+    on raw signals).
+  - The facility-type step and path C's optional "tailor" step remain open.

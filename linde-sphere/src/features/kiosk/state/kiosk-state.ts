@@ -31,9 +31,13 @@ export type KioskScreen =
   | "next-steps"
   | "recommendations"
   | "refine-challenges"
-  // Path B — "Necesito…" (Phase 5) and path C — explorer (Phase 6)
+  // Path B — "Necesito…": challenges, then an optional role
   | "challenges"
-  | "explore";
+  | "challenge-role"
+  // Path C — explorer
+  | "explore"
+  // Value first, then the summary request (the lead form follows in Phase 7)
+  | "summary-request";
 
 /** Screens reachable with GO_TO once a session exists. */
 export type JourneyScreen = Exclude<KioskScreen, "attract">;
@@ -99,6 +103,7 @@ export type KioskAction =
   | { type: "TOGGLE_CHALLENGE"; challengeId: string; max: number }
   | { type: "TOGGLE_OTHER_CHALLENGE" }
   | { type: "CONVERSION_PROMPT"; outcome: "shown" | "accepted" | "dismissed" }
+  | { type: "REQUEST_SUMMARY" }
   | { type: "SELECT_FACILITY"; facilityTypeId: string | null }
   | { type: "VISIT_SCENE"; sceneId: string }
   | { type: "OPEN_HOTSPOT"; hotspotId: string }
@@ -228,6 +233,8 @@ function reduce(state: KioskState, action: KioskAction): KioskState {
         ),
       };
     }
+    case "REQUEST_SUMMARY":
+      return { ...state, screen: "summary-request", session: withEvent(state.session, "summary-requested") };
     case "CONVERSION_PROMPT":
       return { ...state, session: withEvent(state.session, `conversion-prompt-${action.outcome}`) };
     case "SELECT_FACILITY":

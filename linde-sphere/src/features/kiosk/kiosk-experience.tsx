@@ -1,16 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { InactivityWarning } from "@/components/overlay/inactivity-warning";
 import type { PublicContentBundle } from "@/domain/content/visibility";
 import { recommend } from "@/domain/recommendations/engine";
 import { RecommendationReadiness } from "@/domain/recommendations/recommendation-readiness";
-import { primaryItems } from "@/domain/recommendations/recommendation-result";
+import { primaryItems, type RecommendationResult } from "@/domain/recommendations/recommendation-result";
+import {
+  evidenceKey,
+  recommendationChanges,
+  recommendationEvidence,
+  stabilizeRecommendations,
+} from "@/domain/recommendations/recommendation-stability";
 import type { NextStep } from "@/domain/session/session-event";
 import { EMPTY_SIGNALS, type EntryPath } from "@/domain/session/visitor-session";
 import { appConfig } from "@/lib/config/app-config";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import { useHydrated } from "@/lib/use-hydrated";
 import { useReducedMotion } from "@/lib/use-reduced-motion";
+import { useStableByKey } from "@/lib/use-stable-by-key";
 import { ExplorerScreen } from "../explorer/explorer-screen";
 import { ConversionPrompt } from "./conversion/conversion-prompt";
 import type { ConversionPromptConfig } from "./conversion/conversion-policy";
@@ -22,8 +30,9 @@ import { RecommendationsScreen } from "./journey/recommendations-screen";
 import { RefineChallengesScreen } from "./journey/refine-challenges-screen";
 import { RoleChallengesScreen } from "./journey/role-challenges-screen";
 import { TailoringScreen } from "./journey/tailoring-screen";
+import { ChallengesPathScreen } from "./journey/challenges-path-screen";
+import { SummaryRequestScreen } from "./journey/summary-request-screen";
 import { AttractScreen } from "./screens/attract-screen";
-import { PathScreen } from "./screens/path-screen";
 import { WelcomeScreen } from "./screens/welcome-screen";
 import type { JourneyScreen } from "./state/kiosk-state";
 import { useKioskSession } from "./state/kiosk-session-provider";
@@ -47,25 +56,36 @@ export function KioskExperience({
   conversionPrompt?: ConversionPromptConfig & { screens: readonly string[] };
 }) {
   const { state, dispatch, startSession, choosePath, goToWelcome, reset } = useKioskSession();
+  const { localize } = useLanguage();
   const ready = useHydrated();
   const session = state.session;
   const signals = session?.signals ?? EMPTY_SIGNALS;
   const maxChallenges = appConfig.recommendations.maxSelectedChallenges;
 
-  // Preliminary recommendations are recalculated as soon as a selection changes (pure, deterministic).
-  // `signals` keeps its identity until a signal changes, so unrelated actions do not recalculate.
+  // Recommendations (ADR-051): recalculated only when the visitor's evidence changes (choices and content
+  // they looked at, not walking between scenes), then kept in the order the visitor last saw unless the
+  // set changed or a clear score gap justifies moving a card.
   const hasSession = session !== null;
-  const preliminary = useMemo(
-    () => (hasSession ? recommend(signals, content) : null),
-    [hasSession, signals, content],
+  const evidence = useMemo(() => recommendationEvidence(signals, content.scenes), [signals, content.scenes]);
+  const stableEvidence = useStableByKey(evidence, evidenceKey(evidence));
+  const fresh = useMemo(
+    () => (hasSession ? recommend(stableEvidence, content) : null),
+    [hasSession, stableEvidence, content],
+  );
+  const snapshot = session?.recommendations ?? null;
+  const reorderMargin = content.settings.results.reorderMargin;
+  const displayed = useMemo(
+    () => stabilizeRecommendations(snapshot, fresh, reorderMargin),
+    [snapshot, fresh, reorderMargin],
   );
   const persona = content.personas.find((p) => p.id === signals.personaId) ?? null;
-  const areaIds = relevantSceneIds(preliminary, content);
+  const areaIds = relevantSceneIds(displayed, content);
+  // What the visitor saw before opening the recommendations screen (to point out what changed).
+  const [lastSeen, setLastSeen] = useState<RecommendationResult | null>(null);
 
-  /** Stores the current calculation in the session (and its event) before showing it, once per change. */
+  /** Stores the displayed result in the session (and its event) when the visitor is shown it. */
   const commitRecommendations = () => {
-    if (session?.recommendations !== preliminary)
-      dispatch({ type: "SET_RECOMMENDATIONS", result: preliminary });
+    if (snapshot !== displayed) dispatch({ type: "SET_RECOMMENDATIONS", result: displayed });
   };
   const chooseNextStep = (step: NextStep) => {
     if (step === "view-recommendations") commitRecommendations();
@@ -86,6 +106,7 @@ export function KioskExperience({
   };
   const readiness = RecommendationReadiness.assess(signals, content);
   const showRecommendations = () => {
+    setLastSeen(snapshot);
     commitRecommendations();
     dispatch({ type: "GO_TO", screen: "recommendations" });
   };
@@ -102,13 +123,15 @@ export function KioskExperience({
     [dispatch],
   );
   const reducedMotion = useReducedMotion(session?.accessibility.reduceMotion ?? false);
-  // Shared screens return to where the visitor came from; after a refine, to the journey's hub.
-  const recommendationsBack = (): JourneyScreen =>
-    state.previousScreen === "explore" || state.previousScreen === "next-steps"
+  // The explorer's "Volver" from the campus returns to where the visitor came from.
+  const explorerExit = (): JourneyScreen =>
+    state.previousScreen === "next-steps" ||
+    state.previousScreen === "recommendations" ||
+    state.previousScreen === "welcome"
       ? state.previousScreen
       : persona
         ? "next-steps"
-        : "explore";
+        : "welcome";
   const toggleChallenge = (challengeId: string) =>
     dispatch({ type: "TOGGLE_CHALLENGE", challengeId, max: maxChallenges });
   const toggleOther = () => dispatch({ type: "TOGGLE_OTHER_CHALLENGE" });
@@ -168,7 +191,13 @@ export function KioskExperience({
       screen = (
         <TailoringScreen
           durationMs={tailoringMs}
-          onDone={() => dispatch({ type: "GO_TO", screen: "next-steps" })}
+          // Path B goes straight to its recommendations; the role journey offers its next steps first.
+          onDone={() =>
+            dispatch({
+              type: "GO_TO",
+              screen: state.previousScreen === "challenge-role" ? "recommendations" : "next-steps",
+            })
+          }
         />
       );
       break;
@@ -177,7 +206,7 @@ export function KioskExperience({
         <NextStepsScreen
           personaLabel={persona?.label ?? null}
           challengeLabels={labelsFor(signals.challengeIds, content.challenges)}
-          recommendationCount={primaryItems(preliminary).length}
+          recommendationCount={primaryItems(displayed).length}
           areaLabels={labelsFor(areaIds, content.scenes)}
           maxChallenges={maxChallenges}
           onChoose={chooseStep}
@@ -188,17 +217,27 @@ export function KioskExperience({
     case "recommendations":
       screen = (
         <RecommendationsScreen
-          result={preliminary}
+          result={displayed}
           content={content}
-          onRefine={() => chooseStep("refine-challenges")}
-          onExplore={() => chooseStep("explore-areas")}
+          summary={{
+            personaLabel: persona?.label ?? null,
+            challengeLabels: labelsFor(signals.challengeIds, content.challenges),
+            exploredLabels: labelsFor(evidence.visitedSceneIds, content.scenes),
+          }}
+          changes={recommendationChanges(lastSeen, displayed)}
+          onSendSummary={() => dispatch({ type: "REQUEST_SUMMARY" })}
+          onContinueExploring={() => chooseStep("explore-areas")}
+          onReviewPriorities={() => chooseStep("refine-challenges")}
+          onStartOver={() => reset("explicit")}
           onViewScene={(sceneId) => {
             dispatch({ type: "VISIT_SCENE", sceneId });
             dispatch({ type: "GO_TO", screen: "explore" });
           }}
-          onBack={() => dispatch({ type: "GO_TO", screen: recommendationsBack() })}
         />
       );
+      break;
+    case "summary-request":
+      screen = <SummaryRequestScreen onBack={() => dispatch({ type: "GO_TO", screen: "recommendations" })} />;
       break;
     case "refine-challenges":
       screen = (
@@ -209,16 +248,46 @@ export function KioskExperience({
           otherSelected={session?.otherChallengeSelected ?? false}
           onToggle={toggleChallenge}
           onToggleOther={toggleOther}
-          onContinue={() => {
-            commitRecommendations();
-            dispatch({ type: "GO_TO", screen: "recommendations" });
-          }}
-          onBack={() => dispatch({ type: "GO_TO", screen: persona ? "next-steps" : "recommendations" })}
+          personaLabel={persona ? localize(persona.label) : null}
+          onChangeRole={() => dispatch({ type: "GO_TO", screen: "role" })}
+          onContinue={showRecommendations}
+          onBack={() =>
+            dispatch({
+              type: "GO_TO",
+              screen: state.previousScreen === "next-steps" ? "next-steps" : "recommendations",
+            })
+          }
         />
       );
       break;
     case "challenges":
-      screen = <PathScreen path="challenge" onBack={goToWelcome} />;
+      screen = (
+        <ChallengesPathScreen
+          challenges={[...content.challenges].sort((a, b) => a.sortOrder - b.sortOrder)}
+          selectedIds={signals.challengeIds}
+          max={maxChallenges}
+          otherSelected={session?.otherChallengeSelected ?? false}
+          onToggle={toggleChallenge}
+          onToggleOther={toggleOther}
+          onContinue={() => dispatch({ type: "GO_TO", screen: "challenge-role" })}
+          onBack={goToWelcome}
+        />
+      );
+      break;
+    case "challenge-role":
+      screen = (
+        <PersonaScreen
+          optional
+          personas={content.personas}
+          selectedId={persona?.id ?? null}
+          onSelect={(personaId) => dispatch({ type: "SELECT_PERSONA", personaId })}
+          onContinue={() => {
+            commitRecommendations();
+            dispatch({ type: "GO_TO", screen: "tailoring" });
+          }}
+          onBack={() => dispatch({ type: "GO_TO", screen: "challenges" })}
+        />
+      );
       break;
     case "explore":
       screen = rootSceneId && (
@@ -237,7 +306,10 @@ export function KioskExperience({
           onEngageHotspot={engageHotspot}
           onToggleInterest={(solutionId) => dispatch({ type: "TOGGLE_INTEREST", solutionId })}
           onViewRecommendations={showRecommendations}
-          onExit={() => (persona ? dispatch({ type: "GO_TO", screen: "next-steps" }) : goToWelcome())}
+          onExit={() => dispatch({ type: "GO_TO", screen: explorerExit() })}
+          trayResult={displayed}
+          traySeen={snapshot}
+          onTrayOpen={commitRecommendations}
         />
       );
       break;

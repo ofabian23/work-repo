@@ -236,7 +236,7 @@ describe("determinism and rules", () => {
     expect(run(blended, demo, { primary: 1, secondary: 0 }).items).toHaveLength(1);
     expect(run(blended, demo, { primary: 99, secondary: 99 }).items.length).toBeLessThanOrEqual(6);
     const settings = clone(demo);
-    settings.settings.results = { primary: 2, secondary: 1 };
+    settings.settings.results = { ...settings.settings.results, primary: 2, secondary: 1 };
     expect(run(blended, settings).items.map((i) => i.tier)).toEqual(["primary", "primary", "secondary"]);
   });
 

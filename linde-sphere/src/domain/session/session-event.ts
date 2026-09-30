@@ -33,6 +33,8 @@ export const SESSION_EVENT_TYPES = [
   "conversion-prompt-shown",
   "conversion-prompt-accepted",
   "conversion-prompt-dismissed",
+  /** "Enviarme mi resumen personalizado" was chosen (the form itself comes after, Phase 7). */
+  "summary-requested",
 ] as const;
 export const SessionEventTypeSchema = z.enum(SESSION_EVENT_TYPES);
 export type SessionEventType = z.infer<typeof SessionEventTypeSchema>;

@@ -92,7 +92,7 @@ describe("hospital explorer in the kiosk", () => {
     fireEvent.click(screen.getByTestId("view-my-recommendations"));
     expect(screen.getByTestId("recommendations-screen")).toBeInTheDocument();
     expect(screen.getAllByRole("article")[0]).toHaveTextContent(/abrió «/);
-    fireEvent.click(screen.getByTestId("recommendations-back"));
+    fireEvent.click(screen.getByTestId("continue-exploring"));
     expect(sceneId()).toBe("gas-plant");
   });
 

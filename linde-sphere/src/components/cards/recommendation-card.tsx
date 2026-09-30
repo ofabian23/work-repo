@@ -32,8 +32,8 @@ export function RecommendationCard({
   relatedAreas?: string[];
   /** Relevance in words, e.g. "Muy relevante" (never a number or percentage). */
   relevanceLabel?: string;
-  /** Titles of approved resources for this recommendation. */
-  resources?: string[];
+  /** Resources for this recommendation; `pending` marks demo-status resources awaiting validation. */
+  resources?: { title: string; pending: boolean }[];
   pendingValidation: boolean;
   actions?: ReactNode;
   testId?: string;
@@ -110,7 +110,15 @@ export function RecommendationCard({
               <dd className="text-body text-ink">
                 <ul className="list-disc pl-6" data-testid="recommendation-resources">
                   {resources.map((r) => (
-                    <li key={r}>{r}</li>
+                    <li key={r.title}>
+                      {r.title}
+                      {r.pending && (
+                        <span className="text-notice text-caption font-medium">
+                          {" "}
+                          ({t("recommendations.resourcePending")})
+                        </span>
+                      )}
+                    </li>
                   ))}
                 </ul>
               </dd>

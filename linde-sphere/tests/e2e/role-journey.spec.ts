@@ -85,7 +85,7 @@ test.describe("role-based journey", () => {
       );
       const count = await cards.count();
       for (let i = 0; i < count; i++) {
-        await expect(cards.nth(i).getByRole("region", { name: "Por qué aparece" })).toContainText(
+        await expect(cards.nth(i).getByRole("region", { name: "Por qué es relevante" })).toContainText(
           "Aparece porque",
         );
       }
@@ -125,7 +125,7 @@ test.describe("role-based journey", () => {
     await expect(page.getByTestId("recommendations-screen").getByRole("article").first()).toContainText(
       "This appeared because",
     );
-    await page.getByTestId("recommendations-explore").click();
+    await page.getByTestId("continue-exploring").click();
     // The explorer opens on the campus with the areas behind the recommendations highlighted.
     await expect(page.getByTestId("explorer-screen")).toHaveAttribute("data-scene", "campus");
     await expect(page.getByTestId("hotspot-campus-to-gas-plant")).toHaveAttribute("data-highlighted", "true");
@@ -155,8 +155,8 @@ test.describe("role-based journey", () => {
     await shot("recommendations");
     if (testInfo.project.name === "kiosk-portrait") {
       // The persona list fits the 1080 × 1920 screen without scrolling.
-      await page.getByTestId("recommendations-back").click();
-      await page.getByTestId("next-steps-change-role").click();
+      await page.getByTestId("review-priorities").click();
+      await page.getByTestId("refine-change-role").click();
       const fits = await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight);
       expect(fits).toBe(true);
     }

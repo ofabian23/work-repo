@@ -20,12 +20,15 @@ export function PersonaScreen({
   onSelect,
   onContinue,
   onBack,
+  optional = false,
 }: {
   personas: Persona[];
   selectedId: string | null;
   onSelect: (personaId: string) => void;
   onContinue: () => void;
   onBack: () => void;
+  /** Path B: the role is step 2 of 2 and may be skipped. */
+  optional?: boolean;
 }) {
   const { t } = useLanguage();
   const { single, multiple } = splitPersonas(personas);
@@ -34,8 +37,8 @@ export function PersonaScreen({
     <ScreenFrame
       testId="persona-screen"
       title={t("role.title")}
-      subtitle={t("role.subtitle")}
-      progress={<ProgressIndicator current={1} total={2} />}
+      subtitle={optional ? t("challengeRole.subtitle") : t("role.subtitle")}
+      progress={<ProgressIndicator current={optional ? 2 : 1} total={2} />}
       actions={
         <>
           <SecondaryAction data-testid="persona-back" onClick={onBack}>
@@ -43,11 +46,11 @@ export function PersonaScreen({
           </SecondaryAction>
           <PrimaryAction
             data-testid="persona-continue"
-            disabled={selectedId === null}
+            disabled={!optional && selectedId === null}
             icon={<ArrowRightIcon />}
             onClick={onContinue}
           >
-            {t("journey.continue")}
+            {optional && selectedId === null ? t("challengeRole.skip") : t("journey.continue")}
           </PrimaryAction>
         </>
       }

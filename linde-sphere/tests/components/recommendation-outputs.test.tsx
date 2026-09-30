@@ -19,7 +19,7 @@ async function viewRecommendations(personaId: string, ...challengeIds: string[])
 describe("recommendation outputs on screen", () => {
   it("shows three primary cards with relevance in words", async () => {
     await viewRecommendations("procurement-supply", "cylinder-inventory");
-    const primary = screen.getByRole("list", { name: "Recomendaciones" });
+    const primary = screen.getByRole("list", { name: "Recomendaciones principales" });
     const cards = within(primary).getAllByRole("article");
     expect(cards).toHaveLength(3);
     expect(within(cards[0]!).getByTestId("relevance-label")).toHaveTextContent("Muy relevante");

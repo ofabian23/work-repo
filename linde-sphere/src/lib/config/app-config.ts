@@ -26,8 +26,8 @@ export const appConfig = {
       afterInterruptionMs: 1_500,
       /** The prompt hides itself after this long if the visitor does not respond. */
       visibleMs: 15_000,
-      /** Screens where the prompt may appear (never on forms, results or the attract loop). */
-      screens: ["explore", "challenges"] as readonly string[],
+      /** Screens where the prompt may appear (never on forms, selections, results or the attract loop). */
+      screens: ["explore"] as readonly string[],
     },
     /** Primary design target: portrait touchscreen. */
     designViewport: { width: 1080, height: 1920 },

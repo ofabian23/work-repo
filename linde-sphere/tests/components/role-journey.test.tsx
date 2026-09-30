@@ -183,7 +183,7 @@ describe("tailoring transition and next steps", () => {
     expect(screen.getByTestId("challenge-count")).toHaveTextContent("3 de 3 elegidos");
     await user.click(screen.getByTestId("refine-continue"));
     const first = screen.getAllByRole("article")[0]!;
-    expect(first).toHaveTextContent("Por qué aparece");
+    expect(first).toHaveTextContent("Por qué es relevante");
     expect(first).toHaveTextContent(/eligió «/);
     expect(session().signals.challengeIds).toEqual([
       "supply-continuity",
@@ -230,7 +230,7 @@ describe.each([
     const cards = screen.getAllByRole("article");
     expect(cards.length).toBeGreaterThanOrEqual(2);
     for (const card of cards) {
-      expect(within(card).getByRole("region", { name: "Por qué aparece" })).toHaveTextContent(
+      expect(within(card).getByRole("region", { name: "Por qué es relevante" })).toHaveTextContent(
         `Aparece porque seleccionó «${label}» como su área.`,
       );
       expect(card).toHaveTextContent("Contenido pendiente de validación local");

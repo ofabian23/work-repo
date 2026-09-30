@@ -13,29 +13,45 @@ import { PrimaryAction, SecondaryAction } from "./action-button";
 export function ResetExperienceButton({
   onReset,
   requireConfirmation = true,
+  variant = "header",
+  testId = "reset-experience",
 }: {
   onReset: () => void;
   requireConfirmation?: boolean;
+  /** "header": discreet round control; "action": an outlined action button for action bars. */
+  variant?: "header" | "action";
+  testId?: string;
 }) {
   const { t } = useLanguage();
   const [confirming, setConfirming] = useState(false);
 
   return (
     <>
-      <button
-        type="button"
-        data-testid="reset-experience"
-        onClick={() => (requireConfirmation ? setConfirming(true) : onReset())}
-        className="focus-ring border-line text-ink-muted text-label active:bg-surface-muted inline-flex min-h-14 min-w-14 items-center justify-center gap-2 rounded-full border px-4 font-semibold sm:px-5"
-      >
-        <ResetIcon size="size-6" />
-        {/* Icon-only on narrow screens (label kept for assistive tech); full label on the kiosk. */}
-        <span className="max-sm:sr-only sm:not-sr-only">{t("reset.button")}</span>
-      </button>
+      {variant === "action" ? (
+        <SecondaryAction
+          size="md"
+          data-testid={testId}
+          icon={<ResetIcon size="size-6" />}
+          onClick={() => (requireConfirmation ? setConfirming(true) : onReset())}
+        >
+          {t("reset.button")}
+        </SecondaryAction>
+      ) : (
+        <button
+          type="button"
+          data-testid={testId}
+          onClick={() => (requireConfirmation ? setConfirming(true) : onReset())}
+          className="focus-ring border-line text-ink-muted text-label active:bg-surface-muted inline-flex min-h-14 min-w-14 items-center justify-center gap-2 rounded-full border px-4 font-semibold sm:px-5"
+        >
+          <ResetIcon size="size-6" />
+          {/* Icon-only on narrow screens (label kept for assistive tech); full label on the kiosk. */}
+          <span className="max-sm:sr-only sm:not-sr-only">{t("reset.button")}</span>
+        </button>
+      )}
       <Modal
         open={confirming}
         onClose={() => setConfirming(false)}
-        testId="reset-confirmation"
+        testId={testId === "reset-experience" ? "reset-confirmation" : `${testId}-confirmation`}
         title={t("reset.confirmTitle")}
         description={t("reset.confirmBody")}
         footer={

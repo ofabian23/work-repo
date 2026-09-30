@@ -27,6 +27,11 @@ export const EngineSettingsSchema = z.strictObject({
     primary: whole(1, 3),
     /** Further recommendations shown as "you may also be interested in". */
     secondary: whole(0, 3),
+    /**
+     * Cards the visitor has already seen keep their order unless a reordering is backed by at least this
+     * many points (avoids cards jumping around after small changes).
+     */
+    reorderMargin: whole(0, 10),
   }),
   /** Score thresholds for the relevance label (shown in words, never as a number or percentage). */
   relevance: z

@@ -65,7 +65,10 @@ export const RecommendationItemSchema = z
     /** The scene that best shows this recommendation (where the visitor met it, or its main area). */
     sceneId: IdSchema.nullable(),
     relatedSceneIds: uniqueIds(8),
-    /** Approved (validated) digital assets only; placeholder or unreviewed resources are never offered. */
+    /**
+     * Resources that may be offered: approved (validated) ones, plus in demo mode assumed ones that the UI
+     * marks as pending validation. Placeholder or unavailable resources are never offered (ADR-051).
+     */
     digitalAssetIds: uniqueIds(8),
     nextStep: LocalizedTextSchema,
     /** Validation status of the solution, for internal use (reports to sales, audits). */

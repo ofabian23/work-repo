@@ -11,6 +11,8 @@ import type { Hotspot, Scene } from "@/domain/content/scene";
 import type { PublicContentBundle } from "@/domain/content/visibility";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { NO_TRANSITION, SceneViewer, type SceneTransition } from "./scene-viewer";
+import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
+import { RecommendationTray } from "./recommendation-tray";
 import { transitionBetween } from "./scene-navigation";
 
 /**
@@ -34,6 +36,9 @@ export function ExplorerScreen({
   onToggleInterest,
   onViewRecommendations,
   onExit,
+  trayResult = null,
+  traySeen = null,
+  onTrayOpen = () => undefined,
 }: {
   content: PublicContentBundle;
   sceneId: string;
@@ -52,6 +57,10 @@ export function ExplorerScreen({
   onToggleInterest: (solutionId: string) => void;
   onViewRecommendations: () => void;
   onExit: () => void;
+  /** Current recommendations for the compact tray (shown once recommendations are available). */
+  trayResult?: RecommendationResult | null;
+  traySeen?: RecommendationResult | null;
+  onTrayOpen?: () => void;
 }) {
   const { t, localize } = useLanguage();
   const scenesById = useMemo(() => new Map(content.scenes.map((s) => [s.id, s])), [content.scenes]);
@@ -155,6 +164,15 @@ export function ExplorerScreen({
               ? t("explorer.progressOne")
               : t("explorer.progressMany", { remaining })}
         </p>
+        {recommendationsAvailable && (
+          <RecommendationTray
+            result={trayResult}
+            seen={traySeen}
+            content={content}
+            onOpen={onTrayOpen}
+            onViewAll={onViewRecommendations}
+          />
+        )}
         {recommendationsAvailable && (
           <PrimaryAction
             data-testid="view-my-recommendations"

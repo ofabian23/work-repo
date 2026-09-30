@@ -182,7 +182,7 @@ describe("RecommendationCard", () => {
   it("always shows the 'Why this appeared' explanation and never a score", () => {
     renderUi(<RecommendationCard {...props} pendingValidation={false} />);
     const article = screen.getByRole("article", { name: /Recomendación 1: Suministro de respaldo/ });
-    expect(within(article).getByText("Por qué aparece")).toBeInTheDocument();
+    expect(within(article).getByText("Por qué es relevante")).toBeInTheDocument();
     expect(within(article).getByText(props.whyThisAppeared)).toBeInTheDocument();
     expect(within(article).getByText("Planta de gases medicinales")).toBeInTheDocument();
     expect(screen.queryByTestId("pending-validation")).toBeNull();

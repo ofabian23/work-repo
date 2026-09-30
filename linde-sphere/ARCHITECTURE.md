@@ -269,14 +269,20 @@ continues to the transition, refines, or opens the recommendations, and only if 
 Still planned: `hasMinimumInfo` and `shouldShowPrompt` (path B / explorer prompt, Phase 5–6). The lead draft
 (C2) will live only inside the lead form (Phase 7).
 
-#### 5.2.1 Role journey (path A, `src/features/kiosk/journey/`)
+#### 5.2.1 Journeys (`src/features/kiosk/journey/`)
 
 ```
-ROLE (persona grid, 1 of 2) ─Continuar─► ROLE-CHALLENGES (≤ 4 suggestions + "Algo más", 2 of 2)
-   ─Continuar─► TAILORING ("Estamos adaptando la experiencia a sus prioridades", 1.8 s)
-   ─auto─► NEXT-STEPS ─┬─ Ver recomendaciones preliminares ─► RECOMMENDATIONS ⇄ REFINE / EXPLORE
-                       ├─ Refinar eligiendo retos ─► REFINE-CHALLENGES (all challenges, max 3) ─► RECOMMENDATIONS
-                       └─ Explorar áreas relevantes ─► EXPLORE (placeholder listing the relevant areas until Phase 6)
+A  ROLE (1/2) ─► ROLE-CHALLENGES (≤ 4 + "Algo más", 2/2) ─► TAILORING (1.8 s) ─► NEXT-STEPS
+       NEXT-STEPS ─┬─ Ver recomendaciones preliminares ─► RECOMMENDATIONS
+                   ├─ Refinar eligiendo retos ─► REFINE-CHALLENGES ─► RECOMMENDATIONS
+                   └─ Explorar áreas relevantes ─► EXPLORE
+B  CHALLENGES (all, ≤ 3, 1/2) ─► CHALLENGE-ROLE (optional, 2/2) ─► TAILORING ─► RECOMMENDATIONS
+C  EXPLORE ─(ready)─► "Ver mis recomendaciones" / tray / conversion prompt ─► RECOMMENDATIONS
+
+RECOMMENDATIONS ─┬─ Enviarme mi resumen personalizado ─► SUMMARY-REQUEST (lead form: Phase 7)
+                 ├─ Seguir explorando ─► EXPLORE (same scene, progress kept)
+                 ├─ Revisar mis prioridades ─► REFINE-CHALLENGES (role shown, "Cambiar mi área")
+                 └─ Empezar de nuevo ─► confirmation ─► reset
 ```
 
 - One primary persona (single select; selecting another replaces it). Continue is disabled until one is chosen.
@@ -288,8 +294,52 @@ ROLE (persona grid, 1 of 2) ─Continuar─► ROLE-CHALLENGES (≤ 4 suggestion
   count toward the limit of three, and never opens a text field.
 - Next steps summarize the choices and name up to three relevant areas: the `relatedSceneIds` of the
   recommendations in order, without the campus root.
-- Every recommendation card shows "Por qué aparece" from the engine's `whyThisAppeared` (built from
+- Every recommendation card shows "Por qué es relevante" from the engine's `whyThisAppeared` (built from
   `matchedSignals`); scores are never shown.
+
+#### 5.2.2 Recommendation (value) screen (ADR-051)
+
+It shows value before any form, in this order:
+
+1. The heading "Identificamos oportunidades relevantes para usted".
+2. A one-line summary of the visitor's area, priorities and the areas where they looked at content.
+3. The disclaimer: "a starting point … not a complete assessment or clinical advice".
+4. A demo notice when content is pending Puerto Rico validation.
+5. An "updated" notice when something changed since the visitor last looked.
+6. Up to 3 primary cards, each with:
+   - its relevance in words and the pending badge;
+   - "Por qué es relevante" and "Cuándo puede ser relevante";
+   - related areas;
+   - resources, where demo-status ones are marked "pendiente de validación";
+   - the next step and "Verlo en el hospital".
+7. Up to 3 secondary items.
+
+Its one primary action is **"Enviarme mi resumen personalizado"**, which opens a value-first
+summary-request screen listing what the summary contains; the form is Phase 7. The secondary actions are
+"Seguir explorando", "Revisar mis prioridades" and "Empezar de nuevo" (with confirmation). A copy test bans
+pressure, guarantee, clinical and "comprehensive" wording from all UI strings.
+
+**Calm, evidence-based updates (`recommendation-stability.ts`):**
+
+- **Evidence:** recommendations are calculated from `recommendationEvidence(signals)`: role, challenges,
+  organization type, interests, opened information or solution hotspots (and their engagement), and scenes
+  where such content was opened. Navigation clicks and scenes merely passed through are left out, so walking
+  around never changes recommendations.
+- **When they recalculate:** only when `evidenceKey` changes (`useStableByKey`).
+- **Order:** `stabilizeRecommendations(lastSeen, fresh, reorderMargin)` keeps the order the visitor last saw
+  when the same cards are present and no swap is backed by ≥ `reorderMargin` points (seed 2, in
+  `engine-settings.json`). If the set changed, or a card is clearly stronger, the engine's ranking is used.
+  Identical results keep their identity, so nothing is recorded twice.
+- **What changed:** `recommendationChanges(lastSeen, current)` gives the new cards (marked "Nuevo") and
+  whether membership, order, relevance or reasons changed (the "Actualizamos sus recomendaciones…" notice).
+- **Snapshot:** the session keeps the snapshot the visitor last saw. Opening the recommendations screen or the
+  tray commits it.
+
+**Explorer tray (`recommendation-tray.tsx`):** once recommendations are available, "Vista rápida" (with
+"N nuevas" when new cards appeared) opens a compact sheet with the primary recommendations, their relevance,
+reasons and "Nuevo" marks, plus "Ver todo" and "Seguir explorando". It is a dialog, so the conversion prompt
+stays away while it is open.
+
 - The persona grid uses a compact `TouchCard` density so all 11 options fit 1080 × 1920 without scrolling
   (verified by E2E).
 
@@ -547,8 +597,8 @@ category. Explicit choices (role, challenges, interests) therefore always stay d
      the visitor's labels.
    - **Relevant scene:** where the visitor met it (the strongest opened hotspot's scene, then the
      strongest visited scene), otherwise the category's main area. It powers "Verlo en el hospital".
-   - **Approved assets:** only `validated` digital assets. Placeholder or unreviewed resources are never
-     offered.
+   - **Resources:** `validated` digital assets, plus in demo mode `assumed` ones, which the UI marks
+     "pendiente de validación" (ADR-051). Placeholder or unavailable resources are never offered.
    - **Suggested next action:** the solution's next step.
    - **Validation status:** for internal use. The UI shows only the pending-validation badge.
 8. **Nothing qualifies?** The engine returns the fallback, "talk with a specialist", with an honest

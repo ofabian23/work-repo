@@ -114,16 +114,23 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       recommendations calculated immediately, "Estamos adaptando la experiencia a sus prioridades" transition,
       next steps (view recommendations · refine with challenges · explore relevant areas)
 - [x] Anonymous session events written by the reducer (`SessionEvent`: seq, type, id only)
-- [x] Preliminary recommendations screen: cards with "Por qué aparece", relevance, related areas, next step,
-      pending-validation badge (resources/digital assets: with the report, Phase 8)
+- [x] Recommendation (value) screen (ADR-051): "Identificamos oportunidades…" heading, role/priorities/explored
+      summary, disclaimer (not a complete assessment or clinical advice), demo notice, 3 primary cards ("Por qué es
+      relevante", related areas, approved or demo-status resources, next step, "Verlo en el hospital"), secondary
+      items; primary CTA "Enviarme mi resumen personalizado"; "Seguir explorando" · "Revisar mis prioridades" ·
+      "Empezar de nuevo"
+- [x] Evidence-based, order-stable updates ("Nuevo" marks, "Actualizamos…" notice); explorer "Vista rápida" tray
+- [x] Summary request screen (what the summary includes; form → Phase 7)
 - [x] Refine screen with all challenges (max 3) → updated recommendations
 - [x] Tests: engine reasons for operations/facilities, procurement/supply chain, clinical/respiratory care and
       executive leadership (unit), the same four journeys rendered end to end in jsdom (integration) and in
       Playwright at kiosk, laptop and phone sizes (E2E), plus several-areas, "Algo más", English and layout fit
 - [ ] Optional facility type step (not in this prompt; engine already supports `facilityTypeId`)
 - [x] Persistent "View my recommendations" (explorer, once ready) + contextual prompt (once per interval, ADR-050)
-- [ ] Path B ordering (challenges → role) and path C "tailor" step
-- [ ] Value screen ("We found opportunities…" + what the report includes)
+- [x] Path B "Necesito…": all challenges (≤ 3 or "Algo más") → optional role → tailoring → recommendations
+- [ ] Path C optional "tailor" step (role + challenges before recommendations) — "Revisar mis prioridades" covers it for now
+- [x] Tests: short role, challenge-based, explorer-only, continued exploration, updates after new evidence
+      (component + E2E at three viewports); stability, evidence and copy-principle unit tests
 - [~] E2E: quick path to recommendations in both languages (path A done; path B pending)
 - **Done when:** AC-03, AC-04, AC-06, AC-07, AC-13, AC-15 pass.
 

@@ -200,8 +200,8 @@ test.describe("hospital explorer", () => {
     await expect(progress).toHaveText("Ya puede ver sus recomendaciones.");
     await page.getByTestId("view-my-recommendations").click();
     const first = page.getByTestId("recommendations-screen").getByRole("article").first();
-    await expect(first.getByRole("region", { name: "Por qué aparece" })).toContainText("abrió «");
-    await page.getByTestId("recommendations-back").click();
+    await expect(first.getByRole("region", { name: "Por qué es relevante" })).toContainText("abrió «");
+    await page.getByTestId("continue-exploring").click();
     await expect(page.getByTestId("explorer-screen")).toHaveAttribute("data-scene", "emergency");
   });
 

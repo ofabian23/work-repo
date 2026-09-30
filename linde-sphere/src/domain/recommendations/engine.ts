@@ -55,7 +55,8 @@ type Index = LabelIndex & {
   hotspots: Map<string, Hotspot>;
   hotspotScene: Map<string, string>;
   rootSceneId: string | null;
-  approvedAssetIds: Set<string>;
+  /** Assets that may be offered: validated, or assumed in demo mode (never placeholder or unavailable). */
+  offerableAssetIds: Set<string>;
 };
 
 const sum = (matches: MatchedSignal[]) => matches.reduce((total, m) => total + m.weight, 0);
@@ -97,8 +98,12 @@ function buildIndex(content: PublicContentBundle): Index {
     hotspots,
     hotspotScene,
     rootSceneId: content.scenes.find((s) => s.parentSceneId === null)?.id ?? null,
-    approvedAssetIds: new Set(
-      content.digitalAssets.filter((a) => a.validationStatus === "validated").map((a) => a.id),
+    offerableAssetIds: new Set(
+      content.digitalAssets
+        .filter(
+          (a) => a.validationStatus !== "placeholder" && isVisibleStatus(a.validationStatus, content.mode),
+        )
+        .map((a) => a.id),
     ),
   };
 }
@@ -281,7 +286,7 @@ function toItem(
     relevance: scored ? renderRelevance(scored.rule, matches, solution, idx) : solution.summary,
     sceneId: relevantScene(matches, solution, idx),
     relatedSceneIds: solution.relatedSceneIds.filter((id) => idx.scenes.has(id)),
-    digitalAssetIds: solution.digitalAssetIds.filter((id) => idx.approvedAssetIds.has(id)),
+    digitalAssetIds: solution.digitalAssetIds.filter((id) => idx.offerableAssetIds.has(id)),
     nextStep: solution.nextStep,
     validationStatus: solution.validationStatus,
     pendingValidation: solution.validationStatus !== "validated",

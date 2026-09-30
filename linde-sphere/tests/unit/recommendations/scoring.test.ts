@@ -361,16 +361,28 @@ describe("demo versus production content filtering", () => {
     expect(recommend({ ...EMPTY_SIGNALS, personaId: "executive" }, unfiltered)).toBeNull();
   });
 
-  it("offers approved (validated) assets only", () => {
+  it("offers approved assets, demo-status assets only in demo mode, and never placeholders", () => {
     const placeholderOnly = run({ personaId: "government-system" }, demo);
     expect(placeholderOnly.items.flatMap((i) => i.digitalAssetIds)).toEqual([]);
-    const bundle = clone(seed);
-    bundle.digitalAssets.find((a) => a.id === "asset-emergency-planning-checklist")!.validationStatus =
-      "validated";
-    const r = run({ personaId: "government-system" }, visibleContent(bundle, "demo"));
-    expect(r.items.find((i) => i.solutionId === "backup-emergency-supply")!.digitalAssetIds).toEqual([
-      "asset-emergency-planning-checklist",
-    ]);
+    const withStatus = (status: "validated" | "assumed") => {
+      const bundle = clone(seed);
+      bundle.digitalAssets.find((a) => a.id === "asset-emergency-planning-checklist")!.validationStatus =
+        status;
+      return bundle;
+    };
+    const assetsOf = (r: RecommendationResult) =>
+      r.items.find((i) => i.solutionId === "backup-emergency-supply")!.digitalAssetIds;
+    expect(
+      assetsOf(run({ personaId: "government-system" }, visibleContent(withStatus("validated"), "demo"))),
+    ).toEqual(["asset-emergency-planning-checklist"]);
+    expect(
+      assetsOf(run({ personaId: "government-system" }, visibleContent(withStatus("assumed"), "demo"))),
+    ).toEqual(["asset-emergency-planning-checklist"]);
+    // Placeholder assets stay out even when previewing placeholder content locally.
+    const preview = visibleContent(clone(seed), "demo", { previewPlaceholders: true });
+    expect(run({ personaId: "government-system" }, preview).items.flatMap((i) => i.digitalAssetIds)).toEqual(
+      [],
+    );
   });
 });
 

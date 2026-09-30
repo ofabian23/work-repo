@@ -69,7 +69,9 @@ test.describe("design system in the gallery", () => {
   test("selecting a challenge updates the live recommendations", async ({ page }) => {
     await page.getByTestId("challenge-emergency-preparedness").click();
     await expect(page.getByTestId("recommendation-backup-emergency-supply")).toBeVisible();
-    await expect(page.getByTestId("recommendation-backup-emergency-supply")).toContainText("Por qué aparece");
+    await expect(page.getByTestId("recommendation-backup-emergency-supply")).toContainText(
+      "Por qué es relevante",
+    );
   });
 
   test("reset requires confirmation", async ({ page }) => {

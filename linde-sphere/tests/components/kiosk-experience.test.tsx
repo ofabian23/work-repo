@@ -77,7 +77,7 @@ describe("language switching", () => {
 
 const PATH_SCREENS = {
   role: { screen: "persona-screen", title: "¿En qué área trabaja?", back: "persona-back" },
-  challenge: { screen: "path-screen-challenge", title: "Necesito…", back: "back-to-welcome" },
+  challenge: { screen: "challenges-path-screen", title: "¿Qué necesita resolver?", back: "challenges-back" },
   explore: { screen: "explorer-screen", title: "Campus hospitalario", back: "explorer-back" },
 } as const;
 
