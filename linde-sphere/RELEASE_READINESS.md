@@ -323,7 +323,8 @@ Run on the event hardware (MANUAL_KIOSK_TEST.md), then the daily CONVENTION_STAR
 
 **Decision:**
 
-- **Software:** GO. Every automated check in gates 1–5 passed in this audit.
+- **Software:** GO. Every automated check in gates 1–5 passed in this audit, including the full E2E suite
+  run twice on a fresh production build (536 passed, 0 failed).
 - **Internal demo-mode rehearsals:** GO. Use `CONTENT_MODE=demo` and the preview email provider, which
   sends nothing.
 - **Production use at the convention with real visitors:** **NO-GO** until gates 6–9, 11 and 12 are
