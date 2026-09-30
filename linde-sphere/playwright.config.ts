@@ -67,6 +67,10 @@ export default defineConfig({
         EMAIL_PREVIEW_DIR: E2E_EMAIL_PREVIEW_DIR,
         ENABLE_COMPONENT_GALLERY: "true",
         ENABLE_SCENE_CALIBRATION: "true",
+        // Short kiosk timings so session-management E2E tests can watch a warning and a reset (ADR-055).
+        KIOSK_IDLE_WARNING_SECONDS: "10",
+        KIOSK_IDLE_COUNTDOWN_SECONDS: "5",
+        KIOSK_COMPLETION_SECONDS: "5",
       },
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

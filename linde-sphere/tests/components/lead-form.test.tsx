@@ -386,11 +386,12 @@ describe("lead form — cancel, correct and reset", () => {
   });
 
   it("resets automatically after the confirmation", async () => {
-    const { onHardReset } = await openLeadForm(fakeApi(), { confirmationResetMs: 50 });
+    const { onHardReset } = await openLeadForm(fakeApi(), { confirmationResetMs: 1_000 });
     completeToReview();
     fireEvent.click(screen.getByTestId("lead-submit"));
     await flush();
-    await act(async () => new Promise((resolve) => setTimeout(resolve, 80)));
+    expect(screen.getByTestId("completion-countdown")).toHaveTextContent("Volveremos al inicio en 1 s.");
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 1_100)));
     expect(onHardReset).toHaveBeenCalledWith("completed");
     expect(screen.queryByTestId("lead-result")).toBeNull();
   });

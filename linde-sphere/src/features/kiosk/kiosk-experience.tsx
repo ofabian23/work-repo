@@ -36,7 +36,7 @@ import { createLeadApi, type LeadApi } from "./lead/lead-api";
 import { LeadFormScreen } from "./lead/lead-form-screen";
 import { AttractScreen } from "./screens/attract-screen";
 import { WelcomeScreen } from "./screens/welcome-screen";
-import type { JourneyScreen } from "./state/kiosk-state";
+import { sessionPhase, type JourneyScreen } from "./state/kiosk-state";
 import { useKioskSession } from "./state/kiosk-session-provider";
 import { useIdleTimer, type IdleConfig } from "./state/use-idle-timer";
 
@@ -154,10 +154,13 @@ export function KioskExperience({
     [leadApi],
   );
   const finishVisit = useCallback(() => reset("completed"), [reset]);
-  // Typing takes longer than tapping: the lead form gets a longer inactivity allowance.
-  const onLeadForm = state.screen === "lead-form";
+  const phase = sessionPhase(state, { recommendationReady: readiness.ready });
+  // Typing takes longer than tapping: the lead form gets a longer inactivity allowance. The timer is off
+  // while a submission is completing (never interrupt it) and on the completion screen, whose own
+  // countdown returns to the attract screen (ADR-055).
+  const onLeadForm = phase === "entering-contact";
   const idleTimer = useIdleTimer({
-    enabled: state.session !== null,
+    enabled: phase === "active" || phase === "recommendation-ready" || phase === "entering-contact",
     warningAfterMs: onLeadForm ? (idle.leadFormWarningAfterMs ?? idle.warningAfterMs) : idle.warningAfterMs,
     countdownMs: onLeadForm ? (idle.leadFormCountdownMs ?? idle.countdownMs) : idle.countdownMs,
     onTimeout: () => reset("timeout"),
@@ -273,6 +276,9 @@ export function KioskExperience({
           statusPoll={leadStatusPoll}
           confirmationResetMs={confirmationResetMs}
           onSubmitted={() => dispatch({ type: "LEAD_SUBMITTED" })}
+          onSubmissionStarted={() => dispatch({ type: "LEAD_SUBMISSION_STARTED" })}
+          onSubmissionFailed={() => dispatch({ type: "LEAD_SUBMISSION_FAILED" })}
+          onCompleted={() => dispatch({ type: "LEAD_COMPLETED" })}
           onCancel={() => dispatch({ type: "CANCEL_LEAD_FORM" })}
           onFinish={finishVisit}
         />
@@ -359,6 +365,7 @@ export function KioskExperience({
       className="flex flex-1 flex-col"
       data-testid="kiosk-experience"
       data-screen={state.screen}
+      data-session-phase={phase}
       data-ready={ready || undefined}
       // Remount everything on reset so each visitor starts from the initial visual state.
       key={state.resetCount}

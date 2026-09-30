@@ -23,11 +23,19 @@ import { createSessionId } from "./session-id";
 
 type KioskSessionContextValue = {
   state: KioskState;
-  dispatch: (action: Exclude<KioskAction, { type: "START_SESSION" } | { type: "RESET" }>) => void;
+  dispatch: (
+    action: Exclude<
+      KioskAction,
+      { type: "START_SESSION" } | { type: "RESET" } | { type: "REQUEST_RESET" } | { type: "RESET_DONE" }
+    >,
+  ) => void;
   startSession: () => void;
   choosePath: (path: EntryPath) => void;
   goToWelcome: () => void;
-  /** Privacy reset: clears all visitor state, restores Spanish and default accessibility, then hard-reloads. */
+  /**
+   * Privacy reset: clears all visitor state, restores Spanish and default accessibility, then hard-reloads
+   * (fresh session id on the next start). Deferred while a lead submission is completing (ADR-055).
+   */
   reset: (reason: ResetReason) => void;
 };
 
@@ -67,16 +75,34 @@ export function KioskSessionProvider({
     else delete root.dataset.motion;
   }, [accessibility?.largeText, accessibility?.reduceMotion]);
 
-  const reset = useCallback(
-    (reason: ResetReason) => {
-      rawDispatch({ type: "RESET", reason });
-      setLanguage(appConfig.defaultLanguage);
-      delete document.documentElement.dataset.textSize;
-      delete document.documentElement.dataset.motion;
-      onHardReset(reason);
-    },
-    [onHardReset, setLanguage],
-  );
+  const reset = useCallback((reason: ResetReason) => rawDispatch({ type: "REQUEST_RESET", reason }), []);
+
+  // Carry out a reset once the store has cleared the session (the "resetting" state).
+  useEffect(() => {
+    if (!state.resetting) return;
+    setLanguage(appConfig.defaultLanguage);
+    delete document.documentElement.dataset.textSize;
+    delete document.documentElement.dataset.motion;
+    onHardReset(state.resetting);
+    rawDispatch({ type: "RESET_DONE" });
+  }, [state.resetting, onHardReset, setLanguage]);
+
+  // A reset requested during a submission runs as soon as the submission settles.
+  useEffect(() => {
+    if (state.deferredReset && state.leadFlow !== "submitting") {
+      rawDispatch({ type: "REQUEST_RESET", reason: state.deferredReset });
+    }
+  }, [state.deferredReset, state.leadFlow]);
+
+  // Returning to this page from the browser's back/forward cache must never show a previous visitor's
+  // screen: reload it from the server instead.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   const value = useMemo<KioskSessionContextValue>(
     () => ({

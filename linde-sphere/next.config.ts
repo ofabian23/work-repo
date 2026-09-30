@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      {
+        // The kiosk page is never stored by the browser, so Back/Forward cannot bring back a previous
+        // visitor's screen (ADR-055; a pageshow handler also reloads pages restored from bfcache).
+        source: "/",
+        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+      },
     ];
   },
 };

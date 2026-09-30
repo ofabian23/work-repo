@@ -42,7 +42,7 @@ export async function gotoHydrated(page: Page, url: string) {
 }
 
 /** Opens the kiosk route and waits until the experience (inside the root Suspense boundary) is interactive. */
-export async function gotoKiosk(page: Page) {
-  await gotoHydrated(page, "/");
+export async function gotoKiosk(page: Page, url = "/") {
+  await gotoHydrated(page, url);
   await expect(page.locator('[data-testid="kiosk-experience"][data-ready="true"]')).toBeVisible();
 }

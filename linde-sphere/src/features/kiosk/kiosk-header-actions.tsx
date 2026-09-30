@@ -35,7 +35,8 @@ export function KioskHeaderActions() {
         <AccessibilityIcon size="size-6" />
         <span className="max-sm:sr-only sm:not-sr-only">{t("accessibility.button")}</span>
       </button>
-      <ResetExperienceButton onReset={() => reset("explicit")} />
+      {/* Disabled while a submission is completing; a reset is never allowed to interrupt it. */}
+      <ResetExperienceButton onReset={() => reset("explicit")} disabled={state.leadFlow === "submitting"} />
       <Sheet
         open={a11yOpen}
         onClose={() => setA11yOpen(false)}

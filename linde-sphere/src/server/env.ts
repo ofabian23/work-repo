@@ -59,6 +59,16 @@ const ServerEnvSchema = z
       (v) => v ?? 15_000,
     ),
     EMAIL_MAX_ATTEMPTS: optional(z.coerce.number().int().min(1).max(50)).transform((v) => v ?? 12),
+    /**
+     * Kiosk inactivity (ADR-055), in seconds. Unset = defaults in app-config.ts (60 s + 15 s warning;
+     * 120 s + 20 s on the contact form; 15 s on the completion screen). Read on every page load, so the
+     * event team can tune them without rebuilding.
+     */
+    KIOSK_IDLE_WARNING_SECONDS: optional(z.coerce.number().int().min(10).max(3600)),
+    KIOSK_IDLE_COUNTDOWN_SECONDS: optional(z.coerce.number().int().min(5).max(300)),
+    KIOSK_FORM_IDLE_WARNING_SECONDS: optional(z.coerce.number().int().min(30).max(3600)),
+    KIOSK_FORM_IDLE_COUNTDOWN_SECONDS: optional(z.coerce.number().int().min(5).max(300)),
+    KIOSK_COMPLETION_SECONDS: optional(z.coerce.number().int().min(5).max(300)),
     ADMIN_ENABLED: booleanFlag,
     /**
      * Retention placeholder (ADR-052). The company's lead-retention policy is not decided yet: unset means

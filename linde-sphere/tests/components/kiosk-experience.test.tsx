@@ -175,7 +175,7 @@ describe("resetting a session", () => {
     startSession();
     act(() => vi.advanceTimersByTime(1_000));
     fireEvent.click(
-      within(screen.getByTestId("inactivity-warning")).getByRole("button", { name: "Continuar" }),
+      within(screen.getByTestId("inactivity-warning")).getByRole("button", { name: "Continuar mi sesión" }),
     );
     expect(screen.getByTestId("inactivity-warning")).not.toHaveAttribute("open");
     act(() => vi.advanceTimersByTime(900));

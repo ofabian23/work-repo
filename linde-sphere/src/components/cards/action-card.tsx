@@ -13,6 +13,7 @@ export function ActionCard({
   onActivate,
   testId,
   className,
+  dominant = false,
 }: {
   title: string;
   description?: string;
@@ -20,14 +21,18 @@ export function ActionCard({
   onActivate: () => void;
   testId?: string;
   className?: string;
+  /** The screen's one dominant next action: filled and marked `data-variant="primary"`. */
+  dominant?: boolean;
 }) {
   return (
     <button
       type="button"
       data-testid={testId}
+      data-variant={dominant ? "primary" : undefined}
       onClick={onActivate}
       className={cn(
-        "focus-ring rounded-card border-line bg-surface shadow-card flex min-h-32 w-full items-center gap-4 border-2 p-5 text-left sm:gap-6 sm:p-6",
+        "focus-ring rounded-card shadow-card flex min-h-32 w-full items-center gap-4 border-2 p-5 text-left sm:gap-6 sm:p-6",
+        dominant ? "border-primary bg-primary/10" : "border-line bg-surface",
         "active:border-primary active:bg-primary/5 ease-standard transition-[border-color,background-color,transform] duration-(--duration-fast) motion-safe:active:scale-[0.99]",
         className,
       )}

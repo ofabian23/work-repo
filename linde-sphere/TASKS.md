@@ -226,6 +226,25 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] ConsentRecord rows (exact text + language per consent)
 - **Done when:** AC-25, AC-26, AC-36 pass (offline → online simulated in tests).
 
+## Phase 8b — Convention session management (ADR-055) ✅
+
+- [x] Session states: attracting, active, recommendation-ready, entering-contact, submitting, complete,
+      resetting (pure `sessionPhase`; non-personal `leadFlow`, `resetting` and `deferredReset` in the
+      store; `data-session-phase` on the kiosk root)
+- [x] Inactivity: env-configurable intervals (`KIOSK_*_SECONDS`), warning overlay, "Continuar mi sesión",
+      automatic reset; paused while submitting and on the completion screen; longer allowance on the form
+- [x] Resets requested during a submission are deferred until it settles; header reset disabled while sending
+- [x] Reset: store cleared at once → Spanish and accessibility defaults → hard reload; fresh session id; no
+      previous recommendations or contact data; `no-store` kiosk page + bfcache reload for Back/Forward
+- [x] Completion screen: delivery status, masked email, optional consultation step (report CTA + sales
+      contact), visible countdown, "Finalizar ahora", automatic return to attract
+- [x] Throughput: dominant "Ver recomendaciones preliminares" card; one dominant action per journey screen;
+      short routes (6 and 5 taps); explorer optional and "Ver mis recomendaciones" persistent after readiness
+- [x] Fix: lead request token uses `createSessionId` (no `crypto.randomUUID` on the kiosk's plain-HTTP origin)
+- [x] Tests: fake-timer integration (states, warning, continuation, reset, form allowance, completion
+      countdown and finish, submission in progress, deferred reset, failed submission), throughput audit,
+      `sessionPhase`/reducer unit tests, E2E with short server timings and Back/Forward after reset
+
 ## Phase 9 — Admin and data operations
 
 - [~] CLI: `db:export` ✅, `db:backup` ✅ (Phase 7a), `email:status` / `email:retry` ✅ (Phase 8); `leads:purge` (needs Q7)

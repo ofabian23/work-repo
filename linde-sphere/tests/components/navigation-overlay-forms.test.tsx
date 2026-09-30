@@ -150,7 +150,7 @@ describe("InactivityWarning", () => {
     expect(dialog).toHaveAccessibleDescription(
       "Por su privacidad, la experiencia se reiniciará en 12 segundos.",
     );
-    await userEvent.click(within(dialog).getByRole("button", { name: "Continuar" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Continuar mi sesión" }));
     await userEvent.click(within(dialog).getByRole("button", { name: "Empezar de nuevo" }));
     expect(onContinue).toHaveBeenCalledOnce();
     expect(onReset).toHaveBeenCalledOnce();

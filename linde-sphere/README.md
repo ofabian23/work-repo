@@ -182,6 +182,24 @@ deleted automatically in any case; a purge command will be added once the policy
 - Email delivery keeps a status, an attempt count and a short error code only; never credentials or
   provider responses.
 
+## Kiosk session timing
+
+Each visit resets itself for the next visitor's privacy: after a period without touches a "¿Sigue ahí?"
+warning appears with a countdown and a **"Continuar mi sesión"** button; with no answer the kiosk returns
+to the attract screen with a fresh session. A submission that is being sent is never interrupted. After a
+successful submission the completion screen shows the delivery status and a short countdown, with
+**"Finalizar ahora"**.
+
+The intervals can be changed in `.env` without rebuilding (restart the server; values in seconds):
+
+| Variable                            | Default | Meaning                                         |
+| ----------------------------------- | ------- | ----------------------------------------------- |
+| `KIOSK_IDLE_WARNING_SECONDS`        | 60      | No touches before the warning (most screens)    |
+| `KIOSK_IDLE_COUNTDOWN_SECONDS`      | 15      | Warning countdown before the reset              |
+| `KIOSK_FORM_IDLE_WARNING_SECONDS`   | 120     | Same on the contact form                        |
+| `KIOSK_FORM_IDLE_COUNTDOWN_SECONDS` | 20      | Warning countdown on the contact form           |
+| `KIOSK_COMPLETION_SECONDS`          | 15      | Completion screen before returning to the start |
+
 ## Personalized report email
 
 When a visitor sends the form, the server stores the lead, builds their personalized report (in their

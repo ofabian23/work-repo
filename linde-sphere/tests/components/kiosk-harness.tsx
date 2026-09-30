@@ -13,11 +13,15 @@ export const demoContent = visibleContent(loadSeedBundle(), "demo");
 
 /** Test-only window into the session store (never rendered in the app). */
 function SessionProbe() {
-  const { state } = useKioskSession();
+  const { state, reset } = useKioskSession();
   return (
-    <output data-testid="probe" data-screen={state.screen}>
-      {JSON.stringify(state.session)}
-    </output>
+    <>
+      <output data-testid="probe" data-screen={state.screen}>
+        {JSON.stringify(state.session)}
+      </output>
+      {/* Programmatic reset request, e.g. an inactivity timeout arriving at an unlucky moment. */}
+      <button type="button" hidden data-testid="probe-reset" onClick={() => reset("timeout")} />
+    </>
   );
 }
 export const session = () => JSON.parse(screen.getByTestId("probe").textContent || "null");

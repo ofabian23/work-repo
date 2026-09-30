@@ -117,7 +117,7 @@ export const en: Messages = {
       submit: "Send my summary",
       cancel: "Cancel",
       retry: "Try again",
-      finish: "Finish",
+      finish: "Finish now",
     },
     cancelDialog: {
       title: "Do you want to cancel?",
@@ -146,6 +146,8 @@ export const en: Messages = {
       followUp: "A representative may contact you, as you authorized.",
       noFollowUp: "We will only send you the summary you requested.",
       resetNotice: "For your privacy, the screen will restart in a few seconds.",
+      countdown: "Returning to the start in {seconds} s.",
+      optionalNextStep: "Optional next step",
     },
   },
   challengesPath: {
@@ -306,7 +308,7 @@ export const en: Messages = {
   inactivity: {
     title: "Are you still there?",
     body: "For your privacy, the experience will restart in {seconds} seconds.",
-    continue: "Continue",
+    continue: "Continue my session",
     startOver: "Start over",
   },
   reset: {

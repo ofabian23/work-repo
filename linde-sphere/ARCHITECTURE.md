@@ -382,37 +382,78 @@ The page (`src/app/page.tsx`) renders at request time and passes the visibility-
 Content is also validated at server boot in `instrumentation.ts`, so invalid content stops the server
 before the first visitor.
 
-### 5.3 Reset and privacy guarantees
+### 5.3 Session states, reset and privacy guarantees (ADR-055)
 
-Reset is triggered by: the discreet "Empezar de nuevo" action (with confirmation), inactivity countdown
-expiry or the warning's "Empezar de nuevo" button, and (Phase 7) completion (confirmation auto-timeout,
-default 15 s).
+`sessionPhase(state, { recommendationReady })` (pure, `kiosk-state.ts`) derives the kiosk's session state;
+the kiosk root exposes it as `data-session-phase`:
 
-Reset procedure (`KioskSessionProvider.reset`):
+```
+attracting ─touch─► active ─readiness met / recommendations shown─► recommendation-ready
+   ▲                                                   │ "Completar mis datos"
+   │                                                   ▼
+   │                                           entering-contact ◄─ submission failed ─┐
+   │                                                   │ "Enviar mi resumen"          │
+   │                                                   ▼                              │
+   │                                              submitting ─────────────────────────┘
+   │                                                   │ stored + delivery checked
+   │                                                   ▼
+   └──── resetting ◄── countdown / "Finalizar ahora" ─ complete
+          ▲
+          └── "Empezar de nuevo" · inactivity timeout (from any state except submitting/complete)
+```
 
-1. _(Phase 7)_ Send an anonymous session summary via `navigator.sendBeacon('/api/sessions', …)` (C1 only).
-2. Dispatch `RESET`: the state returns to `INITIAL_KIOSK_STATE` (new `resetCount` remounts every screen).
-3. Set the language back to Spanish and remove the accessibility attributes from `<html>`.
-4. `window.location.replace("/")`, a **hard reload** that discards all JS memory and replaces the history
-   entry (injectable for tests).
-5. _(Phase 7)_ Clear the lead draft and blur inputs (dismisses the on-screen keyboard) before step 4.
+The store holds only non-personal flags for this: `leadFlow` (`idle | entering | submitting | complete`),
+`resetting` and `deferredReset`. Contact data never enters the store.
+
+Reset is triggered by the discreet "Empezar de nuevo" (with confirmation), the inactivity countdown or the
+warning's "Empezar de nuevo", and the completion screen (countdown or "Finalizar ahora").
+
+Reset procedure (`KioskSessionProvider.reset` → `REQUEST_RESET`):
+
+1. **Never during a submission.** While `leadFlow` is `submitting` the request is stored as `deferredReset`
+   and carried out as soon as the submission settles (stored or failed). The idle timer is paused and the
+   header reset button disabled while submitting, and the form cannot be cancelled.
+2. `REQUEST_RESET` returns the store to `INITIAL_KIOSK_STATE` at once (session cleared; new `resetCount`
+   remounts every screen, which drops the lead form's local state) and marks `resetting`.
+3. An effect restores Spanish and the default accessibility attributes, then calls
+   `window.location.replace("/")` — a **hard reload** that discards all JS memory and replaces the history
+   entry (injectable for tests) — and marks the reset done.
+4. The next touch starts a new session with a fresh random id (`createSessionId`, also used for the lead
+   request token because `crypto.randomUUID` is unavailable on the kiosk's plain-HTTP origin).
 
 The client never writes to `localStorage`, `sessionStorage`, IndexedDB, or cookies. Form inputs use
-`autocomplete="off"` and non-standard `name` attributes to discourage browser autofill on the shared device.
+`autocomplete="off"` and non-standard `name` attributes. The kiosk page is served with
+`Cache-Control: no-store`, and a `pageshow` handler reloads any page restored from the back/forward cache,
+so browser Back/Forward never reveal a previous visitor. Still planned: an anonymous session summary via
+`sendBeacon` on reset (`POST /api/sessions`).
 
-### 5.4 Idle timer
+### 5.4 Idle timer and completion countdown
 
-| Context                                          | Idle before warning         | Countdown             | Configurable in |
-| ------------------------------------------------ | --------------------------- | --------------------- | --------------- |
-| Attract                                          | none (language revert 30 s) | —                     | `app-config.ts` |
-| Welcome / selection / explorer / recommendations | 60 s                        | 15 s ("¿Sigue ahí?")  | `app-config.ts` |
-| Lead form                                        | 120 s                       | 20 s                  | `app-config.ts` |
-| Confirmation                                     | —                           | auto-reset after 15 s | `app-config.ts` |
+| State                         | Idle before warning         | Countdown              | Env (seconds)                                                          |
+| ----------------------------- | --------------------------- | ---------------------- | ---------------------------------------------------------------------- |
+| attracting                    | none (language revert 30 s) | —                      | —                                                                      |
+| active / recommendation-ready | 60 s                        | 15 s ("¿Sigue ahí?")   | `KIOSK_IDLE_WARNING_SECONDS`, `KIOSK_IDLE_COUNTDOWN_SECONDS`           |
+| entering-contact              | 120 s                       | 20 s                   | `KIOSK_FORM_IDLE_WARNING_SECONDS`, `KIOSK_FORM_IDLE_COUNTDOWN_SECONDS` |
+| submitting                    | paused (never interrupted)  | —                      | —                                                                      |
+| complete                      | paused                      | 15 s visible countdown | `KIOSK_COMPLETION_SECONDS`                                             |
 
-`useIdleTimer` runs only while a session exists. Any `pointerdown`, `keydown`, `touchstart` or `wheel`
-(capture phase) restarts it. While the warning is open, global activity is ignored: only "Continuar" keeps
-the session, so tapping "Empezar de nuevo" in the warning is never swallowed. The warning has large
-buttons and a live seconds countdown.
+Defaults live in `app-config.ts`; the kiosk page reads the env overrides on every request
+(`src/server/kiosk-timing.ts`), so the event team can tune them without rebuilding. `useIdleTimer` restarts
+on any `pointerdown`, `keydown`, `touchstart` or `wheel` (capture phase). While the warning is open, global
+activity is ignored: only **"Continuar mi sesión"** keeps the session (and restarts the full interval), so a
+tap on "Empezar de nuevo" is never swallowed. No action → automatic reset.
+
+**Completion screen** (`completion-screen.tsx`): report delivery status, masked destination
+(`ma•••@dominio`), the optional consultation next step (report copy CTA and sales contact), "Volveremos al
+inicio en N s" and **"Finalizar ahora"**; at zero it resets once and returns to the attract screen.
+
+**Throughput:** role route to recommendations in 6 taps, challenge route in 5 (role and challenges are
+optional); on next steps "Ver recomendaciones preliminares" is the dominant card and the explorer is
+optional; once ready, "Ver mis recomendaciones" stays in the explorer's action bar across scenes. Every
+journey screen has exactly one dominant action (`data-variant="primary"`) and a way back or out — the
+welcome screen's three equal entry paths, the automatic tailoring transition and the explorer before
+readiness (tapping points is the action) are the deliberate exceptions. Tested in
+`tests/components/throughput.test.tsx`.
 
 On the attract screen, if a passer-by switches to English and walks away, the screen returns to Spanish and
 to its first phrase after 30 s without touches.

@@ -867,3 +867,45 @@ entry here — architecture is never changed silently.
     same retention question (Q7).
   - Not built: the QR code / short-lived report view (optional; it would need a public tokenized route),
     PDF, Graph, ConsentRecord rows, and a check in real mail clients (needs the SMTP account, Q2).
+
+## ADR-055 — Convention session management: explicit session states, protected submissions, visible completion countdown
+
+- **Date:** 2026-09-30 · **Status:** Accepted (extends ADR-047 and ADR-053)
+- **Context:** The kiosk needs robust session behavior for a busy convention. That means named session
+  states and configurable inactivity with a warning, "Continue my session" and an automatic reset. No reset
+  may happen while a submission is completing. After completion, personal state must be cleared and the
+  kiosk must return to the attract screen with a fresh session id. The completion screen must show delivery
+  status, a masked email, an optional consultation step, a countdown and "Finish now". The flow must support
+  high throughput, and browser Back must never reveal a previous visitor.
+- **Decision:**
+  - **States:** `attracting | active | recommendation-ready | entering-contact | submitting | complete |
+resetting`. They are derived by a pure `sessionPhase()` from the store plus readiness, not stored
+    separately, so they cannot drift. The store gains only non-personal flags: `leadFlow`, `resetting` and
+    `deferredReset`. The lead form reports submission started, failed and completed to the store.
+  - **Reset pipeline:** `reset()` dispatches `REQUEST_RESET`.
+    - During `submitting` the request is deferred and replayed when the submission settles.
+    - Otherwise the store is cleared immediately (`resetting`). An effect then restores Spanish and the
+      accessibility defaults, hard-reloads with `location.replace`, and marks the reset done.
+    - The idle timer runs only in `active`, `recommendation-ready` and `entering-contact`. The header reset
+      is disabled and cancelling the form is ignored while submitting.
+  - **Timing:** defaults stay in `app-config.ts`. Optional `KIOSK_*_SECONDS` server env overrides are read on
+    each page request and passed to the client, so the event team can tune them without a rebuild. The
+    warning's main button is "Continuar mi sesión".
+  - **Completion:** a dedicated `CompletionScreen` shows the delivery outcome, the masked email and the
+    report copy's CTA and sales contact as an optional next step. A visible 1-second countdown (default
+    15 s) and "Finalizar ahora" each end the visit exactly once.
+  - **Back/Forward:** the kiosk page is served `Cache-Control: no-store`, a `pageshow` handler reloads pages
+    restored from the back/forward cache, reset keeps replacing the history entry, and no browser storage
+    is used.
+  - **Throughput:** on next steps, "Ver recomendaciones preliminares" becomes the dominant card
+    (`ActionCard dominant`). A test audits that every journey screen has exactly one dominant action. The
+    welcome screen's three equal entry paths, the automatic tailoring transition and the explorer before
+    readiness are the documented exceptions.
+  - **Fix:** the lead request token now uses `createSessionId()`, because `crypto.randomUUID` does not exist
+    on the kiosk's plain-HTTP LAN origin (not a secure context) and would have broken every submission at
+    the event.
+- **Consequences:**
+  - A visitor can never lose a submission to an inactivity reset or a mistimed tap.
+  - Every exit from a session goes through the same pipeline, and states are observable for tests and
+    support.
+  - The anonymous session summary on reset (`POST /api/sessions`) is still open.

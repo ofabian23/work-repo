@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { KioskExperience } from "@/features/kiosk/kiosk-experience";
 import { getPublicContent } from "@/server/content/public-content";
 import { getServerEnv } from "@/server/env";
+import { kioskTiming } from "@/server/kiosk-timing";
 
 /** The single kiosk route (ADR-004): server loads visible content, the client runs the experience. */
 export default async function KioskPage() {
@@ -10,5 +11,6 @@ export default async function KioskPage() {
   const content = getPublicContent(env.CONTENT_MODE, {
     previewPlaceholders: env.CONTENT_PREVIEW_PLACEHOLDERS,
   });
-  return <KioskExperience content={content} />;
+  const timing = kioskTiming(env);
+  return <KioskExperience content={content} idle={timing.idle} confirmationResetMs={timing.completionMs} />;
 }

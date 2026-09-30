@@ -122,7 +122,7 @@ export const es = {
       submit: "Enviar mi resumen",
       cancel: "Cancelar",
       retry: "Intentar de nuevo",
-      finish: "Terminar",
+      finish: "Finalizar ahora",
     },
     cancelDialog: {
       title: "¿Desea cancelar?",
@@ -151,6 +151,8 @@ export const es = {
       followUp: "Un representante podrá comunicarse con usted, como autorizó.",
       noFollowUp: "Solo le enviaremos el resumen que solicitó.",
       resetNotice: "Por su privacidad, la pantalla se reiniciará en unos segundos.",
+      countdown: "Volveremos al inicio en {seconds} s.",
+      optionalNextStep: "Siguiente paso opcional",
     },
   },
   challengesPath: {
@@ -311,7 +313,7 @@ export const es = {
   inactivity: {
     title: "¿Sigue ahí?",
     body: "Por su privacidad, la experiencia se reiniciará en {seconds} segundos.",
-    continue: "Continuar",
+    continue: "Continuar mi sesión",
     startOver: "Empezar de nuevo",
   },
   reset: {

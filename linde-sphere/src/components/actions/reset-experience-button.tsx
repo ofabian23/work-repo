@@ -15,12 +15,14 @@ export function ResetExperienceButton({
   requireConfirmation = true,
   variant = "header",
   testId = "reset-experience",
+  disabled = false,
 }: {
   onReset: () => void;
   requireConfirmation?: boolean;
   /** "header": discreet round control; "action": an outlined action button for action bars. */
   variant?: "header" | "action";
   testId?: string;
+  disabled?: boolean;
 }) {
   const { t } = useLanguage();
   const [confirming, setConfirming] = useState(false);
@@ -31,6 +33,7 @@ export function ResetExperienceButton({
         <SecondaryAction
           size="md"
           data-testid={testId}
+          disabled={disabled}
           icon={<ResetIcon size="size-6" />}
           onClick={() => (requireConfirmation ? setConfirming(true) : onReset())}
         >
@@ -40,8 +43,9 @@ export function ResetExperienceButton({
         <button
           type="button"
           data-testid={testId}
+          disabled={disabled}
           onClick={() => (requireConfirmation ? setConfirming(true) : onReset())}
-          className="focus-ring border-line text-ink-muted text-label active:bg-surface-muted inline-flex min-h-14 min-w-14 items-center justify-center gap-2 rounded-full border px-4 font-semibold sm:px-5"
+          className="focus-ring border-line text-ink-muted text-label active:bg-surface-muted inline-flex min-h-14 min-w-14 items-center justify-center gap-2 rounded-full border px-4 font-semibold disabled:opacity-50 sm:px-5"
         >
           <ResetIcon size="size-6" />
           {/* Icon-only on narrow screens (label kept for assistive tech); full label on the kiosk. */}

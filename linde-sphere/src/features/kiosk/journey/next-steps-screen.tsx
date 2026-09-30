@@ -91,6 +91,8 @@ export function NextStepsScreen({
                 icon={option.icon}
                 title={option.title}
                 description={option.description}
+                // Seeing the recommendations is the short route; refining and exploring stay optional.
+                dominant={option.step === "view-recommendations"}
                 onActivate={() => onChoose(option.step)}
               />
             </li>

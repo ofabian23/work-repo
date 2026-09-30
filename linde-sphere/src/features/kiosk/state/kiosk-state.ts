@@ -64,9 +64,17 @@ export type ActiveSession = {
   accessibility: AccessibilityPreferences;
 };
 
+/** Where the visitor is in lead capture (no contact data: that stays in the form component). */
+export type LeadFlow = "idle" | "entering" | "submitting" | "complete";
+
 export type KioskState = {
   screen: KioskScreen;
   session: ActiveSession | null;
+  leadFlow: LeadFlow;
+  /** Set while a privacy reset is being carried out (the session is already cleared). */
+  resetting: ResetReason | null;
+  /** A reset requested while a submission was completing; carried out as soon as it settles. */
+  deferredReset: ResetReason | null;
   /** Increments on every reset so screens remount in their initial visual state. */
   resetCount: number;
   lastResetReason: ResetReason | null;
@@ -77,6 +85,9 @@ export type KioskState = {
 export const INITIAL_KIOSK_STATE: KioskState = {
   screen: "attract",
   session: null,
+  leadFlow: "idle",
+  resetting: null,
+  deferredReset: null,
   resetCount: 0,
   lastResetReason: null,
   previousScreen: null,
@@ -108,7 +119,10 @@ export type KioskAction =
   | { type: "REQUEST_SUMMARY" }
   | { type: "OPEN_LEAD_FORM" }
   | { type: "CANCEL_LEAD_FORM" }
+  | { type: "LEAD_SUBMISSION_STARTED" }
   | { type: "LEAD_SUBMITTED" }
+  | { type: "LEAD_SUBMISSION_FAILED" }
+  | { type: "LEAD_COMPLETED" }
   | { type: "SELECT_FACILITY"; facilityTypeId: string | null }
   | { type: "VISIT_SCENE"; sceneId: string }
   | { type: "OPEN_HOTSPOT"; hotspotId: string }
@@ -116,6 +130,9 @@ export type KioskAction =
   | { type: "TOGGLE_INTEREST"; solutionId: string }
   | { type: "SET_RECOMMENDATIONS"; result: RecommendationResult | null }
   | { type: "SET_ACCESSIBILITY"; preferences: Partial<AccessibilityPreferences> }
+  /** Privacy reset request: carried out now, or deferred while a submission is completing. */
+  | { type: "REQUEST_RESET"; reason: ResetReason }
+  | { type: "RESET_DONE" }
   | { type: "RESET"; reason: ResetReason };
 
 const appendUnique = (list: string[], id: string) => (list.includes(id) ? list : [...list, id]);
@@ -181,6 +198,19 @@ function reduce(state: KioskState, action: KioskAction): KioskState {
     case "RESET":
       // Nothing from the previous visitor survives: a brand-new state object, only the counter carries over.
       return { ...INITIAL_KIOSK_STATE, resetCount: state.resetCount + 1, lastResetReason: action.reason };
+    case "REQUEST_RESET":
+      // Never interrupt a submission that is completing: remember the request instead (ADR-055).
+      if (state.leadFlow === "submitting") return { ...state, deferredReset: action.reason };
+      // The session is cleared at once (nothing from this visitor renders again); the provider then
+      // restores defaults and hard-reloads, and finally marks the reset done.
+      return {
+        ...INITIAL_KIOSK_STATE,
+        resetCount: state.resetCount + 1,
+        lastResetReason: action.reason,
+        resetting: action.reason,
+      };
+    case "RESET_DONE":
+      return { ...state, resetting: null };
   }
 
   // Every other action requires an active session; on the attract screen they are ignored.
@@ -241,16 +271,30 @@ function reduce(state: KioskState, action: KioskAction): KioskState {
     case "REQUEST_SUMMARY":
       return { ...state, screen: "summary-request", session: withEvent(state.session, "summary-requested") };
     case "OPEN_LEAD_FORM":
-      return { ...state, screen: "lead-form", session: withEvent(state.session, "lead-form-opened") };
+      return {
+        ...state,
+        screen: "lead-form",
+        leadFlow: "entering",
+        session: withEvent(state.session, "lead-form-opened"),
+      };
     case "CANCEL_LEAD_FORM":
       // Back to the recommendations: the session (choices, recommendations) is untouched.
+      if (state.leadFlow === "submitting") return state;
       return {
         ...state,
         screen: "recommendations",
+        leadFlow: "idle",
         session: withEvent(state.session, "lead-form-cancelled"),
       };
+    case "LEAD_SUBMISSION_STARTED":
+      return state.screen === "lead-form" ? { ...state, leadFlow: "submitting" } : state;
     case "LEAD_SUBMITTED":
+      // Stored; the form is still confirming delivery, so the flow stays "submitting".
       return { ...state, session: withEvent(state.session, "lead-submitted") };
+    case "LEAD_SUBMISSION_FAILED":
+      return state.leadFlow === "submitting" ? { ...state, leadFlow: "entering" } : state;
+    case "LEAD_COMPLETED":
+      return { ...state, leadFlow: "complete" };
     case "CONVERSION_PROMPT":
       return { ...state, session: withEvent(state.session, `conversion-prompt-${action.outcome}`) };
     case "SELECT_FACILITY":
@@ -354,4 +398,34 @@ export function toSessionSummary(
     outcome: meta.outcome,
     signals: session.signals,
   });
+}
+
+/** The kiosk's session states (ADR-055). */
+export const SESSION_PHASES = [
+  "attracting",
+  "active",
+  "recommendation-ready",
+  "entering-contact",
+  "submitting",
+  "complete",
+  "resetting",
+] as const;
+export type SessionPhase = (typeof SESSION_PHASES)[number];
+
+/**
+ * Derives the session state from the store (pure). `recommendationReady` is true once readiness is met;
+ * shown recommendations and the summary request also count as ready.
+ */
+export function sessionPhase(
+  state: KioskState,
+  { recommendationReady }: { recommendationReady: boolean },
+): SessionPhase {
+  if (state.resetting) return "resetting";
+  if (!state.session) return "attracting";
+  if (state.leadFlow === "submitting") return "submitting";
+  if (state.leadFlow === "complete") return "complete";
+  if (state.screen === "lead-form") return "entering-contact";
+  if (recommendationReady || state.session.recommendations !== null || state.screen === "summary-request")
+    return "recommendation-ready";
+  return "active";
 }

@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PrimaryAction, SecondaryAction } from "@/components/actions/action-button";
 import { LoadingState } from "@/components/feedback/loading-state";
-import { StateLayout } from "@/components/feedback/state-layout";
 import { StatusBanner } from "@/components/feedback/status-banner";
-import { ArrowRightIcon, ClockIcon, MailIcon } from "@/components/icons";
+import { ArrowRightIcon } from "@/components/icons";
 import { ProgressIndicator } from "@/components/navigation/progress-indicator";
 import { Modal } from "@/components/overlay/dialog";
 import type { PublicContentBundle } from "@/domain/content/visibility";
@@ -13,6 +12,8 @@ import { maskEmailForDisplay } from "@/domain/leads/mask-email";
 import type { RecommendationResult } from "@/domain/recommendations/recommendation-result";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { ScreenFrame } from "../journey/screen-frame";
+import { CompletionScreen } from "./completion-screen";
+import { createSessionId } from "../state/session-id";
 import { awaitDelivery, type DeliveryOutcome, type LeadApi } from "./lead-api";
 import {
   buildSubmission,
@@ -52,6 +53,9 @@ export function LeadFormScreen({
   statusPoll,
   confirmationResetMs,
   onSubmitted,
+  onSubmissionStarted = () => undefined,
+  onSubmissionFailed = () => undefined,
+  onCompleted = () => undefined,
   onCancel,
   onFinish,
 }: {
@@ -63,11 +67,15 @@ export function LeadFormScreen({
   confirmationResetMs: number;
   /** Records the anonymous "lead-submitted" event once the server has stored the lead. */
   onSubmitted: () => void;
+  /** Session-state hooks (ADR-055): no reset may interrupt a submission between started and failed/completed. */
+  onSubmissionStarted?: () => void;
+  onSubmissionFailed?: () => void;
+  onCompleted?: () => void;
   onCancel: () => void;
   /** Ends the visit (privacy reset). */
   onFinish: () => void;
 }) {
-  const { t, language } = useLanguage();
+  const { t, language, localize } = useLanguage();
   const interests = useMemo(
     () => interestOptions(session.signals, recommendations, content),
     // The options are fixed when the form opens, so the list does not shift while the visitor edits it.
@@ -103,13 +111,6 @@ export function LeadFormScreen({
     if (focusRequest === 0) return;
     document.querySelector<HTMLElement>('[data-testid="lead-form"] [aria-invalid="true"]')?.focus();
   }, [focusRequest]);
-
-  // The confirmation stays briefly, then the visit ends for the next visitor's privacy.
-  useEffect(() => {
-    if (phase !== "result") return;
-    const timer = setTimeout(onFinish, confirmationResetMs);
-    return () => clearTimeout(timer);
-  }, [phase, confirmationResetMs, onFinish]);
 
   const change = <K extends LeadFormField>(field: K, value: LeadFormValues[K]) => {
     const next = { ...values, [field]: value };
@@ -157,11 +158,12 @@ export function LeadFormScreen({
     // A retry of the same data reuses the request token, so a request that was stored but whose answer
     // was lost is recognized as the same one; corrected data gets a new token.
     const snapshot = JSON.stringify(values);
-    if (!requestToken.current || lastAttempt.current !== snapshot) requestToken.current = crypto.randomUUID();
+    if (!requestToken.current || lastAttempt.current !== snapshot) requestToken.current = createSessionId();
     lastAttempt.current = snapshot;
     setFailure(null);
     setSendingStage("saving");
     setPhase("sending");
+    onSubmissionStarted();
 
     const outcome = await api.submit(
       buildSubmission(values, {
@@ -186,7 +188,9 @@ export function LeadFormScreen({
       // The contact details are no longer needed on this screen.
       setValues(initialValues({ signals: session.signals, language, interests }));
       setPhase("result");
+      onCompleted();
     } else if (outcome.kind === "invalid") {
+      onSubmissionFailed();
       const serverErrors = fieldErrorsFromServer(outcome.fields);
       setErrors(serverErrors);
       setFailure("invalid");
@@ -194,6 +198,7 @@ export function LeadFormScreen({
       setPhase(stepForErrors(serverErrors) ?? "review");
       setFocusRequest((n) => n + 1);
     } else {
+      onSubmissionFailed();
       if (outcome.kind === "conflict") requestToken.current = null;
       setFailure(outcome.kind);
       setPhase("review");
@@ -218,30 +223,26 @@ export function LeadFormScreen({
       </div>
     );
   } else if (phase === "result" && result) {
-    const kind = result.delivery;
+    const copy = content.report;
     body = (
-      <div data-testid="lead-result" data-delivery={kind} className="flex flex-1 flex-col">
-        <StateLayout
-          role="status"
-          icon={
-            kind === "delayed" ? (
-              <ClockIcon size="size-16" className="text-notice" />
-            ) : (
-              <MailIcon size="size-16" className="text-success" />
-            )
-          }
-          title={t(`leadForm.result.${kind}Title`)}
-          body={t(`leadForm.result.${kind}Body`, { email: result.maskedEmail })}
-        >
-          <p className="text-body text-ink-muted w-full">
-            {result.followUp ? t("leadForm.result.followUp") : t("leadForm.result.noFollowUp")}
-          </p>
-          <p className="text-caption text-ink-muted w-full">{t("leadForm.result.resetNotice")}</p>
-          <PrimaryAction data-testid="lead-finish" onClick={onFinish}>
-            {t("leadForm.actions.finish")}
-          </PrimaryAction>
-        </StateLayout>
-      </div>
+      <CompletionScreen
+        delivery={result.delivery}
+        maskedEmail={result.maskedEmail}
+        followUp={result.followUp}
+        consultation={{
+          heading: localize(copy.callToAction.heading),
+          body: localize(copy.callToAction.body),
+          contact: copy.salesContact
+            ? {
+                name: localize(copy.salesContact.name),
+                email: copy.salesContact.email,
+                phone: copy.salesContact.phone,
+              }
+            : null,
+        }}
+        seconds={Math.round(confirmationResetMs / 1000)}
+        onFinish={onFinish}
+      />
     );
   } else {
     const step = phase === "result" ? "review" : phase;
