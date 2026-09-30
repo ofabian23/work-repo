@@ -434,3 +434,46 @@ entry here — architecture is never changed silently.
   "supply procedures for …".
 - **Consequences:** Descriptions state scope and potential relevance only. Any future need for such wording
   requires a new ADR.
+
+## ADR-044 — Token-based touchscreen design system
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Decision:** `src/styles/tokens.css` defines the design tokens with Tailwind 4 `@theme`: semantic brand
+  colors (including new info, success and danger pairs in brand-config, all contrast-tested), a
+  kiosk-readable type scale whose minimum is 1rem (about 23 px on the kiosk), touch spacing (48/64/80 px),
+  radius, subtle shadows, easing and animations, plus a shared `focus-ring` utility. Components live in
+  `src/components/{shell,actions,cards,navigation,explorer,content,overlay,forms,feedback}`, take content
+  strings already localized, and use `useLanguage()` for their own labels. `LanguageProvider` moved to
+  `src/lib/i18n` so shared components don't depend on a feature. The earlier Button, StatusScreen and
+  LanguageSwitcher were replaced (not duplicated) by PrimaryAction/SecondaryAction, the feedback states and
+  LanguageToggle.
+- **Accessibility rules:** targets ≥ 48 px (defaults 64 px); visible labels; state in ARIA (`aria-pressed`,
+  `aria-current`, `aria-invalid`, `aria-disabled` for explainable disabled cards); color never the only
+  signal; animation only under `motion-safe:` plus a global reduced-motion override; no glass or blur effects.
+- **Overlays:** `Modal` and `Sheet` wrap the native `<dialog>` with `showModal()`, so the browser provides
+  focus containment, Esc, an inert background and focus return. Initial focus uses `data-autofocus`, applied
+  after `showModal()`, because React's `autoFocus` fires before the dialog opens. The backdrop colour is a
+  literal, since `::backdrop` may not inherit custom properties.
+- **Consequences:** Kiosk screens (Phases 4–7) compose these components. The Motion library remains unused
+  until the explorer's zoom transitions need it (Phase 6).
+
+## ADR-045 — Development-only component gallery gated before rendering
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Decision:** `/dev/components` shows every component with real seed content and live engine output. It is
+  enabled under `next dev`, and in production only when `ENABLE_COMPONENT_GALLERY=true`. The gate
+  (`isComponentGalleryEnabled`) runs in `src/proxy.ts`, which returns a real HTTP 404 before rendering, and
+  again in the page. Page-level `notFound()` alone would stream a 200 status because of the root
+  `loading.tsx` Suspense boundary. The route is `noindex` and never linked.
+- **Consequences:** E2E tests run a second production server with the flag, to prove both the default 404
+  and the enabled gallery.
+
+## ADR-046 — Component tests with Testing Library in a jsdom Vitest project; readiness markers for E2E
+
+- **Date:** 2026-09-30 · **Status:** Accepted
+- **Decision:** Vitest `projects`: `unit` (node) and `components` (jsdom, `@testing-library/react`,
+  `user-event`, `jest-dom`, a `<dialog>` polyfill). E2E waits for React to be interactive before acting:
+  `<html data-hydrated>` covers the shell, and pages inside the root Suspense boundary expose their own
+  marker via `useHydrated()`. Earlier intermittent E2E failures came from key presses sent before hydration.
+- **Consequences:** Interaction tests are deterministic. Phase 4 can use `useHydrated()` to ignore taps made
+  during hydration.

@@ -93,6 +93,10 @@ describe("brand configuration", () => {
     ["onPrimary", "primary"],
     ["primary", "surface"],
     ["notice", "noticeSurface"],
+    ["info", "infoSurface"],
+    ["success", "successSurface"],
+    ["danger", "dangerSurface"],
+    ["focus", "surface"],
   ] as const)("%s on %s meets WCAG AA (4.5:1)", (fg, bg) => {
     expect(contrast(brandConfig.colors[fg], brandConfig.colors[bg])).toBeGreaterThanOrEqual(4.5);
   });

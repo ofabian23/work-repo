@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import { AppShell } from "@/components/shell/app-shell";
-import { LanguageProvider } from "@/features/language/language-provider";
+import { LanguageProvider } from "@/lib/i18n/language-provider";
 import { appConfig } from "@/lib/config/app-config";
 import { brandConfig, brandCssVariables } from "@/lib/config/brand-config";
 import { es } from "@/data/i18n/es";

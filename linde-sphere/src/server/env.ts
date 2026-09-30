@@ -38,6 +38,8 @@ const ServerEnvSchema = z
     SMTP_PASS: optional(z.string().min(1)),
     EMAIL_MAX_ATTEMPTS: optional(z.coerce.number().int().min(1).max(50)).transform((v) => v ?? 12),
     ADMIN_ENABLED: booleanFlag,
+    /** Dev-only component gallery at /dev/components; in production it is disabled unless this is true. */
+    ENABLE_COMPONENT_GALLERY: booleanFlag,
     ADMIN_USER: optional(z.string().min(3)),
     ADMIN_PASSWORD: optional(z.string().min(12, { error: "Must be at least 12 characters" })),
   })

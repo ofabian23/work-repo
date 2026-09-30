@@ -68,6 +68,14 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] `lead-scoring.ts` (server-only) + `config/lead-scoring.json` + tests
 - **Done when:** lead scoring is implemented and tested; the engine suite already passes with no I/O in `src/domain`.
 
+## Phase 3b — Touchscreen design system ✅
+
+- [x] Design tokens (`src/styles/tokens.css`): color, typography, spacing/touch, radius, shadow, motion, focus ring; status color pairs in brand config (ADR-044)
+- [x] Components: AppShell, KioskHeader, LanguageToggle, PrimaryAction, SecondaryAction, TouchCard, PersonaCard, ChallengeCard, ProgressIndicator, SceneBreadcrumb, HotspotButton, RecommendationCard, SolutionPanel, BottomActionBar, Modal/Sheet, ConsentCheckbox, FormField, StatusBanner, InactivityWarning, ResetExperienceButton, LoadingState, EmptyState, ErrorState
+- [x] Keyboard operability, visible focus, reduced motion, ≥ 48 px targets, logo only if approved and local
+- [x] Dev-only gallery `/dev/components`, 404 in production unless `ENABLE_COMPONENT_GALLERY=true` (proxy + page gate) (ADR-045)
+- [x] Component tests (Testing Library + jsdom) and gallery E2E at kiosk, laptop and phone sizes (ADR-046)
+
 ## Phase 4 — Kiosk shell
 
 - [ ] State machine (reducer, actions, context, selectors) with reducer unit tests
@@ -75,7 +83,7 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] Attract screen (motion loop, ES/EN toggle, fullscreen request on first touch)
 - [ ] Entry screen with three paths
 - [ ] Idle timer + "Are you still there?" overlay + reset controller (sendBeacon + hard reload)
-- [ ] Shared components: large buttons, selectable chips/cards, pending-validation indicator, "Start over"
+- [x] Shared components (delivered in Phase 3b)
 - [ ] E2E: attract → entry; idle reset returns to attract; language resets to ES
 - **Done when:** the shell runs at 1080×1920 and reset guarantees are verified by E2E.
 

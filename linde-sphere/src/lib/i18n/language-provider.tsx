@@ -34,6 +34,12 @@ export function LanguageProvider({
     document.documentElement.lang = language;
   }, [language]);
 
+  // Marks the shell (layout) as hydrated. Pages inside the root Suspense boundary hydrate separately and
+  // expose their own readiness marker (e.g. data-ready on the gallery root).
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+  }, []);
+
   const setLanguage = useCallback((next: Language) => setLanguageState(next), []);
 
   const value = useMemo<LanguageContextValue>(

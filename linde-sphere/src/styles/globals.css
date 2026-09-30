@@ -1,24 +1,5 @@
 @import "tailwindcss";
-
-/*
- * Theme tokens map to brand CSS variables emitted by the root layout from brand-config.ts (ADR-016).
- * Change colors in brand-config.ts, not here.
- */
-@theme inline {
-  --color-canvas: var(--brand-background);
-  --color-surface: var(--brand-surface);
-  --color-surface-muted: var(--brand-surface-muted);
-  --color-ink: var(--brand-text);
-  --color-ink-muted: var(--brand-text-muted);
-  --color-primary: var(--brand-primary);
-  --color-on-primary: var(--brand-on-primary);
-  --color-accent: var(--brand-accent);
-  --color-line: var(--brand-border);
-  --color-focus: var(--brand-focus);
-  --color-notice: var(--brand-notice);
-  --color-notice-surface: var(--brand-notice-surface);
-  --font-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, sans-serif;
-}
+@import "./tokens.css";
 
 /*
  * Fluid base size: ~23 px on the 1080 × 1920 kiosk, ~21 px on a laptop, 16 px on phones.
@@ -33,6 +14,8 @@ body {
   background: var(--brand-background);
   color: var(--brand-text);
   font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: 1.5;
   /* Kiosk hardening (ARCHITECTURE §5.5) */
   touch-action: manipulation;
   overscroll-behavior: none;
@@ -59,4 +42,9 @@ svg {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Native <dialog> backdrop for Modal/Sheet. */
+dialog::backdrop {
+  background: var(--color-overlay, rgb(19 35 47 / 0.55));
 }

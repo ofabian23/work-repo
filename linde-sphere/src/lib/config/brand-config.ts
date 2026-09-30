@@ -31,6 +31,12 @@ export const BrandConfigSchema = z.strictObject({
     focus: HexColor,
     notice: HexColor,
     noticeSurface: HexColor,
+    info: HexColor,
+    infoSurface: HexColor,
+    success: HexColor,
+    successSurface: HexColor,
+    danger: HexColor,
+    dangerSurface: HexColor,
   }),
   approvalStatus: z.enum(["placeholder", "approved"]),
 });
@@ -57,25 +63,22 @@ export const brandConfig: BrandConfig = BrandConfigSchema.parse({
     focus: "#1B4FD1",
     notice: "#7A4E00",
     noticeSurface: "#FFF4DB",
+    info: "#0B5570",
+    infoSurface: "#E5F1F6",
+    success: "#1C6536",
+    successSurface: "#E5F4EA",
+    danger: "#A0232A",
+    dangerSurface: "#FCEBEC",
   },
   approvalStatus: "placeholder",
 });
 
-/** Brand colors as CSS custom properties, consumed by the Tailwind theme in globals.css. */
+/** Brand colors as CSS custom properties (`surfaceMuted` → `--brand-surface-muted`), consumed by tokens.css. */
 export function brandCssVariables(brand: BrandConfig = brandConfig): CSSProperties {
-  const c = brand.colors;
-  return {
-    "--brand-background": c.background,
-    "--brand-surface": c.surface,
-    "--brand-surface-muted": c.surfaceMuted,
-    "--brand-text": c.text,
-    "--brand-text-muted": c.textMuted,
-    "--brand-primary": c.primary,
-    "--brand-on-primary": c.onPrimary,
-    "--brand-accent": c.accent,
-    "--brand-border": c.border,
-    "--brand-focus": c.focus,
-    "--brand-notice": c.notice,
-    "--brand-notice-surface": c.noticeSurface,
-  } as CSSProperties;
+  return Object.fromEntries(
+    Object.entries(brand.colors).map(([name, value]) => [
+      `--brand-${name.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`,
+      value,
+    ]),
+  ) as CSSProperties;
 }

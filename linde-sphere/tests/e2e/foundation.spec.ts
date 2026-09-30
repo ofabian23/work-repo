@@ -1,27 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-
-/** Every visible interactive element must be at least 48 × 48 CSS px (PROJECT_BRIEF AC-08). */
-async function expectTouchTargets(page: Page) {
-  const small = await page.$$eval("button, a[href], [role='button'], input, select", (els) =>
-    els
-      .filter((el) => (el as HTMLElement).offsetParent !== null)
-      .map((el) => {
-        const r = el.getBoundingClientRect();
-        return {
-          text: (el.textContent ?? "").trim().slice(0, 30),
-          w: Math.round(r.width),
-          h: Math.round(r.height),
-        };
-      })
-      .filter((r) => r.w < 48 || r.h < 48),
-  );
-  expect(small, `targets smaller than 48px: ${JSON.stringify(small)}`).toEqual([]);
-}
-
-async function expectNoHorizontalOverflow(page: Page) {
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
-}
+import { expectNoHorizontalOverflow, expectTouchTargets, gotoHydrated } from "./helpers";
+import { expect, test } from "@playwright/test";
 
 test.describe("foundation shell", () => {
   test("home renders in Spanish with visible product naming", async ({ page }, testInfo) => {
@@ -40,7 +18,7 @@ test.describe("foundation shell", () => {
   });
 
   test("switches between Spanish and English", async ({ page }, testInfo) => {
-    await page.goto("/");
+    await gotoHydrated(page, "/");
     const es = page.getByTestId("language-es");
     const en = page.getByTestId("language-en");
     await expect(es).toHaveAttribute("aria-pressed", "true");
@@ -62,7 +40,7 @@ test.describe("foundation shell", () => {
   });
 
   test("a new page load starts in Spanish again (no persisted language)", async ({ page }) => {
-    await page.goto("/");
+    await gotoHydrated(page, "/");
     await page.getByTestId("language-en").click();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await page.reload();

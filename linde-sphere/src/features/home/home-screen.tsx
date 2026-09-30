@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useLanguage } from "@/features/language/language-provider";
+import { useLanguage } from "@/lib/i18n/language-provider";
 import { brandConfig } from "@/lib/config/brand-config";
 import type { MessageKey } from "@/types/i18n";
 

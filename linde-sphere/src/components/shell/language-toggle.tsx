@@ -3,14 +3,14 @@
 import type { Language } from "@/domain/content/primitives";
 import { appConfig } from "@/lib/config/app-config";
 import { cn } from "@/lib/cn";
-import { useLanguage } from "./language-provider";
+import { useLanguage } from "@/lib/i18n/language-provider";
 
-/** Large two-option segmented control (no hover dependency, ≥ 56 px targets). */
-export function LanguageSwitcher({ className }: { className?: string }) {
+/** Two large toggle buttons (ES / EN), each labeled in its own language. No hover dependency. */
+export function LanguageToggle({ className }: { className?: string }) {
   const { language, setLanguage, t } = useLanguage();
 
   return (
-    <div className={cn("flex flex-col items-end gap-1", className)}>
+    <div className={cn("flex flex-col items-end", className)}>
       <div
         role="group"
         aria-label={t("language.switcherLabel")}
@@ -27,11 +27,9 @@ export function LanguageSwitcher({ className }: { className?: string }) {
               onClick={() => setLanguage(option)}
               data-testid={`language-${option}`}
               className={cn(
-                "min-h-14 min-w-[6.5rem] rounded-full px-5 text-lg font-semibold transition-colors",
-                "focus-visible:outline-focus focus-visible:outline-4 focus-visible:outline-offset-2",
-                active
-                  ? "bg-primary text-on-primary shadow-sm"
-                  : "text-ink-muted active:bg-line/60 bg-transparent",
+                "focus-ring text-label min-h-14 min-w-[6.5rem] rounded-full px-5 font-semibold",
+                "ease-standard transition-colors duration-(--duration-fast)",
+                active ? "bg-primary text-on-primary shadow-card" : "text-ink-muted active:bg-line/60",
               )}
             >
               {t(`language.${option}`)}

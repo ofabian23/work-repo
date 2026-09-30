@@ -81,18 +81,18 @@ Items marked ✅ exist today; the rest are planned and arrive in the phase noted
 
 ### 3.1 Source folders (ADR-034)
 
-| Folder           | Holds                                                                                        | Rules                                                  |
-| ---------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| `src/app`        | Routes only: layouts, pages, `error`/`global-error`/`not-found`/`loading`, route handlers    | Thin; delegates to features                            |
-| `src/components` | Reusable, presentational UI (`ui/` primitives, `shell/` frame and status screens)            | No feature logic, no data fetching                     |
-| `src/features`   | Feature modules (language, home, status; later kiosk flow, explorer, recommendations, lead)  | May use components, lib, domain                        |
-| `src/lib`        | Client-safe utilities and configuration (`config/`, `i18n/`, `cn`)                           | No secrets, no Node-only APIs                          |
-| `src/data`       | Static data bundled with the app (UI translation dictionaries)                               | Visitor-editable content stays in `/content` (ADR-006) |
-| `src/types`      | Cross-cutting TypeScript types not derived from Zod (i18n keys, health report)               | Types only                                             |
-| `src/styles`     | Global CSS and Tailwind theme tokens                                                         |                                                        |
-| `src/domain`     | Pure, isomorphic Zod schemas and logic (content model, runtime payloads; engine in Phase 3)  | No I/O; fully unit-tested                              |
-| `src/server`     | Server-only modules (`import "server-only"`): env, health, database probe, later leads/email | Never imported by client components                    |
-| `public/assets`  | Static files served at `/assets/...` (`brand/`, `scenes/placeholder/`)                       | Original or approved assets only                       |
+| Folder           | Holds                                                                                                             | Rules                                                                          |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `src/app`        | Routes only: layouts, pages, `error`/`global-error`/`not-found`/`loading`, route handlers                         | Thin; delegates to features                                                    |
+| `src/components` | Touchscreen design system (§12.1): shell, actions, cards, navigation, explorer, content, overlay, forms, feedback | No feature logic or data fetching; localized chrome labels via `useLanguage()` |
+| `src/features`   | Feature modules (home, status, dev-gallery; later kiosk flow, explorer, recommendations, lead)                    | May use components, lib, domain                                                |
+| `src/lib`        | Client-safe utilities and configuration (`config/`, `i18n/` incl. `LanguageProvider`, `cn`, `csv`, `useHydrated`) | No secrets, no Node-only APIs                                                  |
+| `src/data`       | Static data bundled with the app (UI translation dictionaries)                                                    | Visitor-editable content stays in `/content` (ADR-006)                         |
+| `src/types`      | Cross-cutting TypeScript types not derived from Zod (i18n keys, health report)                                    | Types only                                                                     |
+| `src/styles`     | `tokens.css` (design tokens, §12.1) and `globals.css`                                                             |                                                                                |
+| `src/domain`     | Pure, isomorphic Zod schemas and logic (content model, runtime payloads; engine in Phase 3)                       | No I/O; fully unit-tested                                                      |
+| `src/server`     | Server-only modules (`import "server-only"`): env, health, database probe, later leads/email                      | Never imported by client components                                            |
+| `public/assets`  | Static files served at `/assets/...` (`brand/`, `scenes/placeholder/`)                                            | Original or approved assets only                                               |
 
 ### 3.2 Tree
 
@@ -117,14 +117,21 @@ linde-sphere/
 │  │  ├─ layout.tsx               # brand CSS vars, viewport, LanguageProvider, AppShell    ✅
 │  │  ├─ page.tsx                 # home (foundation placeholder → Attract in Phase 4)      ✅
 │  │  ├─ error.tsx · global-error.tsx · not-found.tsx · loading.tsx                        ✅
-│  │  └─ api/health/route.ts      # readiness JSON                                           ✅
-│  ├─ components/ui/button.tsx · components/shell/{app-shell,brand-wordmark,status-screen}.tsx ✅
-│  ├─ features/language/{language-provider,language-switcher}.tsx                         ✅
-│  ├─ features/home/home-screen.tsx · features/status/{loading,error,not-found}-screen.tsx ✅
-│  ├─ lib/config/{app-config,brand-config}.ts · lib/i18n/translate.ts · lib/cn.ts · lib/csv.ts ✅
+│  │  ├─ api/health/route.ts      # readiness JSON                                           ✅
+│  │  └─ dev/components/page.tsx  # dev-only design-system gallery (gated, ADR-045)          ✅
+│  ├─ components/                 # design system (§12.1)                                    ✅
+│  │  ├─ shell/ (app-shell, kiosk-header, language-toggle, brand-wordmark)
+│  │  ├─ actions/ (action-button: Primary/SecondaryAction, bottom-action-bar, reset-experience-button)
+│  │  ├─ cards/ (touch-card, persona-card, challenge-card, recommendation-card)
+│  │  ├─ navigation/ (progress-indicator, scene-breadcrumb) · explorer/ (hotspot-button)
+│  │  ├─ content/ (solution-panel, pending-validation-badge) · overlay/ (dialog: Modal/Sheet, inactivity-warning)
+│  │  ├─ forms/ (form-field, consent-checkbox) · feedback/ (status-banner, loading/empty/error-state)
+│  │  └─ icons.tsx
+│  ├─ features/home/ · features/status/ · features/dev-gallery/                              ✅
+│  ├─ lib/config/{app-config,brand-config}.ts · lib/i18n/{translate,language-provider} · lib/{cn,csv,use-hydrated}.ts ✅
 │  ├─ data/i18n/{es,en}.ts                                                                  ✅
 │  ├─ types/{i18n,health}.ts                                                                ✅
-│  ├─ styles/globals.css                                                                    ✅
+│  ├─ styles/{tokens,globals}.css                                                          ✅
 │  ├─ domain/                     # content/, session/, leads/, report/, email/                 ✅
 │  │  ├─ recommendations/         # engine.ts, explanations.ts, engine-config.ts, result schema ✅
 │  │  └─ review/content-review.ts # sales-review CSV rows + generated Markdown                 ✅
@@ -133,12 +140,13 @@ linde-sphere/
 │  │  ├─ content/load-content.ts  # fs loader (no `server-only` so CLI scripts can use it)  ✅
 │  │  └─ db.ts · lead-scoring.ts · leads.ts · report/ · email/ · outbox/ · log.ts  (Phases 3–9)
 │  ├─ instrumentation.ts          # validates env at server boot (outbox worker: Phase 8)   ✅
-│  └─ proxy.ts                    # admin guard (Phase 9)
+│  └─ proxy.ts                    # /dev/* gate (404 in production unless enabled) ✅; admin guard (Phase 9)
 ├─ scripts/content-check.ts · content-export.ts (+ lib/)   ✅ · leads-export / leads-purge / outbox-retry (Phase 9)
 ├─ exports/content-validation.csv # generated sales worksheet (UTF-8 BOM, CRLF; `.gitattributes -text`) ✅
 ├─ tests/
 │  ├─ helpers/ · unit/content · unit/runtime · unit/app                                     ✅
-│  ├─ e2e/foundation.spec.ts      # Playwright: kiosk 1080×1920, laptop 1440×900, phone 390×844 ✅
+│  ├─ components/                 # Testing Library + jsdom component tests                   ✅
+│  ├─ e2e/{foundation,gallery}.spec.ts # Playwright: kiosk 1080×1920, laptop 1440×900, phone 390×844 ✅
 │  └─ integration/                (Phase 7)
 └─ data/                          # SQLite db + dev email output (git-ignored)
 ```
@@ -677,6 +685,47 @@ promised. Demo mode marks assumed offering items with the pending-validation not
 
 ---
 
+### 12.1 Touchscreen design system (ADR-044)
+
+**Tokens** (`src/styles/tokens.css`, Tailwind 4 `@theme`):
+
+| Group      | Tokens (utility examples)                                                                                                                                                                                                                          |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Color      | `canvas`, `surface`, `surface-muted`, `ink`, `ink-muted`, `primary`/`on-primary`, `accent`, `line`, `focus`, `info`, `success`, `notice`, `danger` (+ `-surface`), `overlay`. All map to `--brand-*` from brand-config; AA contrast is unit-tested |
+| Typography | `text-caption` 1rem (the minimum), `text-label` 1.125, `text-body` 1.25, `text-lead` 1.5, `text-title` 1.875, `text-headline` 2.5, `text-display` clamp(2.5–5.5rem). With the fluid root, body text is about 29 px on the kiosk                    |
+| Spacing    | `touch-min` 3rem (48 px floor), `touch` 4rem (64 px default), `touch-lg` 5rem; `gutter` clamp(1rem, 6vw, 4.5rem); `stack` clamp(1rem, 2.5vh, 2.5rem)                                                                                               |
+| Radius     | `rounded-control` 1rem, `rounded-card` 1.5rem, `rounded-sheet` 2rem                                                                                                                                                                                |
+| Shadow     | `shadow-card`, `shadow-raised`, `shadow-sheet` (subtle; no glass, blur or glow)                                                                                                                                                                    |
+| Motion     | `ease-standard`, `ease-emphasized`; `--duration-fast/base/slow` (120/200/320 ms); `animate-pulse-ring`, `animate-sheet-in`, `animate-fade-in`, always under `motion-safe:`, plus a global reduced-motion override                                  |
+| Focus      | `focus-ring` utility: 4 px solid `focus` outline, 3 px offset, on `:focus-visible`                                                                                                                                                                 |
+
+**Components** (`src/components/`). Content strings arrive already localized from the caller; chrome labels
+use `useLanguage()`:
+
+| Component                                                  | Notes                                                                                                                                                              |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `AppShell`, `KioskHeader`, `LanguageToggle`                | Portrait column (max 1080 px). Header holds the configured wordmark (a logo only if approved and local), an actions slot and ES/EN toggle buttons (`aria-pressed`) |
+| `PrimaryAction`, `SecondaryAction`                         | Filled / outlined; `md` 56 px, `lg` 64 px (default), `xl` 80 px; `type="button"` by default                                                                        |
+| `TouchCard`, `PersonaCard`, `ChallengeCard`                | ≥ 96 px toggle cards (`aria-pressed`); disabled cards stay focusable (`aria-disabled`) and explain why (challenge limit)                                           |
+| `ProgressIndicator`, `SceneBreadcrumb`                     | "Step 2 of 4" text + segments (`aria-current="step"`); breadcrumb `nav` with ancestor buttons and `aria-current="page"`                                            |
+| `HotspotButton`                                            | Positioned by % on the art box; 56–80 px marker by importance; always-visible label kept inside the box; pulse only when motion is allowed and not yet visited     |
+| `RecommendationCard`, `SolutionPanel`                      | "Why this appeared" always visible, no scores; pending-validation badge; explicit-interest toggle (`aria-pressed`)                                                 |
+| `BottomActionBar`                                          | Sticky bottom region for primary actions within reach on a tall screen                                                                                             |
+| `Modal`, `Sheet`                                           | Native `<dialog>` + `showModal()`: focus containment, Esc, inert background, focus return; `data-autofocus` sets initial focus                                     |
+| `InactivityWarning`, `ResetExperienceButton`               | Countdown modal (presentational; timer in Phase 4); reset requires confirmation                                                                                    |
+| `FormField`, `ConsentCheckbox`                             | Visible labels, hint and error through `aria-describedby`, `aria-invalid`; autofill off; consent text passed in from content                                       |
+| `StatusBanner`, `LoadingState`, `EmptyState`, `ErrorState` | Icon + text (color never alone); errors use `role="alert"`, others `role="status"`                                                                                 |
+
+**Gallery:** `/dev/components` renders every component with real seed content and live engine output. It
+is available with `npm run dev`. In production it answers HTTP 404 from `src/proxy.ts` (and again in the
+page) unless `ENABLE_COMPONENT_GALLERY=true` (ADR-045). It is never linked and is marked `noindex`.
+
+**Readiness:** `useHydrated()` (`useSyncExternalStore`) tells a page when it is interactive. The root
+`loading.tsx` Suspense boundary hydrates pages separately from the layout, so pages expose their own
+readiness marker (the gallery uses `data-ready`); `<html data-hydrated>` covers the shell.
+
+---
+
 ## 13. Visual and motion system (Hospital Explorer)
 
 - **Scene composition:** a fixed-aspect art box (portrait) containing ordered layers (background → mid
@@ -725,6 +774,7 @@ status, timestamps.
 | `ADMIN_ENABLED`                                                       | `false`                       | Enable admin pages/APIs                      |
 | `ADMIN_USER` / `ADMIN_PASSWORD`                                       | —                             | Basic auth credentials (required if enabled) |
 | `DEV_ALLOWED_ORIGINS`                                                 | —                             | Extra dev-server HMR hostnames (comma list)  |
+| `ENABLE_COMPONENT_GALLERY`                                            | `false`                       | Allow `/dev/components` in production builds |
 
 All are parsed by `src/server/env.ts` (Zod) in `instrumentation.ts` at server boot. The server refuses
 to start on invalid configuration (e.g., `EMAIL_PROVIDER=smtp` without `SMTP_HOST`), and errors name
@@ -741,7 +791,7 @@ variables (ADR-037). `.env.example` lists every variable without secrets.
 | Static      | `tsc --noEmit`, ESLint, Prettier check                                               | Whole project                                                                                                                                                                                                                                                                |
 | Content     | `content:check` (Zod + cross-reference + translation + prohibited-claim scan)        | `content/`                                                                                                                                                                                                                                                                   |
 | Unit        | Vitest (node)                                                                        | Engine (determinism, reasons, caps, tie-breaks, fallback), visibility filter, lead scoring, signal normalization, i18n parity, outbox backoff, CSV formatting, contrast tokens                                                                                               |
-| Component   | Vitest + Testing Library (jsdom)                                                     | Reducer transitions, idle timer, minimum-info gating, lead form validation                                                                                                                                                                                                   |
+| Component   | Vitest `components` project (Testing Library + jsdom, `<dialog>` polyfill)           | Now: every design-system component (keyboard, ARIA state, focus, dialogs, forms). Later: reducer transitions, idle timer, lead form                                                                                                                                          |
 | Integration | Vitest + temporary SQLite DB                                                         | `/api/leads` transaction, email failure keeps lead + retries, response excludes score, production mode filtering in report                                                                                                                                                   |
 | E2E         | Playwright projects: kiosk 1080×1920 (touch), laptop 1440×900, phone 390×844 (touch) | Now: home, language switch, no persisted language, not-found, touch-target sizes, no overflow, kiosk fits without scroll, health. Later: quick path, discovery path, explore path, idle reset clears everything, production mode hides assumed content, no external requests |
 

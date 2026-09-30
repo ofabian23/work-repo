@@ -92,6 +92,12 @@ Notes:
   connections from private LAN addresses (192.168.x.x, 10.x.x.x, 172.x.x.x). Add other hostnames with
   `DEV_ALLOWED_ORIGINS` in `.env`. At the event, always use `build` + `start:network`.
 
+## Component gallery (development only)
+
+`npm run dev` → <http://localhost:3000/dev/components> shows every design-system component with real
+content, live recommendations, and both languages (use the header toggle). Production builds answer 404 at
+that URL unless `ENABLE_COMPONENT_GALLERY=true` is set in `.env`. Keep it off at the event.
+
 ## Health check
 
 `GET /api/health` returns JSON with the application version, content mode, configuration validity (by
