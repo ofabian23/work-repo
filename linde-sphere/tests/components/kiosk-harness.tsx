@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { ComponentProps } from "react";
+import { Fragment, StrictMode, type ComponentProps } from "react";
 import { vi } from "vitest";
 import { AppShell } from "@/components/shell/app-shell";
 import { visibleContent, type PublicContentBundle } from "@/domain/content/visibility";
@@ -39,6 +39,7 @@ export function renderKiosk({
   leadStatusPoll = { attempts: 1, intervalMs: 0 },
   confirmationResetMs,
   followUp,
+  strict = false,
 }: {
   content?: PublicContentBundle;
   idle?: { warningAfterMs: number; countdownMs: number };
@@ -49,30 +50,35 @@ export function renderKiosk({
   leadStatusPoll?: { attempts: number; intervalMs: number };
   confirmationResetMs?: number;
   followUp?: ComponentProps<typeof KioskExperience>["followUp"];
+  /** Wrap in React StrictMode, as `next dev` does (reactStrictMode: effects mount, clean up and mount again). */
+  strict?: boolean;
 } = {}) {
   const onHardReset = vi.fn();
+  const Wrapper = strict ? StrictMode : Fragment;
   const utils = render(
-    <LanguageProvider>
-      <KioskSessionProvider
-        onHardReset={onHardReset}
-        createId={() => `00000000-0000-4000-8000-00000000000${++counter % 10}`}
-      >
-        <AppShell contentMode={content.mode} headerActions={<KioskHeaderActions />}>
-          <KioskExperience
-            content={content}
-            idle={idle}
-            attractTimings={attractTimings}
-            tailoringMs={tailoringMs}
-            conversionPrompt={conversionPrompt}
-            leadApi={leadApi}
-            leadStatusPoll={leadStatusPoll}
-            confirmationResetMs={confirmationResetMs}
-            followUp={followUp}
-          />
-        </AppShell>
-        <SessionProbe />
-      </KioskSessionProvider>
-    </LanguageProvider>,
+    <Wrapper>
+      <LanguageProvider>
+        <KioskSessionProvider
+          onHardReset={onHardReset}
+          createId={() => `00000000-0000-4000-8000-00000000000${++counter % 10}`}
+        >
+          <AppShell contentMode={content.mode} headerActions={<KioskHeaderActions />}>
+            <KioskExperience
+              content={content}
+              idle={idle}
+              attractTimings={attractTimings}
+              tailoringMs={tailoringMs}
+              conversionPrompt={conversionPrompt}
+              leadApi={leadApi}
+              leadStatusPoll={leadStatusPoll}
+              confirmationResetMs={confirmationResetMs}
+              followUp={followUp}
+            />
+          </AppShell>
+          <SessionProbe />
+        </KioskSessionProvider>
+      </LanguageProvider>
+    </Wrapper>,
   );
   return { ...utils, onHardReset };
 }

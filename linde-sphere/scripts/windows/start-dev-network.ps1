@@ -68,8 +68,19 @@ if ($CheckOnly) {
 }
 
 Write-Host ''
-Write-Step 'Starting the development server on 0.0.0.0 (first page load compiles and takes longer) ...'
 $node = (Get-Command node).Source
+# `next dev` does not regenerate the Prisma client. After a pull that changes prisma/schema.prisma, an old
+# client rejects every lead (PrismaClientValidationError), so it is regenerated on every start.
+Write-Step 'Generating the database client for the current schema (prisma generate) ...'
+$prismaCli = Join-Path $root 'node_modules\prisma\build\index.js'
+& $node "$prismaCli" generate | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Fail 'prisma generate failed, so leads could not be saved. The server was not started.'
+    Write-Hint 'Run npm install, then run this script again.'
+    exit 1
+}
+Write-Ok 'Database client matches prisma/schema.prisma'
+Write-Step 'Starting the development server on 0.0.0.0 (first page load compiles and takes longer) ...'
 $nextBin = Join-Path $root 'node_modules\next\dist\bin\next'
 $arguments = @("`"$nextBin`"", 'dev', '-H', '0.0.0.0', '-p', [string]$resolved.Port)
 $server = Start-Process -FilePath $node -ArgumentList $arguments -WorkingDirectory $root -NoNewWindow -PassThru

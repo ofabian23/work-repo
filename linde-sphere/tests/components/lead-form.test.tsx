@@ -200,6 +200,33 @@ describe("lead form — follow-up mode (ADR-062)", () => {
   });
 });
 
+describe("lead form — React StrictMode (next dev)", () => {
+  // Regression: under StrictMode effects mount, clean up and mount again. The form used to mark itself
+  // unmounted in that cleanup and then ignore every submission result, staying on "Guardando su solicitud…"
+  // forever in development, whether the lead was stored or the server failed.
+  it("shows the confirmation after a stored submission", async () => {
+    const api = fakeApi({ submit: { kind: "stored", statusToken: TOKEN, followUp: "package" } });
+    await openLeadForm(api, { strict: true });
+    completeToReview();
+    fireEvent.click(screen.getByTestId("lead-submit"));
+    await flush();
+    expect(api.submit).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("lead-sending")).toBeNull();
+    expect(screen.getByTestId("lead-result")).toHaveAttribute("data-delivery", "packaged");
+  });
+
+  it("shows the failure message and keeps the details when the server fails", async () => {
+    const api = fakeApi({ submit: { kind: "failed" } });
+    await openLeadForm(api, { strict: true });
+    completeToReview();
+    fireEvent.click(screen.getByTestId("lead-submit"));
+    await flush();
+    expect(screen.queryByTestId("lead-sending")).toBeNull();
+    expect(screen.getByTestId("lead-failure")).toHaveTextContent("Sus datos siguen aquí");
+    expect(screen.getByTestId("review-email")).toHaveTextContent("maria.rivera@hospital.example");
+  });
+});
+
 describe("lead form — validation", () => {
   it("shows an inline error for an invalid email and clears it as the visitor corrects it", async () => {
     await openLeadForm(fakeApi());
