@@ -1,5 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { scanPublicAssets } from "./asset-safety";
+import { readImageSize } from "./image-size";
+import { SCENE_ART, SCENE_ART_RATIO, SCENE_ART_RATIO_TOLERANCE } from "../../domain/content/scene-art";
 import path from "node:path";
 import type { z } from "zod";
 import {
@@ -213,7 +215,13 @@ export function loadContentFromDirectory(
   return { bundle, issues, filesRead };
 }
 
-/** Local files referenced by content must exist. Missing placeholder art is a warning, not an error. */
+const publicFile = (publicDir: string, publicPath: string) =>
+  path.join(/*turbopackIgnore: true*/ publicDir, ...publicPath.split("/").filter(Boolean));
+
+/**
+ * Local files referenced by content must exist, and scene art must match the art box (every responsive
+ * candidate, with its declared width). Problems with placeholder art are warnings; with approved art, errors.
+ */
 function checkLocalAssetFiles(
   bundle: ContentBundle,
   publicDir: string,
@@ -229,14 +237,49 @@ function checkLocalAssetFiles(
       ...scene.foregroundLayers.map((layer, i) => ({ layer, at: `foregroundLayers[${i}].src` })),
     ];
     for (const { layer, at } of layers) {
-      if (!exists(layer.src)) {
-        issues.push({
-          severity: layer.assetStatus === "approved" ? "error" : "warning",
-          file: sceneFileById.get(scene.id) ?? "content/scenes",
-          path: at,
-          message: `${layer.assetStatus === "approved" ? "Approved" : "Placeholder"} image not found: public${layer.src}`,
-        });
-      }
+      const severity = layer.assetStatus === "approved" ? "error" : "warning";
+      const kind = layer.assetStatus === "approved" ? "Approved" : "Placeholder";
+      const file = sceneFileById.get(scene.id) ?? "content/scenes";
+      const candidates = layer.srcSet ?? [{ src: layer.src, width: undefined }];
+      candidates.forEach((candidate, i) => {
+        const where = layer.srcSet ? at.replace(/\.src$/, `.srcSet[${i}]`) : at;
+        if (!exists(candidate.src)) {
+          issues.push({
+            severity,
+            file,
+            path: where,
+            message: `${kind} image not found: public${candidate.src}`,
+          });
+          return;
+        }
+        // Hotspots are percentages of the art box: art with other proportions would misplace them (ADR-063).
+        const size = readImageSize(publicFile(publicDir, candidate.src));
+        if (!size) {
+          issues.push({
+            severity,
+            file,
+            path: where,
+            message: `Cannot read the size of public${candidate.src}`,
+          });
+          return;
+        }
+        if (Math.abs(size.width / size.height / SCENE_ART_RATIO - 1) > SCENE_ART_RATIO_TOLERANCE) {
+          issues.push({
+            severity,
+            file,
+            path: where,
+            message: `public${candidate.src} is ${size.width} × ${size.height}; scene art must have the proportions of the ${SCENE_ART.width} × ${SCENE_ART.height} art box, or hotspots will not line up`,
+          });
+        }
+        if (candidate.width !== undefined && Math.round(size.width) !== candidate.width) {
+          issues.push({
+            severity: "error",
+            file,
+            path: `${where}.width`,
+            message: `srcSet says ${candidate.width} px wide but public${candidate.src} is ${size.width} px wide`,
+          });
+        }
+      });
     }
   }
   bundle.digitalAssets.forEach((asset, i) => {

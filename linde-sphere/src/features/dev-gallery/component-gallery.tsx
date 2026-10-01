@@ -230,10 +230,11 @@ export function ComponentGallery({ content }: { content: PublicContentBundle }) 
       {scene && (
         <Section title="HotspotButton · Sheet · SolutionPanel" id="explorer">
           <p className="text-body text-ink-muted">
-            Placeholder art box (4:5). Activate a hotspot to open its sheet; visited hotspots stop pulsing.
+            Scene art box (the approved art ratio, ADR-063). Activate a hotspot to open its sheet; visited
+            hotspots stop pulsing.
           </p>
           <div
-            className="bg-surface-muted border-line rounded-card relative aspect-[4/5] w-full border"
+            className="bg-surface-muted border-line rounded-card relative mx-auto aspect-[1536/2752] w-full max-w-md border"
             data-testid="scene-box"
           >
             {scene.hotspots.map((h) => (

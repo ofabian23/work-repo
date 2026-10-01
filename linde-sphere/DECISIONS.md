@@ -1257,3 +1257,41 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
     (PRIVACY_REVIEW A22).
   - A lead stored in an email mode keeps its delivery. If the mode later changes to LOCAL_PACKAGE, the
     worker stops and pending deliveries wait, but the admin manual retry still works.
+
+## ADR-063 — Approved scene art: art box follows the art, responsive WebP copies, originals kept unserved
+
+- **Date:** 2026-10-01 · **Status:** Accepted (amends ADR-049 art box; extends ADR-057/058 asset rules)
+- **Context:**
+  - The project owner delivered approved illustrations for all eight explorer scenes (plus three without a
+    scene) as 1536 × 2752 JPEGs (campus: 768 × 1376, same proportions), 0.7–3.3 MB each, in
+    `public/assets/scenes/prototype1/`.
+  - The viewer drew every scene on a fixed 4:5 art box (1200 × 1500), and hotspots are percentages of that
+    box. Fitting ≈ 9:16 art into it would mean cropping or stretching it.
+  - Files in `public/` are all downloadable and limited to 1 MB each (ADR-058); most originals exceed it.
+- **Decision:**
+  - **Art box = the art's proportions:** `SCENE_ART` becomes 1536 × 2752 (ratio ≈ 0.558). Aspect ratio is
+    preserved: no crop, no stretch. The box still fits its container with container units.
+  - **Guard:** `content:check` reads each scene image's real size from its header (`image-size.ts`, no image
+    library at run time) and rejects approved art whose proportions differ from the box by more than 1 %,
+    and `srcSet` widths that do not match the file. Placeholder art only warns.
+  - **Responsive images:** scene layers gain an optional `srcSet` (`{ src, width }[]`, smallest first;
+    `src` is the largest). The viewer renders `srcset` with `sizes="min(92vw, 42vh)"`, and the neighbor
+    prefetch sets `sizes` and `srcset` before `src`, so it fetches the candidate that will be shown.
+  - **Optimized copies:** `npm run art:scenes` (sharp, now an exact dev dependency) writes WebP (quality 80)
+    at 640/960/1280/1536 px, never above the original's width, without metadata, to
+    `public/assets/scenes/approved/`. 30 files, 41–224 KB each, 3.7 MB in total (originals: 25 MB).
+  - **Originals** move unchanged (SHA-256 verified) to `art-source/scenes/prototype1/` (not served), with
+    their provenance in `art-source/README.md`. The three images without a scene are not published.
+  - **Hotspots:** every hotspot was checked against the new art; those not on a matching feature were moved
+    onto one. Ids, types, labels, accessible labels and content are unchanged. The old foreground layers
+    (trees) are removed: the new art is one composed image. Alt texts describe the new images.
+  - **Marker density:** the compact-marker threshold drops from 36 to 26 rem. The narrower box on the
+    portrait kiosk (≈ 29 rem) keeps regular markers and always-visible wayfinding labels. Phones, laptops
+    and tablets stay compact.
+  - The placeholder SVGs and `art:placeholders` stay (historical, unused); `--sync-content` now skips
+    scenes with approved art.
+- **Consequences:**
+  - On short or landscape screens the art is narrower than before (same height, taller ratio). The page
+    still scrolls on short screens, as before.
+  - Brand marks and English or garbled text baked into the art need marketing review (CONTENT_VALIDATION
+    §9.6, A12). The campus art has no laboratory, so that route sits on the diagnostics floor.

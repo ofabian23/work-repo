@@ -13,13 +13,45 @@ import {
 export const AssetStatusSchema = z.enum(["approved", "placeholder"]);
 export type AssetStatus = z.infer<typeof AssetStatusSchema>;
 
-export const SceneLayerSchema = z.strictObject({
+/** One responsive candidate of a raster scene image: the file and its real pixel width (ADR-063). */
+export const SceneImageCandidateSchema = z.strictObject({
   src: PublicPathSchema,
-  alt: LocalizedTextSchema,
-  /** Parallax depth: 0 = background (static), 1 = nearest foreground (moves most). */
-  depth: z.number().min(0).max(1),
-  assetStatus: AssetStatusSchema,
+  width: z.number().int().min(64).max(4096),
 });
+
+export const SceneLayerSchema = z
+  .strictObject({
+    /** The image to use when `srcSet` is not supported; with `srcSet`, its largest candidate. */
+    src: PublicPathSchema,
+    /**
+     * Optional responsive candidates (smallest first). The browser picks one for the art box width and the
+     * screen's pixel density; every candidate has the art box's proportions (checked by content:check).
+     */
+    srcSet: z.array(SceneImageCandidateSchema).min(1).max(6).optional(),
+    alt: LocalizedTextSchema,
+    /** Parallax depth: 0 = background (static), 1 = nearest foreground (moves most). */
+    depth: z.number().min(0).max(1),
+    assetStatus: AssetStatusSchema,
+  })
+  .superRefine((layer, ctx) => {
+    if (!layer.srcSet) return;
+    layer.srcSet.forEach((c, i) => {
+      if (i > 0 && c.width <= layer.srcSet![i - 1]!.width) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["srcSet", i, "width"],
+          message: "srcSet candidates must be listed from the smallest to the largest width",
+        });
+      }
+    });
+    if (layer.srcSet.at(-1)!.src !== layer.src) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["src"],
+        message: "With srcSet, src must be the largest candidate (the fallback)",
+      });
+    }
+  });
 export type SceneLayer = z.infer<typeof SceneLayerSchema>;
 
 export const VisualImportanceSchema = z.enum(["primary", "secondary", "tertiary"]);

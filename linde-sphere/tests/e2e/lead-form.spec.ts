@@ -135,10 +135,18 @@ test.describe("lead form and consent", () => {
     await page.getByTestId("lead-continue").click();
     await page.getByTestId("lead-submit").click();
     const result = page.getByTestId("lead-result");
-    await expect(result).toHaveAttribute("data-delivery", "sent");
-    await expect(result).toContainText("Enviamos su resumen");
-    // The report was generated and "delivered" to the local preview folder only.
-    expect(previewEmailTo(email)).toContain("Subject: Su resumen personalizado de Linde Sphere");
+    // The kiosk checks the delivery a few times: "sent" when the provider finished in time, otherwise
+    // "queued" (stored and being sent). Both are correct; neither is the package wording.
+    await expect(result).toHaveAttribute("data-delivery", /^(sent|queued)$/);
+    await expect(result).toContainText(/Enviamos su resumen|Guardamos su solicitud/);
+    await expect(result).not.toContainText("paquete");
+    // The report is generated and "delivered" to the local preview folder only.
+    await expect
+      .poll(() => previewEmailTo(email) ?? "", {
+        message: "report written by the email provider",
+        timeout: 15_000,
+      })
+      .toContain("Subject: Su resumen personalizado de Linde Sphere");
   });
 
   test("inline validation blocks invalid and missing fields", async ({ page }) => {

@@ -10,33 +10,41 @@
     "en": "The starting point of the hospital's medical gas supply."
   },
   "background": {
-    "src": "/assets/scenes/placeholder/gas-plant-background.svg",
+    "src": "/assets/scenes/approved/gas-plant-1536.webp",
+    "srcSet": [
+      {
+        "src": "/assets/scenes/approved/gas-plant-640.webp",
+        "width": 640
+      },
+      {
+        "src": "/assets/scenes/approved/gas-plant-960.webp",
+        "width": 960
+      },
+      {
+        "src": "/assets/scenes/approved/gas-plant-1280.webp",
+        "width": 1280
+      },
+      {
+        "src": "/assets/scenes/approved/gas-plant-1536.webp",
+        "width": 1536
+      }
+    ],
     "alt": {
-      "es": "Ilustración isométrica de una planta de gases medicinales con tanque de almacenamiento.",
-      "en": "Isometric illustration of a medical-gas plant with a storage tank."
+      "es": "Ilustración de una planta de gases medicinales exterior con tanque de oxígeno a granel, vaporizadores, reserva de emergencia, múltiple de líquido y tuberías hacia el hospital.",
+      "en": "Illustration of an outdoor medical-gas plant with a bulk oxygen tank, vaporizers, an emergency reserve, a liquid manifold and piping to the hospital."
     },
     "depth": 0,
-    "assetStatus": "placeholder"
+    "assetStatus": "approved"
   },
-  "foregroundLayers": [
-    {
-      "src": "/assets/scenes/placeholder/gas-plant-foreground.svg",
-      "alt": {
-        "es": "Cerca y árboles en primer plano.",
-        "en": "Fence and trees in the foreground."
-      },
-      "depth": 0.35,
-      "assetStatus": "placeholder"
-    }
-  ],
+  "foregroundLayers": [],
   "hotspots": [
     {
       "id": "gas-plant-bulk-tank",
       "type": "solution",
-      "x": 56.5,
-      "y": 36,
-      "width": 24,
-      "height": 18,
+      "x": 37.5,
+      "y": 43,
+      "width": 20,
+      "height": 32,
       "label": {
         "es": "Tanque de almacenamiento",
         "en": "Storage tank"
@@ -56,8 +64,8 @@
     {
       "id": "gas-plant-backup",
       "type": "solution",
-      "x": 51.5,
-      "y": 58.5,
+      "x": 69,
+      "y": 53,
       "label": {
         "es": "Suministro de respaldo",
         "en": "Backup supply"
@@ -98,8 +106,8 @@
     {
       "id": "gas-plant-perimeter",
       "type": "information",
-      "x": 20.5,
-      "y": 47.5,
+      "x": 22,
+      "y": 64,
       "label": {
         "es": "Zona restringida",
         "en": "Restricted area"

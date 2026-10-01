@@ -384,6 +384,19 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] PDF report (not implemented before this phase; still backlog)
 - [ ] Legal confirmation of report-consent wording for representative delivery (PRIVACY_REVIEW A22)
 
+## Phase 13 — Approved scene art (ADR-063) ✅
+
+- [x] Inspect the 11 delivered originals (format, size, proportions); keep them unchanged and unserved in
+      `art-source/` with provenance and checksums
+- [x] Optimized responsive WebP copies (`npm run art:scenes`, no upscaling); `srcSet` + `sizes` in the viewer
+      and prefetch
+- [x] Art box changed to the art's proportions; `content:check` rejects mismatched art
+- [x] Hotspots checked on every scene and moved only where they missed their feature; labels unchanged
+- [x] Layouts checked on portrait kiosk, tablet (portrait and landscape), laptop and phone (E2E with
+      screenshots)
+- [ ] Marketing review: brand marks and English/garbled text baked into the art (CONTENT_VALIDATION §9.6)
+- [ ] Decide whether Scene 1, Homecare Ecosystem and Scene 11 get scenes (new content scope)
+
 ## Phase 10 — Hardening, accessibility, deployment
 
 - [ ] E2E: full quick/discovery/explore journeys; post-reset storage/DOM/history assertions; no external requests
@@ -407,10 +420,10 @@ illustration integration · additional languages.
 
 ## Blockers and external dependencies
 
-| Item                               | Needed for               | Status                                                               |
-| ---------------------------------- | ------------------------ | -------------------------------------------------------------------- |
-| SMTP account + sender address (Q2) | `SMTP_EMAIL` follow-up   | Open — `LOCAL_PACKAGE` (no email) is the default meanwhile (ADR-062) |
-| Validated PR solution catalog (Q5) | Production mode          | Open — demo mode with `assumed` content                              |
-| Approved consent text (Q3)         | Production mode          | Open — placeholder text                                              |
-| Sales contact details (Q4)         | Report CTA in production | Open                                                                 |
-| Scene illustrations (Q6)           | Final visual quality     | Open — local placeholder SVGs                                        |
+| Item                               | Needed for               | Status                                                                                  |
+| ---------------------------------- | ------------------------ | --------------------------------------------------------------------------------------- |
+| SMTP account + sender address (Q2) | `SMTP_EMAIL` follow-up   | Open — `LOCAL_PACKAGE` (no email) is the default meanwhile (ADR-062)                    |
+| Validated PR solution catalog (Q5) | Production mode          | Open — demo mode with `assumed` content                                                 |
+| Approved consent text (Q3)         | Production mode          | Open — placeholder text                                                                 |
+| Sales contact details (Q4)         | Report CTA in production | Open                                                                                    |
+| Scene illustrations (Q6)           | Final visual quality     | Done for the 8 scenes (ADR-063); marketing review of baked-in text and brand marks open |

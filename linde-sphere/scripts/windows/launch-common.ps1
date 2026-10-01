@@ -9,7 +9,9 @@
 
 Set-StrictMode -Version 2.0
 
-$script:MinimumNodeVersion = [version]'20.9.0'
+# Same rule as package.json "engines" (Prisma 7.10+): 20.19+ on Node 20, 22.12+ on Node 22, or 24+.
+$script:MinimumNodeVersion = [version]'20.19.0'
+$script:MinimumNode22Version = [version]'22.12.0'
 $script:DefaultPort = 3000
 $script:HotspotAddress = '192.168.137.1'
 
@@ -64,8 +66,12 @@ function Test-NodeRuntime {
         Write-Fail "Could not read the Node.js version (got '$raw')."
         return $false
     }
-    if ($parsed -lt $script:MinimumNodeVersion) {
-        Write-Fail "Node.js $raw is too old; at least $script:MinimumNodeVersion is required (22 LTS recommended)."
+    $tooOld = ($parsed -lt $script:MinimumNodeVersion) -or
+        ($parsed.Major -eq 21) -or
+        ($parsed.Major -eq 22 -and $parsed -lt $script:MinimumNode22Version) -or
+        ($parsed.Major -eq 23)
+    if ($tooOld) {
+        Write-Fail "Node.js $raw is not supported; use 22 LTS ($script:MinimumNode22Version or later) or $script:MinimumNodeVersion+ on Node 20."
         return $false
     }
     Write-Ok "Node.js $raw"

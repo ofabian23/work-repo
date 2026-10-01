@@ -51,7 +51,7 @@ during Phase 1.
 
 | Concern                  | Choice                                                | Version target                                        | Notes                                                  |
 | ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------ |
-| Runtime                  | Node.js LTS                                           | 22.x (≥ 20.9 required by Next.js 16)                  | Same major on dev and Windows laptop                   |
+| Runtime                  | Node.js LTS                                           | 22.x (≥ 22.12, or ≥ 20.19 on Node 20: Prisma 7.10)    | Same major on dev and Windows laptop                   |
 | Framework                | Next.js, App Router                                   | 16.3.x (latest stable)                                | `start:network` binds `0.0.0.0` for LAN (ADR-039)      |
 | UI                       | React                                                 | 19.x                                                  |                                                        |
 | Language                 | TypeScript                                            | 5.x, `strict: true`, `noUncheckedIndexedAccess: true` |                                                        |
@@ -113,7 +113,8 @@ linde-sphere/
 ├─ prisma/ · prisma.config.ts     (Phase 7)
 ├─ public/assets/
 │  ├─ brand/                      # approved brand files only (empty)                       ✅
-│  └─ scenes/placeholder/         # original placeholder SVG layers (scripts/placeholder-art.ts) ✅
+│  ├─ scenes/approved/            # optimized WebP copies of the approved scene art (npm run art:scenes, ADR-063) ✅
+│  └─ scenes/placeholder/         # original placeholder SVG layers, unused since ADR-063 ✅
 ├─ src/
 │  ├─ app/
 │  │  ├─ layout.tsx               # brand CSS vars, viewport, LanguageProvider, AppShell    ✅
@@ -1182,10 +1183,14 @@ readiness marker (the gallery uses `data-ready`); `<html data-hydrated>` covers 
 
 Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebGL or free camera.
 
-- **Art box:** every layer is drawn on `SCENE_ART` (1200 × 1500, 4:5, `domain/content/scene-art.ts`).
-  The viewer sizes the box with container units, `min(100cqw, 100cqh × 0.8)` by
-  `min(100cqh, 100cqw × 1.25)`, so it fits any container while keeping the ratio. Hotspot `x`/`y` are
-  percentages of this box and land on the same feature at every size.
+- **Art box:** every layer is drawn on `SCENE_ART` (1536 × 2752, the approved art's ≈ 9:16 portrait
+  proportions, `domain/content/scene-art.ts`, ADR-063). The viewer sizes the box with container units,
+  `min(100cqw, 100cqh × ratio)` by `min(100cqh, 100cqw ÷ ratio)`, so it fits any container while keeping the
+  ratio. Hotspot `x`/`y` are percentages of this box and land on the same feature at every size.
+  `content:check` rejects approved art whose real proportions differ by more than 1 %.
+- **Responsive art:** a layer may list `srcSet` candidates (WebP at 640–1536 px, never upscaled). The
+  `<img>` gets `srcset` and `sizes="min(92vw, 42vh)"`, and the neighbor prefetch sets both before `src`.
+  Originals live unserved in `art-source/` (provenance in `art-source/README.md`).
   - The box uses `overflow: clip`: a `hidden` box can be scrolled by focus, which would shift every marker.
 - **Layers:** the background `<img>` has the content's alt text. Foreground layers are decorative
   (`alt=""`) and settle in with a small depth-based offset (`--layer-depth`). Hotspots sit above all layers.
@@ -1226,8 +1231,8 @@ Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebG
 - **Calibration (`/dev/scenes`):** a developer tool (English only). Tapping the art shows normalized x/y (to
   0.1 %) over a 10 % grid with every authored hotspot center, and "Copy coordinates" copies `"x": …, "y": …`.
   Over plain HTTP, where the Clipboard API is unavailable, it falls back to select-and-copy.
-- **Placeholder art (`scripts/placeholder-art.ts`):** flat isometric shapes in the neutral placeholder
-  palette, drawn from code with no reference art. Each drawing registers the anchor of every hotspot it
+- **Placeholder art (`scripts/placeholder-art.ts`, unused since ADR-063):** flat isometric shapes in the
+  neutral placeholder palette on their own 4:5 canvas, drawn from code with no reference art. Each drawing registers the anchor of every hotspot it
   depicts. `npm run art:placeholders -- --sync-content` writes those anchors into `content/scenes`.
 
 ---
@@ -1347,10 +1352,10 @@ Scripts: `lint`, `typecheck`, `format:check`, `test`, `test:e2e`, `content:check
   - The lead form and its validation library load lazily and are prefetched while idle (ADR-058).
   - Measured: see TASKS Phase 10a.
 - **Third parties:** none. No request may leave the kiosk origin (E2E).
-- **Scene layer assets:** SVG or WebP/AVIF at 1200 × 1500.
+- **Scene layer assets:** WebP copies with the art box proportions (ADR-063).
   - Per-file budgets (images ≤ 1 MB, SVG ≤ 512 KB) are enforced by `content:check`.
-  - Target ≤ 300 KB per scene.
-  - The placeholder art totals ~90 KB (~16 KB gzipped).
+  - Target ≤ 300 KB per candidate: the approved copies are 41–224 KB; the kiosk loads one candidate per
+    scene (the 960 px file on the portrait 1080 × 1920 kiosk at 1× density).
 - **Scene images:** intrinsic `width`/`height`, `decoding="async"`, and `fetchpriority="high"` on the
   current background. Neighboring scenes are prefetched while idle.
 - **Transitions:** 60 fps with no layout thrash. Keyframes animate transform and opacity only. Reduced

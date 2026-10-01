@@ -5,7 +5,7 @@ the healthcare convention in Puerto Rico. It records what is built, how to run i
 approval, and whether it can go live.
 
 - **Audit date:** 2026-09-30; software checks re-run on 2026-10-01 after the follow-up strategy refinement
-  (ADR-062)
+  (ADR-062) and the approved scene art (ADR-063)
 - **Branch:** `claude/project-vision-planning-hfwe5m`
 
 **Bottom line:**
@@ -17,19 +17,19 @@ approval, and whether it can go live.
 
 ## 1. Software checks (run for this audit)
 
-| Check                                     | Command                                      | Result                                                                                                                                                                                                                           |
-| ----------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Content validation (demo)                 | `npm run content:check`                      | ✅ 0 errors, 0 warnings                                                                                                                                                                                                          |
-| Content validation (production readiness) | `npm run content:check -- --mode production` | ❌ 7 blockers, **expected**: nothing is validated or approved yet (§11)                                                                                                                                                          |
-| Content export freshness                  | `npm run content:export -- --check`          | ✅ up to date                                                                                                                                                                                                                    |
-| Lint                                      | `npm run lint`                               | ✅ 0 warnings                                                                                                                                                                                                                    |
-| Typecheck                                 | `npm run typecheck`                          | ✅                                                                                                                                                                                                                               |
-| Unit, integration and component tests     | `npm test` (inside `npm run check`)          | ✅ 896 passed, 3 skipped (PowerShell runtime tests; they need `pwsh`, and passed separately: 15/15 with PowerShell 7.4)                                                                                                          |
-| Formatting                                | `npm run format:check`                       | ✅                                                                                                                                                                                                                               |
-| Production build                          | `npm run build`                              | ✅                                                                                                                                                                                                                               |
-| Client bundle scan                        | `npm run security:bundle`                    | ✅ clean (12 markers: secrets, server-only code, lead scoring)                                                                                                                                                                   |
-| Dependency audit                          | `npm run security:audit` / `npm audit`       | ✅ 0 vulnerabilities                                                                                                                                                                                                             |
-| End-to-end, every test twice, fresh build | `CI=1 npx playwright test --repeat-each=2`   | ✅ 542 passed, 0 failed, 22 skipped (11 intentional profile-scoped skips × 2: keyboard and admin checks not on the phone profile, performance measured on kiosk and laptop, developer tool and kiosk-only checks on one profile) |
+| Check                                     | Command                                      | Result                                                                                                                                                                                                                                                                                    |
+| ----------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Content validation (demo)                 | `npm run content:check`                      | ✅ 0 errors, 0 warnings                                                                                                                                                                                                                                                                   |
+| Content validation (production readiness) | `npm run content:check -- --mode production` | ❌ 7 blockers, **expected**: nothing is validated or approved yet (§11)                                                                                                                                                                                                                   |
+| Content export freshness                  | `npm run content:export -- --check`          | ✅ up to date                                                                                                                                                                                                                                                                             |
+| Lint                                      | `npm run lint`                               | ✅ 0 warnings                                                                                                                                                                                                                                                                             |
+| Typecheck                                 | `npm run typecheck`                          | ✅                                                                                                                                                                                                                                                                                        |
+| Unit, integration and component tests     | `npm test` (inside `npm run check`)          | ✅ 908 passed, 3 skipped (PowerShell runtime tests; they need `pwsh`, and passed separately: 15/15 with PowerShell 7.4)                                                                                                                                                                   |
+| Formatting                                | `npm run format:check`                       | ✅                                                                                                                                                                                                                                                                                        |
+| Production build                          | `npm run build`                              | ✅                                                                                                                                                                                                                                                                                        |
+| Client bundle scan                        | `npm run security:bundle`                    | ✅ clean (12 markers: secrets, server-only code, lead scoring)                                                                                                                                                                                                                            |
+| Dependency audit                          | `npm run security:audit` / `npm audit`       | ✅ 0 vulnerabilities                                                                                                                                                                                                                                                                      |
+| End-to-end, every test twice, fresh build | `CI=1 npx playwright test --repeat-each=2`   | ✅ 546 passed, 0 failed, 30 skipped (15 intentional profile-scoped skips × 2: tablet-size scene checks run once, on the kiosk profile; keyboard and admin checks not on the phone profile, performance measured on kiosk and laptop, developer tool and kiosk-only checks on one profile) |
 
 **Manual inspection.** A scripted browser pass (239 checks, all passing after the fixes below) covered:
 
@@ -108,7 +108,7 @@ approval, and whether it can go live.
 From the `linde-sphere/` folder, on the event laptop (Windows PowerShell shown):
 
 ```powershell
-npm install                      # Node.js 22 LTS (≥ 20.9) and npm required
+npm install                      # Node.js 22 LTS (≥ 22.12; or ≥ 20.19 on Node 20) and npm required
 Copy-Item .env.example .env      # then edit .env (§5)
 npm run db:deploy                # create or upgrade data\linde-sphere.db
 npm run build                    # production build
@@ -195,7 +195,8 @@ validates them at start-up, and `/api/health` lists invalid ones by name.
 ## 8. Known limitations
 
 - **Content:** all of it is a demonstrative assumption. Production mode shows nothing until items are
-  validated and approved (§11), and scene art and digital assets are placeholders (§12).
+  validated and approved (§11); digital assets are placeholders and the approved scene art still needs a
+  marketing review of the brand marks and text baked into it (§12).
 - **Follow-up:**
   - The default `LOCAL_PACKAGE` mode sends no email: a representative follows up from the Convention Export
     Package, which is handed over manually (PRIVACY_REVIEW A21).
@@ -282,9 +283,10 @@ Each item links to its PRIVACY_REVIEW §9 number. Nothing in this project assume
 
 - **Brand:** the "Linde Sphere" name and brand usage (A12). The palette is a neutral placeholder and no
   logo is included (`src/lib/config/brand-config.ts`, `approvalStatus: placeholder`).
-- **Scene illustrations:** the 8 scenes use generated placeholder SVGs. Replace them with approved art
-  at 1200 × 1500, then re-calibrate hotspots with `/dev/scenes`. `content:check` enforces the asset
-  budgets.
+- **Scene illustrations:** the 8 scenes use the project owner's approved illustrations (ADR-063; source and
+  checksums in `art-source/README.md`). Still for **[Linde Marketing]** (A12): the Linde wordmark on the
+  gas-plant tank and a stylized wordmark on the campus tank, English and misspelled text baked into the art,
+  and descriptive labels to check against the no-claims rule (CONTENT_VALIDATION §9.6).
 - **Digital assets:** the 3 linked assets are placeholders pointing to `example.com`. They need
   approved, publicly shareable brochures, videos or technical sheets (A13).
 - **Report copy:** subject, introduction, call to action and disclaimer (A11).
@@ -321,7 +323,7 @@ Run on the event hardware (MANUAL_KIOSK_TEST.md), then the daily CONVENTION_STAR
 | #   | Gate                                                                                                                                                     | Status                                       |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | 1   | Lint, typecheck, formatting pass                                                                                                                         | ✅ Go                                        |
-| 2   | Unit, integration and component tests pass (896; 3 PowerShell tests need `pwsh`)                                                                         | ✅ Go                                        |
+| 2   | Unit, integration and component tests pass (908; 3 PowerShell tests need `pwsh`)                                                                         | ✅ Go                                        |
 | 3   | End-to-end suite passes twice on a fresh production build                                                                                                | ✅ Go                                        |
 | 4   | Production build succeeds; client bundle clean; dependency audit 0 vulnerabilities                                                                       | ✅ Go                                        |
 | 5   | Demo-mode content check passes                                                                                                                           | ✅ Go                                        |
@@ -337,7 +339,7 @@ Run on the event hardware (MANUAL_KIOSK_TEST.md), then the daily CONVENTION_STAR
 **Decision:**
 
 - **Software:** GO. Every automated check in gates 1–5 passed in this audit, including the full E2E suite
-  run twice on a fresh production build (542 passed, 0 failed).
+  run twice on a fresh production build (546 passed, 0 failed).
 - **Internal demo-mode rehearsals:** GO. Use `CONTENT_MODE=demo` and the default `LOCAL_PACKAGE` follow-up,
   which sends nothing.
 - **Production use at the convention with real visitors:** **NO-GO** until gates 6–9, 11 and 12 are

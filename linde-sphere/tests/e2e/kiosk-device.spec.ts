@@ -3,6 +3,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 import { expect, test, type Page } from "@playwright/test";
 import { E2E_ADMIN_PASSPHRASE, E2E_ADMIN_PATH, GALLERY_PORT } from "../../playwright.config";
+import { SCENE_ART, SCENE_ART_RATIO } from "../../src/domain/content/scene-art";
 import { expectNoHorizontalOverflow, gotoKiosk } from "./helpers";
 
 /**
@@ -19,7 +20,7 @@ async function expectSceneFits(page: Page) {
   const r = (await box.boundingBox())!;
   const viewport = page.viewportSize()!;
   expect(r.width).toBeGreaterThan(100);
-  expect(r.width / r.height).toBeCloseTo(1200 / 1500, 2);
+  expect(r.width / r.height).toBeCloseTo(SCENE_ART_RATIO, 2);
   expect(r.x).toBeGreaterThanOrEqual(0);
   expect(r.x + r.width).toBeLessThanOrEqual(viewport.width + 1);
   // Every marker stays inside the art box (percent positions recomputed for the new size).
@@ -59,8 +60,8 @@ test.describe("zoom, gestures, dragging and selection", () => {
         "none",
       );
       // Intrinsic size set, so the browser reserves the box before the file arrives.
-      await expect(img).toHaveAttribute("width", "1200");
-      await expect(img).toHaveAttribute("height", "1500");
+      await expect(img).toHaveAttribute("width", String(SCENE_ART.width));
+      await expect(img).toHaveAttribute("height", String(SCENE_ART.height));
     }
     await expect(images.first()).toHaveAttribute("fetchpriority", "high");
   });
