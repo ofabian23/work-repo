@@ -9,6 +9,8 @@ export type TouchCardProps = {
   title: string;
   description?: string;
   icon?: ReactNode;
+  /** Leading visual drawn as-is (e.g. a persona portrait), instead of the tinted `icon` square. */
+  media?: ReactNode;
   /** When provided the card is a toggle button (aria-pressed); omit for a static information card. */
   selected?: boolean;
   onSelect?: () => void;
@@ -32,6 +34,7 @@ export function TouchCard({
   title,
   description,
   icon,
+  media,
   selected,
   onSelect,
   disabled = false,
@@ -44,9 +47,36 @@ export function TouchCard({
   const { t } = useLanguage();
   const interactive = onSelect !== undefined;
   const compact = density === "compact";
+  // With a leading visual on a compact card, the selection mark sits on the visual's corner, so the text
+  // keeps the width the corner mark would otherwise reserve (long role names wrap less).
+  const markOnMedia = compact && media !== undefined;
+  const mark = interactive && (
+    <span
+      aria-hidden
+      data-testid="selection-mark"
+      className={cn(
+        "flex shrink-0 items-center justify-center border-2",
+        markOnMedia
+          ? "absolute -right-2 bottom-0 size-7"
+          : compact
+            ? "absolute top-3 right-3 size-8"
+            : "size-10",
+        indicator === "checkbox" ? "rounded-lg" : "rounded-full",
+        selected ? "border-primary bg-primary text-on-primary" : "border-line bg-surface text-transparent",
+      )}
+    >
+      <CheckIcon size={markOnMedia ? "size-4" : compact ? "size-5" : "size-6"} />
+    </span>
+  );
   const content = (
     <>
-      {icon && (
+      {media && (
+        <span className="relative flex shrink-0 items-center self-stretch">
+          {media}
+          {markOnMedia && mark}
+        </span>
+      )}
+      {!media && icon && (
         <span
           className={cn(
             "rounded-control flex size-16 shrink-0 items-center justify-center",
@@ -67,29 +97,19 @@ export function TouchCard({
         )}
         {hint && <span className="text-caption text-notice font-medium">{hint}</span>}
       </span>
-      {interactive && (
-        <span
-          aria-hidden
-          className={cn(
-            "flex shrink-0 items-center justify-center border-2",
-            // Compact cards put the mark in the corner so the text can use the full width.
-            compact ? "absolute top-3 right-3 size-8" : "size-10",
-            indicator === "checkbox" ? "rounded-lg" : "rounded-full",
-            selected
-              ? "border-primary bg-primary text-on-primary"
-              : "border-line bg-surface text-transparent",
-          )}
-        >
-          <CheckIcon size={compact ? "size-5" : "size-6"} />
-        </span>
-      )}
+      {/* Compact cards put the mark in the corner so the text can use the full width. */}
+      {!markOnMedia && mark}
       {selected && <span className="sr-only">{t("ui.selected")}</span>}
     </>
   );
 
   const classes = cn(
     "rounded-card flex w-full items-center border-2 text-left",
-    compact ? "relative min-h-20 gap-4 py-3 pr-14 pl-5" : "min-h-24 gap-5 p-5",
+    compact
+      ? markOnMedia
+        ? "relative min-h-20 gap-3 py-1.5 pr-4 pl-3"
+        : "relative min-h-20 gap-4 py-3 pr-14 pl-5"
+      : "min-h-24 gap-5 p-5",
     "transition-[border-color,background-color,box-shadow] duration-(--duration-fast) ease-standard",
     selected ? "border-primary bg-primary/5 shadow-card" : "border-line bg-surface",
     className,

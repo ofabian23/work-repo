@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   IdSchema,
+  ImageCandidateSchema,
+  refineCandidates,
   LocalizedLabelSchema,
   LocalizedTextSchema,
   PublicPathSchema,
@@ -14,10 +16,7 @@ export const AssetStatusSchema = z.enum(["approved", "placeholder"]);
 export type AssetStatus = z.infer<typeof AssetStatusSchema>;
 
 /** One responsive candidate of a raster scene image: the file and its real pixel width (ADR-063). */
-export const SceneImageCandidateSchema = z.strictObject({
-  src: PublicPathSchema,
-  width: z.number().int().min(64).max(4096),
-});
+export const SceneImageCandidateSchema = ImageCandidateSchema;
 
 export const SceneLayerSchema = z
   .strictObject({
@@ -33,25 +32,7 @@ export const SceneLayerSchema = z
     depth: z.number().min(0).max(1),
     assetStatus: AssetStatusSchema,
   })
-  .superRefine((layer, ctx) => {
-    if (!layer.srcSet) return;
-    layer.srcSet.forEach((c, i) => {
-      if (i > 0 && c.width <= layer.srcSet![i - 1]!.width) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["srcSet", i, "width"],
-          message: "srcSet candidates must be listed from the smallest to the largest width",
-        });
-      }
-    });
-    if (layer.srcSet.at(-1)!.src !== layer.src) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["src"],
-        message: "With srcSet, src must be the largest candidate (the fallback)",
-      });
-    }
-  });
+  .superRefine((layer, ctx) => refineCandidates(layer, ctx));
 export type SceneLayer = z.infer<typeof SceneLayerSchema>;
 
 export const VisualImportanceSchema = z.enum(["primary", "secondary", "tertiary"]);

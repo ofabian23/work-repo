@@ -84,6 +84,38 @@ export const PublicPathSchema = z
     error: "Use an image, PDF or video file (.svg .png .jpg .webp .avif .pdf .mp4 .webm)",
   });
 
+/** One responsive candidate of a raster image: the file and its real pixel width (ADR-063, ADR-064). */
+export const ImageCandidateSchema = z.strictObject({
+  src: PublicPathSchema,
+  width: z.number().int().min(64).max(4096),
+});
+export type ImageCandidate = z.infer<typeof ImageCandidateSchema>;
+
+/** Responsive candidates, smallest first; the largest must also be the fallback `src`. */
+export function refineCandidates(
+  image: { src: string; srcSet?: ImageCandidate[] },
+  ctx: z.RefinementCtx,
+  path: (string | number)[] = [],
+) {
+  if (!image.srcSet) return;
+  image.srcSet.forEach((c, i) => {
+    if (i > 0 && c.width <= image.srcSet![i - 1]!.width) {
+      ctx.addIssue({
+        code: "custom",
+        path: [...path, "srcSet", i, "width"],
+        message: "srcSet candidates must be listed from the smallest to the largest width",
+      });
+    }
+  });
+  if (image.srcSet.at(-1)!.src !== image.src) {
+    ctx.addIssue({
+      code: "custom",
+      path: [...path, "src"],
+      message: "With srcSet, src must be the largest candidate (the fallback)",
+    });
+  }
+}
+
 export const HttpsUrlSchema = z.url({ protocol: /^https$/, error: "Must be an https:// URL" });
 
 /** Governance fields required on every solution and digital asset (see CONTENT_VALIDATION.md). */

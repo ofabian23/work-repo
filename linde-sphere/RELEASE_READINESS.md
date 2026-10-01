@@ -5,7 +5,7 @@ the healthcare convention in Puerto Rico. It records what is built, how to run i
 approval, and whether it can go live.
 
 - **Audit date:** 2026-09-30; software checks re-run on 2026-10-01 after the follow-up strategy refinement
-  (ADR-062) and the approved scene art (ADR-063)
+  (ADR-062) the approved scene art (ADR-063) and the persona illustrations (ADR-064)
 - **Branch:** `claude/project-vision-planning-hfwe5m`
 
 **Bottom line:**
@@ -24,7 +24,7 @@ approval, and whether it can go live.
 | Content export freshness                  | `npm run content:export -- --check`          | ✅ up to date                                                                                                                                                                                                                                                                             |
 | Lint                                      | `npm run lint`                               | ✅ 0 warnings                                                                                                                                                                                                                                                                             |
 | Typecheck                                 | `npm run typecheck`                          | ✅                                                                                                                                                                                                                                                                                        |
-| Unit, integration and component tests     | `npm test` (inside `npm run check`)          | ✅ 908 passed, 3 skipped (PowerShell runtime tests; they need `pwsh`, and passed separately: 15/15 with PowerShell 7.4)                                                                                                                                                                   |
+| Unit, integration and component tests     | `npm test` (inside `npm run check`)          | ✅ 916 passed, 3 skipped (PowerShell runtime tests; they need `pwsh`, and passed separately: 15/15 with PowerShell 7.4)                                                                                                                                                                   |
 | Formatting                                | `npm run format:check`                       | ✅                                                                                                                                                                                                                                                                                        |
 | Production build                          | `npm run build`                              | ✅                                                                                                                                                                                                                                                                                        |
 | Client bundle scan                        | `npm run security:bundle`                    | ✅ clean (12 markers: secrets, server-only code, lead scoring)                                                                                                                                                                                                                            |
@@ -283,6 +283,9 @@ Each item links to its PRIVACY_REVIEW §9 number. Nothing in this project assume
 
 - **Brand:** the "Linde Sphere" name and brand usage (A12). The palette is a neutral placeholder and no
   logo is included (`src/lib/config/brand-config.ts`, `approvalStatus: placeholder`).
+- **Persona illustrations:** 8 of 11 role cards show the project owner's illustrations (ADR-064). The mapping
+  for clinical-respiratory and technology-biomed is a project-team choice, and academia, government and "several
+  areas" have none yet (neutral tile). **[Linde Marketing]** sign-off not on file (A12).
 - **Scene illustrations:** the 8 scenes use the project owner's approved illustrations (ADR-063; source and
   checksums in `art-source/README.md`). Still for **[Linde Marketing]** (A12): the Linde wordmark on the
   gas-plant tank and a stylized wordmark on the campus tank, English and misspelled text baked into the art,
@@ -323,7 +326,7 @@ Run on the event hardware (MANUAL_KIOSK_TEST.md), then the daily CONVENTION_STAR
 | #   | Gate                                                                                                                                                     | Status                                       |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | 1   | Lint, typecheck, formatting pass                                                                                                                         | ✅ Go                                        |
-| 2   | Unit, integration and component tests pass (908; 3 PowerShell tests need `pwsh`)                                                                         | ✅ Go                                        |
+| 2   | Unit, integration and component tests pass (916; 3 PowerShell tests need `pwsh`)                                                                         | ✅ Go                                        |
 | 3   | End-to-end suite passes twice on a fresh production build                                                                                                | ✅ Go                                        |
 | 4   | Production build succeeds; client bundle clean; dependency audit 0 vulnerabilities                                                                       | ✅ Go                                        |
 | 5   | Demo-mode content check passes                                                                                                                           | ✅ Go                                        |

@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { SceneLayerSchema } from "@/domain/content/scene";
+import { PERSONA_ART_RATIO } from "@/domain/content/persona-art";
 import { SCENE_ART, SCENE_ART_RATIO } from "@/domain/content/scene-art";
 import { imageSizeFromBuffer, readImageSize } from "@/server/content/image-size";
 import { loadContentFromDirectory } from "@/server/content/load-content";
@@ -155,9 +156,7 @@ describe("content check refuses art that does not match the art box", () => {
     const contentDir = path.join(dir, "content");
     const publicDir = path.join(dir, "public");
     cpSync(CONTENT_DIR, contentDir, { recursive: true });
-    cpSync(path.join(PROJECT_ROOT, "public", "assets", "scenes"), path.join(publicDir, "assets", "scenes"), {
-      recursive: true,
-    });
+    cpSync(path.join(PROJECT_ROOT, "public", "assets"), path.join(publicDir, "assets"), { recursive: true });
     return { contentDir, publicDir };
   };
 
@@ -177,7 +176,7 @@ describe("content check refuses art that does not match the art box", () => {
         severity: "error",
         file: "content/scenes/icu.json",
         path: "background.src",
-        message: expect.stringContaining(`${SCENE_ART.width} × ${SCENE_ART.height} art box`),
+        message: expect.stringContaining(`${SCENE_ART.width} × ${SCENE_ART.height} scene art box`),
       }),
     );
   });
@@ -216,5 +215,83 @@ describe("content check refuses art that does not match the art box", () => {
         message: expect.stringContaining("Approved image not found"),
       }),
     );
+  });
+});
+
+describe("persona illustrations (ADR-064)", () => {
+  const personas = loadSeedBundle().personas;
+  const MAPPING: Record<string, string> = {
+    executive: "Hospital Executive.png",
+    "operations-facilities": "Facilities Director.png",
+    "procurement-supply": "Procurement Leader.png",
+    "clinical-respiratory": "Respiratory Therapist.png",
+    "quality-compliance": "Quality Manager.png",
+    finance: "Finance Leader.png",
+    "technology-biomed": "Biomedical Engineer.png",
+    "ambulatory-homecare": "Homecare Provider.png",
+  };
+
+  it("maps 8 personas to approved 2:3 WebP copies that exist with their declared widths", () => {
+    const illustrated = personas.filter((p) => p.illustration);
+    expect(illustrated.map((p) => p.id).sort()).toEqual(Object.keys(MAPPING).sort());
+    for (const p of illustrated) {
+      expect(p.illustration!.assetStatus, p.id).toBe("approved");
+      for (const c of p.illustration!.srcSet) {
+        expect(c.src, p.id).toMatch(new RegExp(`^/assets/personas/${p.id}-\\d+\\.webp$`));
+        const size = readImageSize(publicPath(c.src))!;
+        expect(size.width, c.src).toBe(c.width);
+        expect(size.width / size.height, c.src).toBeCloseTo(PERSONA_ART_RATIO, 2);
+        expect(readFileSync(publicPath(c.src)).length, c.src).toBeLessThan(20 * 1024);
+      }
+    }
+  });
+
+  it("keeps every original unchanged and unserved, and publishes nothing for the unused ones", () => {
+    const originals = path.join(PROJECT_ROOT, "art-source", "personas");
+    expect(existsSync(path.join(PROJECT_ROOT, "public", "assets", "brand", "icons", "personas"))).toBe(false);
+    for (const file of [...Object.values(MAPPING), "Clinical Director.png", "Technology Leader.png"]) {
+      expect(readImageSize(path.join(originals, file)), file).toEqual({ width: 400, height: 600 });
+    }
+    expect(
+      existsSync(path.join(PROJECT_ROOT, "public", "assets", "personas", "clinical-director-160.webp")),
+    ).toBe(false);
+  });
+
+  it("rejects illustrations with other proportions or wrong widths in content:check", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "linde-persona-"));
+    try {
+      const contentDir = path.join(dir, "content");
+      const publicDir = path.join(dir, "public");
+      cpSync(CONTENT_DIR, contentDir, { recursive: true });
+      cpSync(path.join(PROJECT_ROOT, "public", "assets"), path.join(publicDir, "assets"), {
+        recursive: true,
+      });
+      const file = path.join(contentDir, "personas.json");
+      const json = JSON.parse(readFileSync(file, "utf8"));
+      // A scene image (≈ 9:16) is not a 2:3 portrait; a wrong declared width is an error too.
+      json[0].illustration = {
+        src: "/assets/scenes/approved/icu-640.webp",
+        srcSet: [
+          { src: "/assets/personas/executive-160.webp", width: 170 },
+          { src: "/assets/scenes/approved/icu-640.webp", width: 640 },
+        ],
+        assetStatus: "approved",
+      };
+      writeFileSync(file, JSON.stringify(json));
+      const issues = loadContentFromDirectory(contentDir, { publicDir }).issues;
+      expect(issues).toContainEqual(
+        expect.objectContaining({
+          severity: "error",
+          file: "content/personas.json",
+          path: "[0].illustration.srcSet[1]",
+          message: expect.stringContaining("executive: "),
+        }),
+      );
+      expect(issues).toContainEqual(
+        expect.objectContaining({ severity: "error", path: "[0].illustration.srcSet[0].width" }),
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

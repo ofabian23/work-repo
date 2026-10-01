@@ -1295,3 +1295,32 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
     still scrolls on short screens, as before.
   - Brand marks and English or garbled text baked into the art need marketing review (CONTENT_VALIDATION
     §9.6, A12). The campus art has no laboratory, so that route sits on the diagnostics floor.
+
+## ADR-064 — Persona illustrations on the role selection cards
+
+- **Date:** 2026-10-01 · **Status:** Accepted (extends ADR-044 touch cards and ADR-063 asset handling)
+- **Context:**
+  - The project owner delivered 10 persona illustrations (400 × 600 PNG, opaque white background,
+    150–190 KB each) and asked for them on the role selection screen. The kiosk offers 11 personas.
+  - The persona grid must still fit the 1080 × 1920 kiosk without scrolling (Phase 5 acceptance, E2E).
+- **Decision:**
+  - **Content:** personas gain an optional `illustration` (`src`, `srcSet`, `assetStatus`); the schema shares
+    the responsive-candidate rules with scene layers. `content:check` verifies every candidate exists, is 2:3
+    (`PERSONA_ART`) and has its declared width.
+  - **Mapping (8 of 10):** six are direct matches; for the two broad roles the project team chose Respiratory
+    Therapist (`clinical-respiratory`) and Biomedical Engineer (`technology-biomed`). Clinical Director and
+    Technology Leader stay unused. Academia, government and "several areas" have no illustration and get a
+    neutral 2:3 tile with a person glyph, so every card lines up. Changing the mapping is a content edit.
+  - **Assets:** originals move unchanged to `art-source/personas/`; `npm run art:personas` writes WebP copies at
+    160/320 px (3–9 KB) to `public/assets/personas/`, served with `srcset` and `sizes="90px"`.
+  - **Card:** `TouchCard` gains a `media` slot. The portrait (3.5 rem wide) uses `mix-blend-multiply`, so its
+    white background takes the card's color, also when selected. It is decorative (`alt=""`, `aria-hidden`):
+    the card's title names the role. On compact cards with media, the selection mark sits on the portrait's
+    bottom corner (over the feet, never the face), and the text gets the width the corner mark used.
+  - **Fit:** compact media cards use 0.375 rem vertical padding (still ≥ 80 px tall) and the grid gap is
+    0.75 rem. Measured slack between the list and the actions on 1080 × 1920: 34 px in Spanish and 19–26 px in
+    English, at least the slack before the change (22 px and 19 px). The E2E fit check now covers English too.
+- **Consequences:**
+  - Role cards are recognizable at a glance; the 11 options still fit one kiosk screen in both languages.
+  - The mapping for the two broad roles and the three missing illustrations are open for the project owner
+    and marketing (CONTENT_VALIDATION §9.5).

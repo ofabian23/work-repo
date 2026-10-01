@@ -1,4 +1,4 @@
-# Approved scene art — originals and provenance (ADR-063)
+# Approved art — originals and provenance (ADR-063, ADR-064)
 
 This folder keeps the **original** scene illustrations exactly as delivered. They are never served to the
 kiosk and never modified: `npm run art:scenes` only reads them and writes optimized WebP copies to
@@ -45,6 +45,32 @@ All are baseline JPEG, sRGB, 3 channels. Hash = first 16 hex digits of SHA-256.
 
 The three unused images are not copied to `public/` and appear nowhere in the kiosk. Using them needs new
 scenes (hotspots, texts, navigation), which is new content scope for the project owner to decide.
+
+## Persona illustrations (ADR-064)
+
+- **Source:** delivered by the project owner and committed to `main` in `440154a` (2026-10-01, "Added Personas
+  Icons…") under `public/assets/brand/icons/personas/`; moved here unchanged on 2026-10-01 (SHA-256 verified).
+- **Approval:** the project owner asked for them to be integrated into the role selection screen
+  (2026-10-01); recorded as `assetStatus: "approved"` on each persona's `illustration` in
+  `content/personas.json`. No separate Linde Marketing sign-off is on file (A12). No brand marks or text appear
+  in these images.
+- **Format:** PNG, 400 × 600 (2:3), RGBA with an opaque white background. `npm run art:personas` writes WebP
+  copies at 160 and 320 px (3–9 KB each) to `public/assets/personas/`.
+- **Personas without an illustration** (neutral tile): `academia-research`, `government-system`,
+  `multiple-areas`.
+
+| File                        | Pixels    | Size   | SHA-256 (prefix)   | Used for                                              |
+| --------------------------- | --------- | ------ | ------------------ | ----------------------------------------------------- |
+| `Hospital Executive.png`    | 400 × 600 | 162 KB | `b7eb0860f3125256` | `executive`                                           |
+| `Facilities Director.png`   | 400 × 600 | 185 KB | `8a0c12c69c786c4b` | `operations-facilities`                               |
+| `Procurement Leader.png`    | 400 × 600 | 168 KB | `5a06c3711434b056` | `procurement-supply`                                  |
+| `Respiratory Therapist.png` | 400 × 600 | 164 KB | `3b341fa3c6303b5c` | `clinical-respiratory`                                |
+| `Quality Manager.png`       | 400 × 600 | 164 KB | `dbcc803505d0f77f` | `quality-compliance`                                  |
+| `Finance Leader.png`        | 400 × 600 | 176 KB | `7028b9caf18a504f` | `finance`                                             |
+| `Biomedical Engineer.png`   | 400 × 600 | 179 KB | `08504000fdda5a60` | `technology-biomed`                                   |
+| `Homecare Provider.png`     | 400 × 600 | 172 KB | `5f1515f7d8e84a1d` | `ambulatory-homecare`                                 |
+| `Clinical Director.png`     | 400 × 600 | 152 KB | `23ed5f47f79d8358` | **Not used** (alternative for `clinical-respiratory`) |
+| `Technology Leader.png`     | 400 × 600 | 146 KB | `64549cbf72ab7bc5` | **Not used** (alternative for `technology-biomed`)    |
 
 ## Replacing or adding art
 

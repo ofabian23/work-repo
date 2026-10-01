@@ -292,6 +292,10 @@ the original to `art-source/`, map it in `scripts/scene-art.ts`, run `npm run ar
 `background`, and re-check hotspot positions with the calibration tool. The old generated placeholders
 (`npm run art:placeholders`, 4:5) are kept but no longer used.
 
+**Persona illustrations** on the role cards follow the same pattern (ADR-064): originals in `art-source/personas/`,
+`npm run art:personas` writes 160/320 px WebP copies to `public/assets/personas/`, and each persona's
+`illustration` in `content/personas.json` points to them. Personas without one show a neutral tile.
+
 ## Health check
 
 `GET /api/health` returns JSON with the application version, content mode, configuration validity (by

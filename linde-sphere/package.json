@@ -20,6 +20,7 @@
     "content:export": "tsx scripts/content-export.ts",
     "art:placeholders": "tsx scripts/placeholder-art.ts",
     "art:scenes": "tsx scripts/scene-art.ts",
+    "art:personas": "tsx scripts/persona-art.ts",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

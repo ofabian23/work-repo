@@ -376,6 +376,8 @@ reasons and "Nuevo" marks, plus "Ver todo" and "Seguir explorando". It is a dial
 stays away while it is open.
 
 - The persona grid uses a compact `TouchCard` density so all 11 options fit 1080 × 1920 without scrolling
+- Persona cards show the persona's approved illustration (2:3 WebP with `srcset`, decorative, blended into the
+  card) or a neutral tile; the selection mark sits on the portrait (ADR-064).
   (verified by E2E).
 
 The page (`src/app/page.tsx`) renders at request time and passes the visibility-filtered

@@ -397,6 +397,15 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] Marketing review: brand marks and English/garbled text baked into the art (CONTENT_VALIDATION §9.6)
 - [ ] Decide whether Scene 1, Homecare Ecosystem and Scene 11 get scenes (new content scope)
 
+## Phase 14 — Persona illustrations (ADR-064) ✅
+
+- [x] 8 delivered illustrations on the role cards (WebP 160/320 px, `npm run art:personas`); originals unchanged
+      in `art-source/personas/`
+- [x] Neutral tile for academia, government and "several areas"; decorative images, unchanged accessible names
+- [x] Persona grid still fits 1080 × 1920 without scrolling in Spanish and English (E2E)
+- [ ] Project owner/marketing: confirm the mapping for clinical-respiratory and technology-biomed; provide
+      illustrations for the three personas without one
+
 ## Phase 10 — Hardening, accessibility, deployment
 
 - [ ] E2E: full quick/discovery/explore journeys; post-reset storage/DOM/history assertions; no external requests
