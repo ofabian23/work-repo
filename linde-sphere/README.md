@@ -24,7 +24,7 @@ The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md
 
 ## Requirements
 
-- Node.js 22 LTS (≥ 20.9) and npm
+- Node.js 22 LTS (Prisma 7.10+ requires Node 20.19+ or 22.12+, so use Node 22 LTS for compatibility) and npm
 - Windows, macOS or Linux
 
 ## Quick start
@@ -122,7 +122,7 @@ new hardware, [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md).
 
 Commands run in **PowerShell** from the `linde-sphere` folder.
 
-1. **Install dependencies.** Install Node.js 22 LTS (at least 20.9), which includes npm, then:
+   Install dependencies. Install Node.js 22 LTS (Prisma 7.10+ requires Node 20.19+ or 22.12+), which includes npm, then:
 
    ```powershell
    npm install
