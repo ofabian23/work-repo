@@ -104,13 +104,15 @@ export function LeadFormScreen({
   const inFlight = useRef(false);
   const requestToken = useRef<string | null>(null);
   const lastAttempt = useRef<string | null>(null);
-  const mounted = useRef(true);
-  useEffect(
-    () => () => {
+  // Set on every mount, not only cleared on unmount: React StrictMode (next dev) mounts, cleans up and
+  // mounts again, and a flag left false would make the form ignore every submission result.
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
       mounted.current = false;
-    },
-    [],
-  );
+    };
+  }, []);
 
   // After a failed "Continuar", move focus to the first field with an error.
   useEffect(() => {

@@ -57,6 +57,20 @@ describe("launch scripts: static checks", () => {
     expect(code("launch-common.ps1")).toMatch(/environment variable PORT[\s\S]*PORT in \.env[\s\S]*default/);
   });
 
+  it("development servers regenerate the Prisma client first (a stale client rejects every lead)", () => {
+    // Regression: after a pull that changed prisma/schema.prisma, `next dev` kept the old generated client and
+    // every lead failed with PrismaClientValidationError (500).
+    const scripts = JSON.parse(readFileSync(path.join(PROJECT_ROOT, "package.json"), "utf8")).scripts;
+    expect(scripts.predev).toBe("prisma generate");
+    expect(scripts["predev:network"]).toBe("prisma generate");
+    const dev = code("start-dev-network.ps1");
+    const generate = dev.indexOf("generate");
+    expect(generate).toBeGreaterThan(-1);
+    expect(dev).toContain("node_modules\\prisma\\build\\index.js");
+    expect(dev).toMatch(/LASTEXITCODE -ne 0[\s\S]*exit 1/);
+    expect(generate).toBeLessThan(dev.indexOf("Start-Process"));
+  });
+
   it(".env.example documents PORT with the default value", () => {
     expect(readFileSync(path.join(PROJECT_ROOT, ".env.example"), "utf8")).toMatch(/^PORT=3000$/m);
   });

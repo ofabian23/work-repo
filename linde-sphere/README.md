@@ -43,6 +43,12 @@ npm run dev                 # open http://localhost:3000
 
 `.env` is optional in development (safe defaults apply) and is git-ignored. Never commit it.
 
+**After pulling changes:** run `npm install` (it regenerates the Prisma database client) and
+`npm run db:deploy` (it applies new migrations), then restart the server. `npm run dev`, `npm run dev:network`
+and `scripts\windows\start-dev-network.ps1` also regenerate the client before starting. A server running with
+an old client logs `lead.store_failed` with `PrismaClientValidationError` and cannot save leads; one running
+before `db:deploy` reports `migrations_pending` in `/api/health`.
+
 ## Scripts
 
 | Command                                      | What it does                                                                                 |
