@@ -50,6 +50,9 @@ export const es = {
   summary: {
     title: "Su resumen personalizado",
     intro: "Le enviaremos un resumen de lo que vio hoy, para revisarlo con calma o compartirlo con su equipo.",
+    // LOCAL_PACKAGE (ADR-062): no automatic email, so nothing here promises that one will be sent.
+    introPackage:
+      "Prepararemos un resumen de lo que vio hoy, para que un representante de Linde pueda darle seguimiento.",
     includesLabel: "El resumen incluye",
     items: {
       priorities: "Su área y sus prioridades",
@@ -58,7 +61,7 @@ export const es = {
       resources: "Los recursos disponibles para cada tema",
       nextSteps: "Siguientes pasos sugeridos",
     },
-    privacy: "Solo le pediremos los datos necesarios para enviarlo y, por separado, su consentimiento.",
+    privacy: "Solo le pediremos los datos necesarios para prepararlo y, por separado, su consentimiento.",
     continue: "Completar mis datos",
     back: "Volver a mis recomendaciones",
   },
@@ -74,6 +77,7 @@ export const es = {
       organization: "Organización",
       email: "Correo electrónico de trabajo",
       emailHint: "Aquí le enviaremos su resumen.",
+      emailHintPackage: "Lo usaremos para darle seguimiento con su resumen.",
       phone: "Teléfono",
       phoneHint: "Solo si prefiere que le llamemos.",
       role: "Su área o función",
@@ -97,14 +101,14 @@ export const es = {
       phone: { required: "Escriba su teléfono.", invalid: "Revise el teléfono. Debe tener al menos 7 dígitos." },
       roleId: { required: "Elija su área o función.", invalid: "Elija una de las áreas de la lista." },
       reportConsent: {
-        required: "Para enviarle el resumen necesitamos su permiso.",
-        invalid: "Para enviarle el resumen necesitamos su permiso.",
+        required: "Para preparar su resumen necesitamos su permiso.",
+        invalid: "Para preparar su resumen necesitamos su permiso.",
       },
       summary: "Revise los campos marcados.",
     },
     consent: {
       title: "Sus permisos",
-      separate: "Son dos permisos distintos. El segundo es opcional y no afecta el envío de su resumen.",
+      separate: "Son dos permisos distintos. El segundo es opcional y no afecta su resumen.",
       version: "Versión del texto de consentimiento: {version}",
       pendingReview: "Texto provisional pendiente de revisión legal y de privacidad.",
     },
@@ -123,7 +127,7 @@ export const es = {
       continue: "Continuar",
       back: "Volver",
       correct: "Corregir mis datos",
-      submit: "Enviar mi resumen",
+      submit: "Solicitar mi resumen",
       cancel: "Cancelar",
       retry: "Intentar de nuevo",
       finish: "Finalizar ahora",
@@ -136,7 +140,7 @@ export const es = {
     },
     sending: {
       saving: "Guardando su solicitud…",
-      preparing: "Solicitud guardada. Preparando el envío…",
+      preparing: "Solicitud guardada. Preparando su resumen…",
     },
     failure: {
       title: "No pudimos guardar su solicitud",
@@ -153,7 +157,9 @@ export const es = {
       delayedBody:
         "El envío a {email} no se completó todavía. Lo intentaremos de nuevo automáticamente; no necesita volver a llenar el formulario.",
       followUp: "Un representante podrá comunicarse con usted, como autorizó.",
-      noFollowUp: "Solo le enviaremos el resumen que solicitó.",
+      noFollowUp: "Solo usaremos sus datos para el resumen que solicitó.",
+      packagedTitle: "Su paquete personalizado de seguimiento está preparado",
+      packagedBody: "Un representante de Linde podrá darle seguimiento con la información que compartió ({email}).",
       resetNotice: "Por su privacidad, la pantalla se reiniciará en unos segundos.",
       countdown: "Volveremos al inicio en {seconds} s.",
       optionalNextStep: "Siguiente paso opcional",
@@ -232,7 +238,7 @@ export const es = {
     viewScene: "Verlo en el hospital: {scene}",
     resources: "Recursos",
     resourcePending: "pendiente de validación",
-    sendSummary: "Enviarme mi resumen personalizado",
+    sendSummary: "Solicitar mi resumen personalizado",
     continueExploring: "Seguir explorando",
     reviewPriorities: "Revisar mis prioridades",
     relevance: {

@@ -101,6 +101,29 @@ describe("getHealthReport", () => {
     expect(report.content).toEqual({ status: "valid", version: "0.4.0", errorCount: 0 });
     expect(report.database.status).toBe("not_initialized");
     expect(report.email).toEqual({ provider: "preview", deliversExternally: false });
+    expect(report.followUp).toEqual({ mode: "LOCAL_PACKAGE", deliversExternally: false });
+  });
+
+  it("reports external delivery only for an email follow-up mode with a real transport", () => {
+    const smtp = {
+      EMAIL_PROVIDER: "smtp",
+      SMTP_HOST: "smtp.example.test",
+      SMTP_PORT: "587",
+      EMAIL_FROM: "reports@example.test",
+    };
+    const local = getHealthReport({ rawEnv: smtp, projectRoot: withContent() });
+    expect(local.followUp).toEqual({ mode: "LOCAL_PACKAGE", deliversExternally: false });
+    expect(local.email).toEqual({ provider: "smtp", deliversExternally: false });
+    const email = getHealthReport({
+      rawEnv: { ...smtp, FOLLOW_UP_MODE: "SMTP_EMAIL" },
+      projectRoot: withContent(),
+    });
+    expect(email.followUp).toEqual({ mode: "SMTP_EMAIL", deliversExternally: true });
+    const invalid = getHealthReport({
+      rawEnv: { FOLLOW_UP_MODE: "OUTLOOK_DRAFT" },
+      projectRoot: withContent(),
+    });
+    expect(invalid.configuration.invalidVariables).toContain("FOLLOW_UP_MODE");
   });
 
   it("is ok and ready when configuration, content and database are ready", () => {

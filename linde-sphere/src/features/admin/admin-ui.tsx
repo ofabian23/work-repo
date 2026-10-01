@@ -69,6 +69,19 @@ export const DELIVERY_LABELS: Record<string, string> = {
   failed: "Fallido",
   retrying: "Reintentando",
 };
+/** Follow-up strategies as named in the admin console (ADR-062). */
+export const FOLLOW_UP_MODE_LABELS: Record<string, string> = {
+  LOCAL_PACKAGE: "Paquete local (sin correo)",
+  SMTP_EMAIL: "Correo automático por SMTP",
+  MICROSOFT_GRAPH: "Correo por Microsoft Graph (no implementado)",
+  OUTLOOK_DRAFT: "Borradores de Outlook (no implementado)",
+  FUTURE_CRM: "CRM (reservado)",
+};
+export const FOLLOW_UP_STATUS_LABELS: Record<string, string> = {
+  follow_up_pending: "Seguimiento pendiente",
+  exported: "Exportado",
+};
+
 export const LEAD_STATUS_LABELS: Record<string, string> = {
   active: "Activo",
   archived: "Archivado",

@@ -11,7 +11,7 @@ const events = () => session().events.map((e: { type: string }) => e.type);
 const flush = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
 
 function fakeApi({
-  submit = { kind: "stored", statusToken: TOKEN },
+  submit = { kind: "stored", statusToken: TOKEN, followUp: "email" },
   status = "pending",
 }: { submit?: SubmitOutcome | (() => Promise<SubmitOutcome>); status?: ReportDeliveryState | null } = {}) {
   const api = {
@@ -147,6 +147,59 @@ describe("lead form — valid submission", () => {
   });
 });
 
+describe("lead form — follow-up mode (ADR-062)", () => {
+  it("LOCAL_PACKAGE: no email promise, no delivery polling, and a prepared-package confirmation", async () => {
+    const api = fakeApi({
+      submit: { kind: "stored", statusToken: TOKEN, followUp: "package" },
+      status: "sent",
+    });
+    renderKiosk({ tailoringMs: 10, leadApi: api });
+    startSession();
+    fireEvent.click(screen.getByTestId("path-role"));
+    fireEvent.click(screen.getByTestId("persona-procurement-supply"));
+    fireEvent.click(screen.getByTestId("persona-continue"));
+    fireEvent.click(screen.getByTestId("challenge-supply-continuity"));
+    fireEvent.click(screen.getByTestId("role-challenges-continue"));
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 30)));
+    fireEvent.click(screen.getByTestId("next-view-recommendations"));
+    fireEvent.click(screen.getByTestId("send-summary"));
+    // The default kiosk follow-up is the local package: the summary screen does not promise an email.
+    expect(screen.getByTestId("summary-request-screen")).toHaveTextContent("Prepararemos un resumen");
+    expect(screen.getByTestId("summary-request-screen")).not.toHaveTextContent(/Le enviaremos/);
+    fireEvent.click(screen.getByTestId("summary-continue"));
+    expect(screen.getByText("Lo usaremos para darle seguimiento con su resumen.")).toBeInTheDocument();
+    completeToReview({ followUp: true });
+    fireEvent.click(screen.getByTestId("lead-submit"));
+    await flush();
+
+    expect(api.submit).toHaveBeenCalledTimes(1);
+    expect(api.status).not.toHaveBeenCalled();
+    const result = screen.getByTestId("lead-result");
+    expect(result).toHaveAttribute("data-delivery", "packaged");
+    expect(result).toHaveTextContent("Su paquete personalizado de seguimiento está preparado");
+    expect(screen.getByTestId("delivery-status")).toHaveTextContent(
+      "Un representante de Linde podrá darle seguimiento con la información que compartió (ma•••@hospital.example).",
+    );
+    expect(result).not.toHaveTextContent(/Enviamos|enviamos|enviaremos/);
+    expect(events().at(-1)).toBe("lead-submitted");
+  });
+
+  it("an email mode keeps the email wording on the summary screen", async () => {
+    await openLeadForm(fakeApi(), { followUp: "email" });
+    expect(screen.getByText("Aquí le enviaremos su resumen.")).toBeInTheDocument();
+  });
+
+  it("the server's answer decides: a package answer shows the package confirmation even in email copy mode", async () => {
+    const api = fakeApi({ submit: { kind: "stored", statusToken: TOKEN, followUp: "package" } });
+    await openLeadForm(api, { followUp: "email" });
+    completeToReview();
+    fireEvent.click(screen.getByTestId("lead-submit"));
+    await flush();
+    expect(api.status).not.toHaveBeenCalled();
+    expect(screen.getByTestId("lead-result")).toHaveAttribute("data-delivery", "packaged");
+  });
+});
+
 describe("lead form — validation", () => {
   it("shows an inline error for an invalid email and clears it as the visitor corrects it", async () => {
     await openLeadForm(fakeApi());
@@ -176,7 +229,7 @@ describe("lead form — validation", () => {
     next();
     next(); // no report consent yet
     expect(screen.getByTestId("lead-step-preferences")).toBeInTheDocument();
-    expect(screen.getByText("Para enviarle el resumen necesitamos su permiso.")).toBeInTheDocument();
+    expect(screen.getByText("Para preparar su resumen necesitamos su permiso.")).toBeInTheDocument();
   });
 
   it("asks for the role when the visit did not include one", async () => {
@@ -247,7 +300,7 @@ describe("lead form — separate consents", () => {
     await flush();
     expect(api.submit.mock.calls[0]![0].consents).toEqual({ reportDelivery: true, salesFollowUp: false });
     expect(screen.getByTestId("lead-result")).toHaveTextContent(
-      "Solo le enviaremos el resumen que solicitó.",
+      "Solo usaremos sus datos para el resumen que solicitó.",
     );
   });
 
@@ -273,14 +326,17 @@ describe("lead form — double submission and failures", () => {
     fireEvent.click(submit);
     expect(screen.getByTestId("lead-sending")).toHaveTextContent("Guardando su solicitud…");
     expect(screen.queryByTestId("lead-submit")).toBeNull();
-    await act(async () => resolve({ kind: "stored", statusToken: TOKEN }));
+    await act(async () => resolve({ kind: "stored", statusToken: TOKEN, followUp: "email" }));
     await flush();
     expect(api.submit).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("lead-result")).toBeInTheDocument();
   });
 
   it("keeps the details and recommendations after a server error and retries with the same request token", async () => {
-    const outcomes: SubmitOutcome[] = [{ kind: "failed" }, { kind: "stored", statusToken: TOKEN }];
+    const outcomes: SubmitOutcome[] = [
+      { kind: "failed" },
+      { kind: "stored", statusToken: TOKEN, followUp: "email" },
+    ];
     const api = fakeApi({ submit: async () => outcomes.shift()! });
     await openLeadForm(api);
     const recommendations = session().recommendations;

@@ -1,6 +1,8 @@
+import { usesEmailOutbox } from "@/domain/follow-up/follow-up-mode";
 import {
   AdminPage,
   DELIVERY_LABELS,
+  FOLLOW_UP_STATUS_LABELS,
   formatDate,
   input,
   LEAD_STATUS_LABELS,
@@ -28,19 +30,30 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
     service.listLeads(filters, PAGE_SIZE),
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // Email analytics only when the follow-up mode sends email; LOCAL_PACKAGE counts packages (ADR-062).
+  const emailMode = usesEmailOutbox(config.followUpMode);
   const pageLink = (page: number) => `${base}${filtersToQuery({ ...filters, page }, { withPage: true })}`;
 
   return (
     <AdminPage title="Leads" lead="Datos de contacto de negocio recogidos en el espacio de exhibición.">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4" data-testid="admin-overview">
         <Stat label="Leads (con filtros)" value={overview.total} testId="stat-total" />
-        <Stat label="Exportados" value={overview.exported} testId="stat-exported" />
-        <Stat label="Resumen enviado" value={overview.byDelivery.sent} testId="stat-sent" />
-        <Stat
-          label="Envío fallido o reintentando"
-          value={overview.byDelivery.failed + overview.byDelivery.retrying}
-          testId="stat-attention"
-        />
+        <Stat label="Paquetes de seguimiento generados" value={overview.packages} testId="stat-packages" />
+        {emailMode ? (
+          <>
+            <Stat label="Resumen enviado" value={overview.byDelivery.sent} testId="stat-sent" />
+            <Stat
+              label="Envío fallido o reintentando"
+              value={overview.byDelivery.failed + overview.byDelivery.retrying}
+              testId="stat-attention"
+            />
+          </>
+        ) : (
+          <>
+            <Stat label="Seguimiento pendiente" value={overview.followUpPending} testId="stat-pending" />
+            <Stat label="Exportados" value={overview.exported} testId="stat-exported" />
+          </>
+        )}
       </div>
 
       <form
@@ -68,22 +81,24 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
             ))}
           </select>
         </label>
-        <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
-          Envío del resumen
-          <select
-            className={input}
-            name="delivery"
-            defaultValue={filters.delivery ?? ""}
-            data-testid="filter-delivery"
-          >
-            <option value="">Todos</option>
-            {DELIVERY_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {DELIVERY_LABELS[s]}
-              </option>
-            ))}
-          </select>
-        </label>
+        {emailMode && (
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
+            Envío del resumen
+            <select
+              className={input}
+              name="delivery"
+              defaultValue={filters.delivery ?? ""}
+              data-testid="filter-delivery"
+            >
+              <option value="">Todos</option>
+              {DELIVERY_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {DELIVERY_LABELS[s]}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
           Exportado
           <select className={input} name="exported" defaultValue={filters.exported ?? ""}>
@@ -113,7 +128,8 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
               <th className="p-2">Área</th>
               <th className="p-2">Seguimiento</th>
               <th className="p-2">Puntaje interno</th>
-              <th className="p-2">Envío</th>
+              <th className="p-2">Estado de seguimiento</th>
+              {emailMode && <th className="p-2">Envío</th>}
               <th className="p-2">Exportado</th>
             </tr>
           </thead>
@@ -132,9 +148,14 @@ export default async function AdminHomePage({ searchParams }: PageProps<"/admin-
                 <td className="p-2 whitespace-nowrap" data-testid="lead-score">
                   {lead.leadTier} · {lead.leadScore}
                 </td>
-                <td className="p-2" data-testid="lead-delivery">
-                  {lead.delivery ? DELIVERY_LABELS[lead.delivery.status] : "—"}
+                <td className="p-2" data-testid="lead-follow-up-status">
+                  {FOLLOW_UP_STATUS_LABELS[lead.followUpStatus] ?? lead.followUpStatus}
                 </td>
+                {emailMode && (
+                  <td className="p-2" data-testid="lead-delivery">
+                    {lead.delivery ? DELIVERY_LABELS[lead.delivery.status] : "—"}
+                  </td>
+                )}
                 <td className="p-2">{lead.exportedAt ? formatDate(lead.exportedAt) : "No"}</td>
               </tr>
             ))}

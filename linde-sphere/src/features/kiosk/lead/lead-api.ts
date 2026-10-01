@@ -4,13 +4,15 @@ import {
   type LeadSubmissionInput,
   type ReportDeliveryState,
 } from "@/domain/leads/lead-submission";
+import type { VisitorFollowUp } from "@/domain/follow-up/follow-up-mode";
 
 /**
  * Browser client for the lead routes (ADR-052/053). Results are plain outcomes the UI can explain in
  * visitor language; no response bodies, error texts or status codes reach the screen.
  */
 export type SubmitOutcome =
-  | { kind: "stored"; statusToken: string }
+  /** `followUp` comes from the server (FOLLOW_UP_MODE of the stored lead, ADR-062). */
+  | { kind: "stored"; statusToken: string; followUp: VisitorFollowUp }
   | { kind: "invalid"; fields: { field: string }[] }
   | { kind: "conflict" }
   | { kind: "failed" };
@@ -45,7 +47,9 @@ export function createLeadApi({
         });
         if (res.status === 201 || res.status === 200) {
           const body = LeadCreatedResponseSchema.safeParse(await res.json());
-          return body.success ? { kind: "stored", statusToken: body.data.statusToken } : { kind: "failed" };
+          return body.success
+            ? { kind: "stored", statusToken: body.data.statusToken, followUp: body.data.followUp }
+            : { kind: "failed" };
         }
         if (res.status === 422) {
           const body = (await res.json().catch(() => null)) as { issues?: { field?: unknown }[] } | null;
@@ -79,7 +83,11 @@ export function createLeadApi({
   };
 }
 
-export type DeliveryOutcome = "sent" | "delayed" | "queued";
+/**
+ * What the completion screen reports. "packaged" (LOCAL_PACKAGE and the other modes without automatic email):
+ * the summary is prepared and stored for a representative; no email is attempted, so nothing is polled.
+ */
+export type DeliveryOutcome = "sent" | "delayed" | "queued" | "packaged";
 
 /**
  * Checks the delivery state a few times after the lead is stored. "sent" once the provider accepted the
@@ -103,6 +111,7 @@ export async function awaitDelivery(
     const state = await api.status(statusToken);
     if (state === "sent") return "sent";
     if (state === "failed" || state === "retrying") return "delayed";
+    if (state === "packaged") return "packaged";
   }
   return "queued";
 }

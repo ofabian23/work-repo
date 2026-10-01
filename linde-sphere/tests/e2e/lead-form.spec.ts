@@ -1,13 +1,29 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import { GALLERY_PORT } from "../../playwright.config";
 import { expectNoHorizontalOverflow, expectTouchTargets, gotoKiosk } from "./helpers";
 
 /**
  * Lead form and consent experience against the real production server and database (ADR-053).
- * The E2E servers use the development preview provider (ADR-054), so a real submission is "sent" into
- * a local preview file; the email-failure and server-error paths are simulated by intercepting responses.
+ * The main server runs the default LOCAL_PACKAGE follow-up (ADR-062): the lead and its report are stored
+ * and no email is attempted. The email mode is covered on the second server (FOLLOW_UP_MODE=SMTP_EMAIL with
+ * the development preview provider, which writes a local file and never sends); the email-failure and
+ * server-error paths are simulated by intercepting responses.
  */
+const EMAIL_MODE = `http://localhost:${GALLERY_PORT}/`;
+const PREVIEW_DIR = path.resolve("data/e2e-email-preview"); // EMAIL_PREVIEW_DIR in playwright.config.ts
+const previewEmailTo = (email: string) => {
+  let files: string[] = [];
+  try {
+    files = readdirSync(PREVIEW_DIR).filter((f) => f.endsWith(".eml"));
+  } catch {
+    return undefined; // no preview folder yet: nothing was ever "sent"
+  }
+  return files
+    .map((f) => readFileSync(path.join(PREVIEW_DIR, f), "utf8"))
+    .find((eml) => eml.includes(`To: ${email}`));
+};
 
 const EMAIL_USER = `e2e.${Math.random().toString(36).slice(2, 8)}`;
 const EMAIL = `${EMAIL_USER}@example.test`;
@@ -91,26 +107,38 @@ test.describe("lead form and consent", () => {
 
     const result = page.getByTestId("lead-result");
     await expect(result).toBeVisible();
-    await expect(result).toHaveAttribute("data-delivery", "sent");
-    await expect(result).toContainText("Enviamos su resumen");
+    // LOCAL_PACKAGE (default): the package is prepared; the screen never says the report was sent.
+    await expect(result).toHaveAttribute("data-delivery", "packaged");
+    await expect(result).toContainText("Su paquete personalizado de seguimiento está preparado");
+    await expect(result).toContainText("Un representante de Linde podrá darle seguimiento");
+    await expect(result).not.toContainText(/Enviamos|enviaremos/);
     await expect(result).toContainText(`${EMAIL_USER.slice(0, 2)}•••@example.test`);
     await expect(page.locator("body")).not.toContainText(EMAIL);
     expect(leadRequests).toHaveLength(1);
-
-    // The report was generated and "delivered" to the local preview folder only.
-    // Same folder as EMAIL_PREVIEW_DIR in playwright.config.ts.
-    const dir = path.resolve("data/e2e-email-preview");
-    const emails = readdirSync(dir).filter((f) => f.endsWith(".eml"));
-    const mine = emails
-      .map((f) => readFileSync(path.join(dir, f), "utf8"))
-      .find((eml) => eml.includes(`To: ${EMAIL}`));
-    expect(mine).toBeDefined();
-    expect(mine).toContain("Subject: Su resumen personalizado de Linde Sphere");
+    // No email attempt: nothing was written by the email provider for this visitor.
+    expect(previewEmailTo(EMAIL)).toBeUndefined();
 
     await page.getByTestId("lead-finish").click();
     await expect(page.getByTestId("attract-screen")).toBeVisible();
     await expect(page.locator("body")).not.toContainText("Automatizada");
     await expect(page.locator("body")).not.toContainText("@example.test");
+  });
+
+  test("an email follow-up mode sends the report through the configured provider", async ({ page }) => {
+    const email = `e2e.mail.${Date.now()}@example.test`;
+    await gotoKiosk(page, EMAIL_MODE);
+    await openForm(page);
+    await expect(page.getByText("Aquí le enviaremos su resumen.")).toBeVisible();
+    await fillContact(page, email);
+    await page.getByTestId("lead-continue").click();
+    await tapConsent(page, "consent-report");
+    await page.getByTestId("lead-continue").click();
+    await page.getByTestId("lead-submit").click();
+    const result = page.getByTestId("lead-result");
+    await expect(result).toHaveAttribute("data-delivery", "sent");
+    await expect(result).toContainText("Enviamos su resumen");
+    // The report was generated and "delivered" to the local preview folder only.
+    expect(previewEmailTo(email)).toContain("Subject: Su resumen personalizado de Linde Sphere");
   });
 
   test("inline validation blocks invalid and missing fields", async ({ page }) => {
@@ -165,6 +193,8 @@ test.describe("lead form and consent", () => {
         body: '{"submission":"stored","report":"failed"}',
       }),
     );
+    // Email mode only: LOCAL_PACKAGE never polls a delivery.
+    await gotoKiosk(page, EMAIL_MODE);
     await openForm(page);
     await toReview(page);
     await page.getByTestId("lead-submit").click();

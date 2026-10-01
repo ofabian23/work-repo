@@ -26,6 +26,7 @@
     "db:seed": "prisma db seed",
     "db:backup": "tsx --conditions=react-server scripts/db-backup.ts",
     "db:export": "tsx --conditions=react-server scripts/db-export.ts",
+    "followup:package": "tsx --conditions=react-server scripts/follow-up-package.ts",
     "email:status": "tsx --conditions=react-server scripts/email-admin.ts status",
     "email:retry": "tsx --conditions=react-server scripts/email-admin.ts retry",
     "email:preview": "tsx --conditions=react-server scripts/email-admin.ts preview",

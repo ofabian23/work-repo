@@ -42,6 +42,7 @@ describe("lead service — storing a submission", () => {
     expect(LeadCreatedResponseSchema.parse(response)).toEqual({
       statusToken: expect.any(String),
       emailQueued: true,
+      followUp: "email",
       replayed: false,
     });
     const lead = await t.db.lead.findFirstOrThrow({ include: { interests: true, emailDeliveries: true } });
@@ -325,5 +326,67 @@ describe("lead service — server recomputation (ADR-025, ADR-051)", () => {
       .sort((a, b) => a.position - b.position)
       .map((i) => i.value);
     expect(stored).toEqual(expected?.items.map((i) => i.solutionId));
+  });
+});
+
+describe("lead service — LOCAL_PACKAGE follow-up (ADR-062)", () => {
+  const local = () => createTestLeadService(t.db, { followUpMode: "LOCAL_PACKAGE" });
+
+  it("stores the lead and its report (HTML, text, JSON) as follow_up_pending, with no email attempt", async () => {
+    const queued: string[] = [];
+    const { service, logs } = createTestLeadService(t.db, {
+      followUpMode: "LOCAL_PACKAGE",
+      onDeliveryQueued: (id) => void queued.push(id),
+    });
+    const result = await service.submitLead(validLead());
+    if (result.outcome !== "created") throw new Error(result.outcome);
+    expect(LeadCreatedResponseSchema.parse(result.response)).toEqual({
+      statusToken: expect.any(String),
+      emailQueued: false,
+      followUp: "package",
+      replayed: false,
+    });
+
+    expect(await counts()).toMatchObject({ leads: 1, sessions: 1, deliveries: 0 });
+    expect(queued).toEqual([]);
+    const lead = await t.db.lead.findFirstOrThrow({ include: { report: true } });
+    expect(lead).toMatchObject({ followUpMode: "LOCAL_PACKAGE", followUpStatus: "follow_up_pending" });
+    expect(lead.report?.html).toContain("<html");
+    expect(lead.report?.text.length).toBeGreaterThan(0);
+    const json = JSON.parse(lead.report!.payloadJson!) as Record<string, unknown>;
+    expect(json).toMatchObject({ language: "es", contentVersion: lead.contentVersion });
+    // The JSON is the visitor-safe report payload: no internal score or scoring factors.
+    expect(lead.report!.payloadJson).not.toMatch(/leadScore|leadTier|internal/i);
+    expect(logs.text()).toContain("LOCAL_PACKAGE");
+    PERSONAL_VALUES.forEach((v) => expect(logs.text()).not.toContain(v));
+  });
+
+  it("reports the stored package as 'packaged', never 'sent' or 'pending'", async () => {
+    const { service } = local();
+    const result = await service.submitLead(validLead());
+    if (result.outcome !== "created") throw new Error(result.outcome);
+    expect(await service.getSubmissionStatus(result.response.statusToken)).toEqual({
+      submission: "stored",
+      report: "packaged",
+    });
+  });
+
+  it("a replay keeps the original lead's follow-up kind even after the mode changes", async () => {
+    const first = await local().service.submitLead(validLead());
+    if (first.outcome !== "created") throw new Error(first.outcome);
+    const later = createTestLeadService(t.db, { followUpMode: "SMTP_EMAIL" });
+    const replay = await later.service.submitLead(validLead());
+    expect(replay.outcome).toBe("replayed");
+    if (replay.outcome !== "replayed") return;
+    expect(replay.response).toMatchObject({ followUp: "package", emailQueued: false, replayed: true });
+    expect(await counts()).toMatchObject({ leads: 1, deliveries: 0 });
+  });
+
+  it("an email mode stores SMTP_EMAIL on the lead and queues exactly one delivery", async () => {
+    const { response } = await created();
+    expect(response.followUp).toBe("email");
+    const lead = await t.db.lead.findFirstOrThrow();
+    expect(lead).toMatchObject({ followUpMode: "SMTP_EMAIL", followUpStatus: "follow_up_pending" });
+    expect(await counts()).toMatchObject({ deliveries: 1 });
   });
 });

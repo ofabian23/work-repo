@@ -5,6 +5,7 @@ import { SecondaryAction } from "@/components/actions/action-button";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { InactivityWarning } from "@/components/overlay/inactivity-warning";
 import { leadCaptureAvailable, type PublicContentBundle } from "@/domain/content/visibility";
+import type { VisitorFollowUp } from "@/domain/follow-up/follow-up-mode";
 import { recommend } from "@/domain/recommendations/engine";
 import { RecommendationReadiness } from "@/domain/recommendations/recommendation-readiness";
 import { primaryItems } from "@/domain/recommendations/recommendation-items";
@@ -37,6 +38,7 @@ import { TailoringScreen } from "./journey/tailoring-screen";
 import { ChallengesPathScreen } from "./journey/challenges-path-screen";
 import { SummaryRequestScreen } from "./journey/summary-request-screen";
 import type { LeadApi } from "./lead/lead-api";
+import { FollowUpProvider } from "./follow-up/follow-up-context";
 import { LazyLeadFormScreen, preloadLeadForm } from "./lead/lazy-lead-form";
 import { AttractScreen } from "./screens/attract-screen";
 import { WelcomeScreen } from "./screens/welcome-screen";
@@ -60,6 +62,7 @@ export function KioskExperience({
     intervalMs: appConfig.leadForm.statusPollIntervalMs,
   },
   confirmationResetMs = appConfig.kiosk.idle.confirmationResetMs,
+  followUp = "package",
 }: {
   content: PublicContentBundle;
   idle?: IdleConfig & { leadFormWarningAfterMs?: number; leadFormCountdownMs?: number };
@@ -70,6 +73,8 @@ export function KioskExperience({
   leadApi?: LeadApi;
   leadStatusPoll?: { attempts: number; intervalMs: number };
   confirmationResetMs?: number;
+  /** From FOLLOW_UP_MODE (ADR-062): adapts the copy so it never promises an email that will not be sent. */
+  followUp?: VisitorFollowUp;
 }) {
   const { state, dispatch, startSession, choosePath, goToWelcome, reset } = useKioskSession();
   const { localize, t } = useLanguage();
@@ -388,37 +393,39 @@ export function KioskExperience({
   }
 
   return (
-    <div
-      className="flex flex-1 flex-col"
-      data-testid="kiosk-experience"
-      data-screen={state.screen}
-      data-session-phase={phase}
-      data-ready={ready || undefined}
-      // Remount everything on reset so each visitor starts from the initial visual state.
-      key={state.resetCount}
-    >
-      {screen}
-      <ConversionPrompt
-        visible={prompt.visible}
-        onAccept={() => {
-          prompt.hide();
-          dispatch({ type: "CONVERSION_PROMPT", outcome: "accepted" });
-          showRecommendations();
-        }}
-        onDismiss={() => {
-          prompt.hide();
-          dispatch({ type: "CONVERSION_PROMPT", outcome: "dismissed" });
-        }}
-      />
-      <InactivityWarning
-        open={idleTimer.warningOpen}
-        secondsRemaining={idleTimer.secondsRemaining}
-        onContinue={idleTimer.keepAlive}
-        onReset={() => {
-          idleTimer.stop();
-          reset("explicit");
-        }}
-      />
-    </div>
+    <FollowUpProvider value={followUp}>
+      <div
+        className="flex flex-1 flex-col"
+        data-testid="kiosk-experience"
+        data-screen={state.screen}
+        data-session-phase={phase}
+        data-ready={ready || undefined}
+        // Remount everything on reset so each visitor starts from the initial visual state.
+        key={state.resetCount}
+      >
+        {screen}
+        <ConversionPrompt
+          visible={prompt.visible}
+          onAccept={() => {
+            prompt.hide();
+            dispatch({ type: "CONVERSION_PROMPT", outcome: "accepted" });
+            showRecommendations();
+          }}
+          onDismiss={() => {
+            prompt.hide();
+            dispatch({ type: "CONVERSION_PROMPT", outcome: "dismissed" });
+          }}
+        />
+        <InactivityWarning
+          open={idleTimer.warningOpen}
+          secondsRemaining={idleTimer.secondsRemaining}
+          onContinue={idleTimer.keepAlive}
+          onReset={() => {
+            idleTimer.stop();
+            reset("explicit");
+          }}
+        />
+      </div>
+    </FollowUpProvider>
   );
 }

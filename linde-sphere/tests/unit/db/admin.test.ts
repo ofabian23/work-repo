@@ -14,6 +14,7 @@ import { createAdminRepository } from "@/server/admin/admin-repository";
 import { createAdminService, INTEREST_CSV_COLUMNS, LEAD_CSV_COLUMNS } from "@/server/admin/admin-service";
 import { ADMIN_COOKIE, createAdminSessions, createLoginThrottle } from "@/server/admin/admin-session";
 import { hashPassphrase } from "@/server/admin/passphrase";
+import { createZip } from "@/server/follow-up/zip";
 import { loadSeedBundle } from "../../helpers/schema";
 import {
   captureLogs,
@@ -22,6 +23,7 @@ import {
   validLead,
   type TestDatabase,
 } from "../../helpers/test-database";
+import { readZip } from "../../helpers/zip";
 
 const PASSPHRASE = "frase de acceso de prueba";
 let HASH: string;
@@ -95,6 +97,8 @@ function setup({ enabled = true } = {}) {
     basePath: "/gestion-local",
     passphraseHash: HASH,
     sessionMinutes: 30,
+    followUpMode: "LOCAL_PACKAGE",
+    emailProvider: "preview",
   };
   const ctx: AdminHttpContext = {
     config,
@@ -406,5 +410,145 @@ describe("admin HTTP: authorization", () => {
     expect(res.headers.get("location")).toBe("/gestion-local/login");
     expect(res.headers.get("set-cookie")).toContain("Max-Age=0");
     expect(ctx.sessions.validate(token)).toBe(false);
+  });
+});
+
+describe("Convention Export Package (ADR-062)", () => {
+  /** Two active LOCAL_PACKAGE leads and one erasure request, as the default kiosk stores them. */
+  async function seedLocal() {
+    const { service } = createTestLeadService(t.db, { followUpMode: "LOCAL_PACKAGE" });
+    const ids: string[] = [];
+    for (const [i, overrides] of [
+      [1, {}],
+      [2, { firstName: "Ana", lastName: "-Rivera", organization: "+Hospital (Norte), Inc." }],
+      [3, { firstName: "Luis", lastName: "Prueba" }],
+    ] as const) {
+      const r = await service.submitLead(
+        validLead({
+          idempotencyKey: `0f8e2f52-8f0c-4d8a-a1b2-10000000000${i}`,
+          email: `local${i}@hospital.example`,
+          ...overrides,
+        }),
+      );
+      if (r.outcome !== "created") throw new Error(r.outcome);
+      ids.push(
+        (await t.db.lead.findFirstOrThrow({ where: { businessEmail: `local${i}@hospital.example` } })).id,
+      );
+    }
+    await t.db.lead.update({ where: { id: ids[2] }, data: { status: "erasure_requested" } });
+    return ids as [string, string, string];
+  }
+
+  it("writes a standard ZIP (deflate, UTF-8 names, CRC-32) and refuses unsafe entry names", () => {
+    const zip = createZip(
+      [
+        { name: "a.txt", data: "hola" },
+        { name: "carpeta/año.txt", data: Buffer.from("ñandú ".repeat(200)) },
+      ],
+      new Date("2026-10-23T12:00:00Z"),
+    );
+    const files = readZip(zip);
+    expect([...files.keys()]).toEqual(["a.txt", "carpeta/año.txt"]);
+    expect(files.get("carpeta/año.txt")!.toString("utf8")).toBe("ñandú ".repeat(200));
+    expect(() => createZip([{ name: "../x", data: "" }], new Date())).toThrow();
+    expect(() => createZip([{ name: "/x", data: "" }], new Date())).toThrow();
+    expect(() =>
+      createZip(
+        [
+          { name: "a", data: "" },
+          { name: "a", data: "" },
+        ],
+        new Date(),
+      ),
+    ).toThrow();
+  });
+
+  it("contains /reports (HTML, text, JSON per active lead) and /leads.csv, with no personal data in file names", async () => {
+    const [a, b, erased] = await seedLocal();
+    const { service, logs } = setup();
+    const pkg = await service.exportPackage({});
+    expect(pkg).toMatchObject({ leads: 2, reports: 2, marked: 0 });
+    expect(pkg.filename).toBe("linde-sphere-follow-up-package-2026-10-23-12-00-00.zip");
+
+    const files = readZip(pkg.bytes);
+    expect([...files.keys()].sort()).toEqual(
+      [
+        "LEEME.txt",
+        "leads.csv",
+        ...[a, b].flatMap((id) => ["html", "json", "txt"].map((ext) => `reports/${id}/report.${ext}`)),
+      ].sort(),
+    );
+    expect([...files.keys()].join(" ")).not.toMatch(/local\d|Ana|Rivera|hospital/i);
+    expect([...files.keys()].join(" ")).not.toContain(erased);
+
+    const csv = files
+      .get("leads.csv")!
+      .toString("utf8")
+      .replace(/^\uFEFF/, "");
+    const [header, ...rows] = csv.trimEnd().split("\r\n");
+    expect(header).toBe([...LEAD_CSV_COLUMNS, "report_folder"].join(","));
+    expect(header).toContain("follow_up_mode,follow_up_status");
+    expect(rows).toHaveLength(2);
+    expect(csv).toContain(`reports/${a}/`);
+    expect(csv).toContain("LOCAL_PACKAGE,follow_up_pending");
+    // Spreadsheet formula injection is neutralized in the package CSV too.
+    expect(csv).toContain(`"'+Hospital (Norte), Inc."`);
+    expect(csv).not.toContain("local3@hospital.example");
+
+    expect(files.get(`reports/${a}/report.html`)!.toString("utf8")).toContain("<html");
+    const json = JSON.parse(files.get(`reports/${a}/report.json`)!.toString("utf8"));
+    expect(json).toMatchObject({ leadId: a, language: "es", report: { language: "es" } });
+    expect(JSON.stringify(json)).not.toMatch(/leadScore|leadTier|internal_score|score_factors/);
+
+    // Counts only in the logs: never names, emails or organizations.
+    expect(logs.text()).toContain("follow_up.package");
+    expect(logs.text()).not.toMatch(/local\d@|Ana|Norte|Hospital San Juan/);
+  });
+
+  it("counts generated packages, and marking exported sets the follow-up status", async () => {
+    const [a] = await seedLocal();
+    const { service } = setup();
+    expect(await service.overview(parseAdminFilters({}))).toMatchObject({
+      total: 3,
+      packages: 3,
+      followUpPending: 3,
+      byDelivery: { pending: 0, sent: 0, failed: 0, retrying: 0 },
+    });
+    const pkg = await service.exportPackage({ exported: "no" }, { markExported: true });
+    expect(pkg.marked).toBe(2);
+    expect(await t.db.lead.findUniqueOrThrow({ where: { id: a } })).toMatchObject({
+      followUpStatus: "exported",
+      exportedAt: new Date("2026-10-23T12:00:00Z"),
+    });
+    expect(await service.overview(parseAdminFilters({}))).toMatchObject({ followUpPending: 1, exported: 2 });
+    // Only not-yet-exported active leads remain: none.
+    expect((await service.exportPackage({ exported: "no" })).leads).toBe(0);
+    expect(await t.db.lead.count()).toBe(3);
+  });
+
+  it("is a confirmed, uncached download over the admin export route", async () => {
+    await seedLocal();
+    const { ctx } = setup();
+    const token = ctx.sessions.create();
+    const unconfirmed = await handleExport(post("/x", { kind: "package" }, { cookie: token }), ctx);
+    expect(unconfirmed.headers.get("location")).toBe("/gestion-local/exports?error=confirm");
+    expect(await t.db.lead.count({ where: { followUpStatus: "exported" } })).toBe(0);
+
+    const res = await handleExport(
+      post("/x", { kind: "package", confirm: "yes", markExported: "yes" }, { cookie: token }),
+      ctx,
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/zip");
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(res.headers.get("content-disposition")).toMatch(
+      /^attachment; filename="linde-sphere-follow-up-package-[\d-]+\.zip"$/,
+    );
+    const files = readZip(Buffer.from(await res.arrayBuffer()));
+    expect(files.has("leads.csv")).toBe(true);
+    expect(await t.db.lead.count({ where: { followUpStatus: "exported" } })).toBe(2);
+
+    const signedOut = await handleExport(post("/x", { kind: "package", confirm: "yes" }), ctx);
+    expect(signedOut.headers.get("location")).toBe("/gestion-local/login");
   });
 });

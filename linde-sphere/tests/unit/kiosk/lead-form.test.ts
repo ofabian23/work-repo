@@ -115,14 +115,24 @@ describe("lead API client", () => {
     const token = "A".repeat(43);
     expect(
       await createLeadApi({
-        fetchImpl: respond(201, { statusToken: token, emailQueued: true, replayed: false }),
+        fetchImpl: respond(201, {
+          statusToken: token,
+          emailQueued: true,
+          followUp: "email",
+          replayed: false,
+        }),
       }).submit(payload),
-    ).toEqual({ kind: "stored", statusToken: token });
+    ).toEqual({ kind: "stored", statusToken: token, followUp: "email" });
     expect(
       await createLeadApi({
-        fetchImpl: respond(200, { statusToken: token, emailQueued: true, replayed: true }),
+        fetchImpl: respond(200, {
+          statusToken: token,
+          emailQueued: false,
+          followUp: "package",
+          replayed: true,
+        }),
       }).submit(payload),
-    ).toEqual({ kind: "stored", statusToken: token });
+    ).toEqual({ kind: "stored", statusToken: token, followUp: "package" });
     expect(
       await createLeadApi({
         fetchImpl: respond(422, {
@@ -170,6 +180,9 @@ describe("lead API client", () => {
     expect(await awaitDelivery(pending, "t", { attempts: 2, intervalMs: 0, sleep })).toBe("queued");
     const failed: LeadApi = { submit: vi.fn(), status: vi.fn(async () => "failed" as const) };
     expect(await awaitDelivery(failed, "t", { attempts: 3, intervalMs: 0, sleep })).toBe("delayed");
+    // No delivery row (LOCAL_PACKAGE): the report is prepared, never "sent" (ADR-062).
+    const packaged: LeadApi = { submit: vi.fn(), status: vi.fn(async () => "packaged" as const) };
+    expect(await awaitDelivery(packaged, "t", { attempts: 3, intervalMs: 0, sleep })).toBe("packaged");
   });
 });
 

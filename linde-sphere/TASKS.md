@@ -368,6 +368,22 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [x] Fixed (docs): README status was out of date
 - [x] RELEASE_READINESS.md with go/no-go checklist
 
+## Phase 12 — Follow-up strategy refinement (ADR-062) ✅
+
+- [x] `FollowUpMode` enum (`LOCAL_PACKAGE`, `SMTP_EMAIL`, `MICROSOFT_GRAPH`, `OUTLOOK_DRAFT`, `FUTURE_CRM`);
+      `FOLLOW_UP_MODE` env, default `LOCAL_PACKAGE`; unimplemented modes refused at start-up with a reason
+- [x] LOCAL_PACKAGE: lead + report (HTML, text, JSON) stored as `follow_up_pending`, no email delivery, no
+      worker; migration 5 (hand-written, CHECK constraints, backfill)
+- [x] Email architecture kept intact (providers, outbox, templates, delivery model, worker, admin retry,
+      CLI, tests); used only in `SMTP_EMAIL`
+- [x] Convention Export Package (`leads.csv` + `reports/`): admin download (confirmed) and
+      `npm run followup:package`
+- [x] Kiosk copy adapts to the mode; confirmation never says "sent" in package mode
+- [x] Admin: current mode in the header, "Paquetes de seguimiento generados" KPI, follow-up status
+- [x] Outlook Draft and Microsoft Graph placeholders documented (ARCHITECTURE §9.7)
+- [ ] PDF report (not implemented before this phase; still backlog)
+- [ ] Legal confirmation of report-consent wording for representative delivery (PRIVACY_REVIEW A22)
+
 ## Phase 10 — Hardening, accessibility, deployment
 
 - [ ] E2E: full quick/discovery/explore journeys; post-reset storage/DOM/history assertions; no external requests
@@ -384,16 +400,17 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 
 ## Backlog (post-MVP)
 
-PDF report · Microsoft Graph email provider · CRM integration · sales notification email · QR hand-off
+PDF report · Microsoft Graph email provider · Outlook draft follow-up mode (ARCHITECTURE §9.7) · CRM
+integration (`FUTURE_CRM`) · sales notification email · QR hand-off
 to phone · badge scanning · multi-kiosk sync · content editor UI · analytics dashboard · approved
 illustration integration · additional languages.
 
 ## Blockers and external dependencies
 
-| Item                               | Needed for               | Status                                  |
-| ---------------------------------- | ------------------------ | --------------------------------------- |
-| SMTP account + sender address (Q2) | Real email delivery      | Open — `file` provider used meanwhile   |
-| Validated PR solution catalog (Q5) | Production mode          | Open — demo mode with `assumed` content |
-| Approved consent text (Q3)         | Production mode          | Open — placeholder text                 |
-| Sales contact details (Q4)         | Report CTA in production | Open                                    |
-| Scene illustrations (Q6)           | Final visual quality     | Open — local placeholder SVGs           |
+| Item                               | Needed for               | Status                                                               |
+| ---------------------------------- | ------------------------ | -------------------------------------------------------------------- |
+| SMTP account + sender address (Q2) | `SMTP_EMAIL` follow-up   | Open — `LOCAL_PACKAGE` (no email) is the default meanwhile (ADR-062) |
+| Validated PR solution catalog (Q5) | Production mode          | Open — demo mode with `assumed` content                              |
+| Approved consent text (Q3)         | Production mode          | Open — placeholder text                                              |
+| Sales contact details (Q4)         | Report CTA in production | Open                                                                 |
+| Scene illustrations (Q6)           | Final visual quality     | Open — local placeholder SVGs                                        |

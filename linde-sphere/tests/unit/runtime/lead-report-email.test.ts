@@ -83,17 +83,33 @@ describe("LeadSubmissionSchema", () => {
 describe("LeadCreatedResponseSchema", () => {
   const statusToken = "A".repeat(43);
   it("returns only an opaque status token and flags (no lead id)", () => {
-    expectValid(LeadCreatedResponseSchema, { statusToken, emailQueued: true, replayed: false });
+    expectValid(LeadCreatedResponseSchema, {
+      statusToken,
+      emailQueued: true,
+      followUp: "email",
+      replayed: false,
+    });
     expectInvalid(
       LeadCreatedResponseSchema,
-      { statusToken: "short", emailQueued: true, replayed: false },
+      { statusToken: "short", emailQueued: true, followUp: "email", replayed: false },
       "statusToken",
     );
     expectInvalid(
       LeadCreatedResponseSchema,
-      { statusToken, emailQueued: true, replayed: false, leadId: "lead_1" },
+      { statusToken, emailQueued: true, followUp: "email", replayed: false, leadId: "lead_1" },
       "",
       "Unrecognized",
+    );
+    expectValid(LeadCreatedResponseSchema, {
+      statusToken,
+      emailQueued: false,
+      followUp: "package",
+      replayed: false,
+    });
+    expectInvalid(
+      LeadCreatedResponseSchema,
+      { statusToken, emailQueued: false, followUp: "crm", replayed: false },
+      "followUp",
     );
   });
 });

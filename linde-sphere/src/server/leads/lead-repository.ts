@@ -2,6 +2,8 @@ import "server-only";
 import type {
   EmailDeliveryStatus,
   EmailProvider,
+  FollowUpMode,
+  FollowUpStatus,
   InterestCategory,
   InterestSourceType,
   Language,
@@ -48,6 +50,8 @@ export type NewSubmission = {
     /** JSON array of { code, points }. */
     leadScoreFactors: string;
     leadScoringVersion: string;
+    followUpMode: FollowUpMode;
+    followUpStatus: FollowUpStatus;
   };
   interests: NewLeadInterest[];
   session: {
@@ -66,11 +70,14 @@ export type NewSubmission = {
     text: string;
     contentVersion: string;
     copyVersion: string;
+    /** ReportPayload as JSON, for the follow-up package. */
+    payloadJson: string;
   } | null;
-  delivery: { provider: EmailProvider };
+  /** Email delivery to queue; null in follow-up modes without automatic email (LOCAL_PACKAGE, ADR-062). */
+  delivery: { provider: EmailProvider } | null;
 };
 
-export type ExistingSubmission = { leadId: string; requestFingerprint: string };
+export type ExistingSubmission = { leadId: string; requestFingerprint: string; followUpMode: FollowUpMode };
 
 /** Thrown when another request with the same idempotency key committed first (double tap race). */
 export class DuplicateRequestError extends Error {
@@ -82,10 +89,13 @@ export class DuplicateRequestError extends Error {
 
 export interface LeadRepository {
   findByIdempotencyKey(idempotencyKey: string): Promise<ExistingSubmission | null>;
-  /** Stores lead, interests, session summary, report and a pending email delivery atomically. */
+  /**
+   * Stores lead, interests, session summary, report and (in email follow-up modes) a pending email delivery
+   * atomically. `deliveryId` is null when no email is queued (LOCAL_PACKAGE).
+   */
   createSubmission(
     submission: NewSubmission,
-  ): Promise<{ leadId: string; deliveryId: string; reportStored: boolean }>;
+  ): Promise<{ leadId: string; deliveryId: string | null; reportStored: boolean }>;
   /** Latest report-delivery state for a status-token hash, or null if unknown. No personal data. */
   findDeliveryStatusByTokenHash(
     statusTokenHash: string,
@@ -104,9 +114,11 @@ export function createPrismaLeadRepository(db: Database): LeadRepository {
     async findByIdempotencyKey(idempotencyKey) {
       const lead = await db.lead.findUnique({
         where: { idempotencyKey },
-        select: { id: true, requestFingerprint: true },
+        select: { id: true, requestFingerprint: true, followUpMode: true },
       });
-      return lead ? { leadId: lead.id, requestFingerprint: lead.requestFingerprint } : null;
+      return lead
+        ? { leadId: lead.id, requestFingerprint: lead.requestFingerprint, followUpMode: lead.followUpMode }
+        : null;
     },
 
     async createSubmission({ lead, interests, session, report, delivery }) {
@@ -142,6 +154,8 @@ export function createPrismaLeadRepository(db: Database): LeadRepository {
             });
           }
           if (report) await tx.report.create({ data: { ...report, leadId: lead.id } });
+          // LOCAL_PACKAGE and other modes without automatic email: no delivery row, no email attempt.
+          if (!delivery) return { leadId: lead.id, deliveryId: null, reportStored: report !== null };
           // Without a report there is nothing to send: the delivery is recorded as failed (visible to the
           // operator) instead of retrying forever.
           const created = await tx.emailDelivery.create({

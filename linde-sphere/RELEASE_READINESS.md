@@ -4,7 +4,8 @@ This is the final audit of Linde Sphere (codename _Mockup Vision_), the Spanish-
 the healthcare convention in Puerto Rico. It records what is built, how to run it, what still needs
 approval, and whether it can go live.
 
-- **Audit date:** 2026-09-30
+- **Audit date:** 2026-09-30; software checks re-run on 2026-10-01 after the follow-up strategy refinement
+  (ADR-062)
 - **Branch:** `claude/project-vision-planning-hfwe5m`
 
 **Bottom line:**
@@ -23,12 +24,12 @@ approval, and whether it can go live.
 | Content export freshness                  | `npm run content:export -- --check`          | ✅ up to date                                                                                                                                                                                                                    |
 | Lint                                      | `npm run lint`                               | ✅ 0 warnings                                                                                                                                                                                                                    |
 | Typecheck                                 | `npm run typecheck`                          | ✅                                                                                                                                                                                                                               |
-| Unit, integration and component tests     | `npm test` (inside `npm run check`)          | ✅ 878 passed, 3 skipped (PowerShell runtime tests; they need `pwsh`, and passed separately: 15/15 with PowerShell 7.4)                                                                                                          |
+| Unit, integration and component tests     | `npm test` (inside `npm run check`)          | ✅ 896 passed, 3 skipped (PowerShell runtime tests; they need `pwsh`, and passed separately: 15/15 with PowerShell 7.4)                                                                                                          |
 | Formatting                                | `npm run format:check`                       | ✅                                                                                                                                                                                                                               |
 | Production build                          | `npm run build`                              | ✅                                                                                                                                                                                                                               |
 | Client bundle scan                        | `npm run security:bundle`                    | ✅ clean (12 markers: secrets, server-only code, lead scoring)                                                                                                                                                                   |
 | Dependency audit                          | `npm run security:audit` / `npm audit`       | ✅ 0 vulnerabilities                                                                                                                                                                                                             |
-| End-to-end, every test twice, fresh build | `CI=1 npx playwright test --repeat-each=2`   | ✅ 536 passed, 0 failed, 22 skipped (11 intentional profile-scoped skips × 2: keyboard and admin checks not on the phone profile, performance measured on kiosk and laptop, developer tool and kiosk-only checks on one profile) |
+| End-to-end, every test twice, fresh build | `CI=1 npx playwright test --repeat-each=2`   | ✅ 542 passed, 0 failed, 22 skipped (11 intentional profile-scoped skips × 2: keyboard and admin checks not on the phone profile, performance measured on kiosk and laptop, developer tool and kiosk-only checks on one profile) |
 
 **Manual inspection.** A scripted browser pass (239 checks, all passing after the fixes below) covered:
 
@@ -69,11 +70,15 @@ approval, and whether it can go live.
   - Shown only after recommendations.
   - Three steps: contact, preferences with two separate unchecked consents, and review.
   - Validated on the client and the server, protected against double taps (idempotent), and rate-limited.
-- **Storage and email:**
-  - One SQLite transaction stores the lead, interests, session summary, rendered report and a pending
-    email delivery.
-  - An outbox retries with backoff, recovers after a crash, and supports manual retry.
-  - Email providers: development preview and SMTP with required TLS.
+- **Follow-up strategy (ADR-062):** `FOLLOW_UP_MODE`, default `LOCAL_PACKAGE`.
+  - **LOCAL_PACKAGE (default):** one SQLite transaction stores the lead, interests, session summary and the
+    rendered report (HTML, text, JSON), marked "follow-up pending". No email is attempted.
+  - **Convention Export Package:** ZIP with `leads.csv` and `reports/<id>/`, from the admin (confirmed) or
+    `npm run followup:package`.
+  - **SMTP_EMAIL (optional, configuration only):** the same, plus a pending email delivery. The outbox
+    retries with backoff, recovers after a crash, and supports manual retry. Providers: development
+    preview and SMTP with required TLS.
+  - `MICROSOFT_GRAPH` and `OUTLOOK_DRAFT` are architecture placeholders that the server refuses at start-up.
 - **Report:** personalized HTML and text email in the visitor's language, with a pending-validation note in
   demo mode.
 - **Session isolation:**
@@ -151,7 +156,8 @@ validates them at start-up, and `/api/health` lists invalid ones by name.
 | `DATABASE_URL`                                                                                                | SQLite file                                                                                          | `file:./data/linde-sphere.db`                                    |
 | `PORT`                                                                                                        | Port for the launch scripts                                                                          | `3000`                                                           |
 | `LEAD_RETENTION_DAYS`                                                                                         | Retention placeholder; nothing is deleted automatically                                              | empty, until privacy/legal decide                                |
-| `EMAIL_PROVIDER`                                                                                              | `preview` (writes files, never sends) or `smtp`                                                      | `smtp` at the event (**[Linde IT]** relay)                       |
+| `FOLLOW_UP_MODE`                                                                                              | `LOCAL_PACKAGE` (store + package, no email) or `SMTP_EMAIL` (automatic email)                        | `LOCAL_PACKAGE` unless the SMTP relay is approved                |
+| `EMAIL_PROVIDER`                                                                                              | Transport for `SMTP_EMAIL`: `preview` (writes files, never sends) or `smtp`                          | `smtp` only with `SMTP_EMAIL` (**[Linde IT]** relay)             |
 | `EMAIL_FROM`, `EMAIL_REPLY_TO`                                                                                | Sender and reply-to                                                                                  | approved addresses                                               |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_REQUIRE_TLS`, `SMTP_USER`, `SMTP_PASS`                         | SMTP relay; TLS required in production                                                               | from **[Linde IT]**                                              |
 | `EMAIL_MAX_ATTEMPTS`, `EMAIL_WORKER_INTERVAL_MS`, `EMAIL_PREVIEW_DIR`                                         | Retry ceiling, worker interval, preview folder                                                       | `12`, `15000`, `data/email-preview`                              |
@@ -190,10 +196,13 @@ validates them at start-up, and `/api/health` lists invalid ones by name.
 
 - **Content:** all of it is a demonstrative assumption. Production mode shows nothing until items are
   validated and approved (§11), and scene art and digital assets are placeholders (§12).
-- **Real email:**
-  - Real delivery needs an approved SMTP relay. Only failure paths are exercised end to end, since a
-    successful SMTP send needs a trusted relay.
-  - Microsoft Graph is not implemented.
+- **Follow-up:**
+  - The default `LOCAL_PACKAGE` mode sends no email: a representative follows up from the Convention Export
+    Package, which is handed over manually (PRIVACY_REVIEW A21).
+  - No PDF report is produced; the HTML report can be printed to PDF.
+  - Real email (`SMTP_EMAIL`) needs an approved SMTP relay. Only failure paths are exercised end to end,
+    since a successful SMTP send needs a trusted relay.
+  - Microsoft Graph and Outlook drafts are not implemented (placeholders refused at start-up).
 - **Admin security:** the admin uses one passphrase and in-memory sessions. This is **not enterprise
   authentication**; any use beyond the convention needs approved authentication and a security review.
 - **Deletion and retention:** there is no delete or anonymize function and no automatic retention (retention
@@ -205,8 +214,8 @@ validates them at start-up, and `/api/health` lists invalid ones by name.
 - **Plain HTTP:** the local network uses plain HTTP; an HTTPS certificate is an IT/security decision.
 - **Rate limits:** per-client limits rely on addresses that can be spoofed on a LAN; there is also a global
   cap.
-- **Missing database:** if the database was never created, the email worker logs a "table missing" error
-  every tick. The kiosk stays usable, lead submission shows a safe "could not save" message, and health
+- **Missing database:** if the database was never created, the email worker (email mode only) logs a "table
+  missing" error every tick. The kiosk stays usable, lead submission shows a safe "could not save" message, and health
   says `degraded`. Run `npm run db:deploy`.
 
 ## 9. Items requiring corporate IT approval
@@ -219,11 +228,14 @@ Each item links to its PRIVACY_REVIEW §9 number. Nothing in this project assume
 - **A19 Laptop and runtime:** power, sleep and lid settings; Node.js installation.
 - **A5 Laptop hardening:** disk encryption, accounts, screen lock, custody.
 - **A6 Kiosk browser:** lockdown on the tablet (kiosk mode, autofill off, portrait lock).
-- **A7 Email relay:** SMTP relay, sender address, SPF/DKIM, and a dedicated least-privilege account.
+- **A7 Email relay (only for `FOLLOW_UP_MODE=SMTP_EMAIL`):** SMTP relay, sender address, SPF/DKIM, and a
+  dedicated least-privilege account.
 - **A4 Transport:** plain HTTP on an isolated network vs a local HTTPS certificate (with Linde Security).
 - **A14 Logs:** log capture and retention on the laptop (with Privacy).
 - **A9 Data handling:** approved storage for backups and exports, and the transfer channel to sales/CRM
   (with Privacy).
+- **A21 Follow-up package:** who may generate and receive the Convention Export Package, its storage,
+  transfer and deletion (with Privacy).
 
 ## 10. Items requiring privacy/legal approval
 
@@ -287,7 +299,8 @@ Run on the event hardware (MANUAL_KIOSK_TEST.md), then the daily CONVENTION_STAR
   form.
 - **Assistive settings:** TalkBack, Android "Remove animations", and larger text.
 - **Network and recovery:** a Wi-Fi drop mid-journey, a laptop restart, and a browser reload.
-- **Real email:** a real SMTP delivery to a test mailbox (item 9 of the startup checklist).
+- **Follow-up:** in `LOCAL_PACKAGE`, a test lead in a follow-up package created on the event laptop; only
+  with `SMTP_EMAIL`, a real SMTP delivery to a test mailbox (item 9 of the startup checklist).
 - **Windows specifics:** the launch script under **Windows PowerShell 5.1**, the Mobile Hotspot, the
   firewall behavior, and Ctrl+C in a Windows console.
 - **Endurance:** 20 consecutive visitor sessions with resets.
@@ -295,37 +308,37 @@ Run on the event hardware (MANUAL_KIOSK_TEST.md), then the daily CONVENTION_STAR
 
 ## 14. Approvals summary
 
-| Owner                 | Open items                                                      |
-| --------------------- | --------------------------------------------------------------- |
-| Linde IT              | A4 (with Security), A5, A6, A7, A9 (with Privacy), A14, A16–A19 |
-| Linde Privacy / Legal | A1, A2, A3, A10, A11 (with Marketing), A20                      |
-| Linde Security        | A4, A8, A15, A16, A17                                           |
-| Linde Marketing       | A11, A12, A13 (with PR sales)                                   |
-| Puerto Rico sales     | §11 (37 items, rules, contact, routing, scoring weights)        |
+| Owner                 | Open items                                                                                |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| Linde IT              | A4 (with Security), A5, A6, A7 (email mode only), A9 and A21 (with Privacy), A14, A16–A19 |
+| Linde Privacy / Legal | A1, A2, A3, A10, A11 (with Marketing), A20, A21, A22                                      |
+| Linde Security        | A4, A8, A15, A16, A17                                                                     |
+| Linde Marketing       | A11, A12, A13 (with PR sales)                                                             |
+| Puerto Rico sales     | §11 (37 items, rules, contact, routing, scoring weights)                                  |
 
 ## 15. Go / no-go checklist
 
-| #   | Gate                                                                                                   | Status                                       |
-| --- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
-| 1   | Lint, typecheck, formatting pass                                                                       | ✅ Go                                        |
-| 2   | Unit, integration and component tests pass (878; 3 PowerShell tests need `pwsh`)                       | ✅ Go                                        |
-| 3   | End-to-end suite passes twice on a fresh production build                                              | ✅ Go                                        |
-| 4   | Production build succeeds; client bundle clean; dependency audit 0 vulnerabilities                     | ✅ Go                                        |
-| 5   | Demo-mode content check passes                                                                         | ✅ Go                                        |
-| 6   | Production-mode content check passes (validated and approved content, consent, report)                 | ❌ No-go (§11)                               |
-| 7   | Consent text and privacy notice approved (A1–A3, A10)                                                  | ❌ No-go                                     |
-| 8   | Report copy, brand and assets approved (A11–A13)                                                       | ❌ No-go                                     |
-| 9   | IT approvals: network, firewall, scripts, laptop, kiosk lockdown, SMTP relay (A4–A7, A9, A14, A16–A19) | ❌ No-go                                     |
-| 10  | Security acceptance of the admin protection, or admin kept off (A8, A15)                               | ⚠️ Keep `ADMIN_ENABLED=false` until accepted |
-| 11  | Real SMTP test email delivered on the event network                                                    | ❌ Not yet run                               |
-| 12  | MANUAL_KIOSK_TEST.md completed on the event hardware                                                   | ❌ Not yet run                               |
-| 13  | Lead-scoring weights approved (A20), or scores not used for follow-up                                  | ⚠️ Pending                                   |
+| #   | Gate                                                                                                                                                     | Status                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| 1   | Lint, typecheck, formatting pass                                                                                                                         | ✅ Go                                        |
+| 2   | Unit, integration and component tests pass (896; 3 PowerShell tests need `pwsh`)                                                                         | ✅ Go                                        |
+| 3   | End-to-end suite passes twice on a fresh production build                                                                                                | ✅ Go                                        |
+| 4   | Production build succeeds; client bundle clean; dependency audit 0 vulnerabilities                                                                       | ✅ Go                                        |
+| 5   | Demo-mode content check passes                                                                                                                           | ✅ Go                                        |
+| 6   | Production-mode content check passes (validated and approved content, consent, report)                                                                   | ❌ No-go (§11)                               |
+| 7   | Consent text and privacy notice approved (A1–A3, A10, A22)                                                                                               | ❌ No-go                                     |
+| 8   | Report copy, brand and assets approved (A11–A13)                                                                                                         | ❌ No-go                                     |
+| 9   | IT approvals: network, firewall, scripts, laptop, kiosk lockdown, package handling (A4–A6, A9, A14, A16–A19, A21); SMTP relay (A7) only for `SMTP_EMAIL` | ❌ No-go                                     |
+| 10  | Security acceptance of the admin protection, or admin kept off (A8, A15)                                                                                 | ⚠️ Keep `ADMIN_ENABLED=false` until accepted |
+| 11  | Follow-up verified on the event laptop: test lead in a follow-up package (`LOCAL_PACKAGE`, default), or a real SMTP test email (`SMTP_EMAIL` only)       | ❌ Not yet run                               |
+| 12  | MANUAL_KIOSK_TEST.md completed on the event hardware                                                                                                     | ❌ Not yet run                               |
+| 13  | Lead-scoring weights approved (A20), or scores not used for follow-up                                                                                    | ⚠️ Pending                                   |
 
 **Decision:**
 
 - **Software:** GO. Every automated check in gates 1–5 passed in this audit, including the full E2E suite
-  run twice on a fresh production build (536 passed, 0 failed).
-- **Internal demo-mode rehearsals:** GO. Use `CONTENT_MODE=demo` and the preview email provider, which
-  sends nothing.
+  run twice on a fresh production build (542 passed, 0 failed).
+- **Internal demo-mode rehearsals:** GO. Use `CONTENT_MODE=demo` and the default `LOCAL_PACKAGE` follow-up,
+  which sends nothing.
 - **Production use at the convention with real visitors:** **NO-GO** until gates 6–9, 11 and 12 are
   closed and gates 10 and 13 are resolved.

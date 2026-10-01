@@ -22,6 +22,22 @@ enum LeadStatus {
   erasure_requested
 }
 
+/// Follow-up strategy in force when the lead was stored (ADR-062).
+enum FollowUpMode {
+  LOCAL_PACKAGE
+  SMTP_EMAIL
+  MICROSOFT_GRAPH
+  OUTLOOK_DRAFT
+  FUTURE_CRM
+}
+
+/// follow_up_pending ("FollowUpPending"): stored and packaged, a representative still has to follow up.
+/// exported: handed to the sales team in a Convention Export Package (or marked exported by the admin).
+enum FollowUpStatus {
+  follow_up_pending
+  exported
+}
+
 enum LeadSource {
   kiosk_lead_form
 }
@@ -87,9 +103,9 @@ enum EmailDeliveryStatus {
 }
 
 model Lead {
-  id                 String     @id @default(cuid())
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  id                 String         @id @default(cuid())
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   firstName          String
   lastName           String
   organization       String
@@ -103,25 +119,27 @@ model Lead {
   reportConsent      Boolean
   followUpConsent    Boolean
   consentTextVersion String
-  source             LeadSource @default(kiosk_lead_form)
-  status             LeadStatus @default(active)
+  source             LeadSource     @default(kiosk_lead_form)
+  status             LeadStatus     @default(active)
   /// Client request token; a repeated submission with the same key returns the original result.
-  idempotencyKey     String     @unique
+  idempotencyKey     String         @unique
   /// SHA-256 of the normalized submission, to tell a genuine retry from a reused key.
   requestFingerprint String
   /// SHA-256 of the opaque status token returned to the kiosk.
-  statusTokenHash    String     @unique
+  statusTokenHash    String         @unique
   contentVersion     String
   /// Set by the local administration utility when the lead was exported (ADR-056). Never cleared.
   exportedAt         DateTime?
   /// Internal commercial score 0–100 (server-only, never sent to the kiosk or the report; PROJECT_BRIEF M12).
-  leadScore          Int        @default(0)
+  leadScore          Int            @default(0)
   /// A, B or C, derived from leadScore.
-  leadTier           String     @default("C")
+  leadTier           String         @default("C")
   /// JSON array of { code, points }: why the score is what it is.
-  leadScoreFactors   String     @default("[]")
+  leadScoreFactors   String         @default("[]")
   /// Weights version used (assumed until sales validates them).
-  leadScoringVersion String     @default("none")
+  leadScoringVersion String         @default("none")
+  followUpMode       FollowUpMode   @default(LOCAL_PACKAGE)
+  followUpStatus     FollowUpStatus @default(follow_up_pending)
 
   session         VisitorSessionSummary @relation(fields: [sessionId], references: [sessionId])
   interests       LeadInterest[]
@@ -231,6 +249,8 @@ model Report {
   contentVersion String
   /// Version of content/report.json (report copy) used.
   copyVersion    String
+  /// Structured report (ReportPayload as JSON) for the follow-up package (ADR-062). Null for older rows.
+  payloadJson    String?
 
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }

@@ -2,6 +2,7 @@ import "server-only";
 import path from "node:path";
 import { loadContentFromDirectory } from "@/server/content/load-content";
 import { probeSqliteDatabase } from "@/server/database-probe";
+import { usesEmailOutbox } from "@/domain/follow-up/follow-up-mode";
 import { parseServerEnv } from "@/server/env";
 import { appConfig } from "@/lib/config/app-config";
 import { brandConfig } from "@/lib/config/brand-config";
@@ -28,6 +29,8 @@ export function getHealthReport({
     : { status: "unavailable" as const, reason: "configuration_invalid" };
 
   const configValid = envResult.ok;
+  const emailDeliversExternally =
+    env !== null && usesEmailOutbox(env.FOLLOW_UP_MODE) && env.EMAIL_PROVIDER !== "preview";
   const contentValid = content.bundle !== null && contentErrors === 0;
   const hardFailure = !configValid || !contentValid || database.status === "unavailable";
   const ready = configValid && contentValid && database.status === "ready";
@@ -59,9 +62,13 @@ export function getHealthReport({
       errorCount: contentErrors,
     },
     database: { status: database.status, engine: "sqlite", reason: database.reason },
+    followUp: {
+      mode: env?.FOLLOW_UP_MODE ?? null,
+      deliversExternally: env ? emailDeliversExternally : null,
+    },
     email: {
       provider: env?.EMAIL_PROVIDER ?? null,
-      deliversExternally: env ? env.EMAIL_PROVIDER !== "preview" : null,
+      deliversExternally: env ? emailDeliversExternally : null,
     },
   };
 }

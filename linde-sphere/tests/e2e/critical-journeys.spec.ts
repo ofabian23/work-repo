@@ -8,6 +8,7 @@ import {
   GALLERY_PORT,
   PRODUCTION_CONTENT_PORT,
 } from "../../playwright.config";
+import { readZip } from "../helpers/zip";
 import { gotoKiosk } from "./helpers";
 
 /**
@@ -16,8 +17,9 @@ import { gotoKiosk } from "./helpers";
  * - Selectors are data-testid attributes or accessible roles and names, never CSS structure.
  * - No fixed sleeps: every wait is a web-first assertion. The two inactivity journeys wait for the short
  *   kiosk timings of the second server (warning 10 s, countdown 5 s) with explicit timeouts.
- * - Servers: main (3100, preview email), short timings + admin (3101), production content (3102), and
- *   failing SMTP + admin (3103). See playwright.config.ts.
+ * - Servers: main (3100, default LOCAL_PACKAGE follow-up: no email), short timings + admin + SMTP_EMAIL
+ *   with the preview provider (3101), production content (3102), and SMTP_EMAIL with a failing SMTP
+ *   server + admin (3103). The first three share one database. See playwright.config.ts.
  */
 const SHORT_TIMINGS = `http://localhost:${GALLERY_PORT}/`;
 const PRODUCTION = `http://localhost:${PRODUCTION_CONTENT_PORT}/`;
@@ -87,7 +89,7 @@ async function rolePathToRecommendations(page: Page) {
   await expect(experience(page)).toHaveAttribute("data-session-phase", "recommendation-ready");
 }
 
-/** Preview provider output for one address (the main E2E server never sends real email). */
+/** Preview provider output for one address (no E2E server ever sends real email). */
 function previewMentions(email: string): boolean {
   const dir = path.join("data", "e2e-email-preview");
   const walk = (d: string): string[] =>
@@ -102,25 +104,54 @@ function previewMentions(email: string): boolean {
 }
 
 test.describe("critical journeys", () => {
-  test("1. persona → challenge → recommendation → lead → email sent → reset", async ({ page }) => {
+  test("1. persona → challenge → recommendation → lead → follow-up package → reset", async ({ page }) => {
     await gotoKiosk(page);
     await rolePathToRecommendations(page);
     expect((await primaryIds(page)).length).toBeGreaterThan(0);
 
     await openLeadForm(page);
     const email = uniqueEmail("journey1");
-    await completeLead(page, { email });
+    const lastName = uniqueName();
+    await completeLead(page, { email, lastName });
     const result = page.getByTestId("lead-result");
-    await expect(result).toHaveAttribute("data-delivery", "sent");
+    // Default LOCAL_PACKAGE mode (ADR-062): prepared for a representative, never "sent".
+    await expect(result).toHaveAttribute("data-delivery", "packaged");
+    await expect(result).toContainText("Su paquete personalizado de seguimiento está preparado");
     await expect(page.getByTestId("delivery-status")).toContainText(`${email.slice(0, 2)}•••@example.test`);
-    await expect
-      .poll(() => previewMentions(email), { message: "report written by the email provider" })
-      .toBe(true);
+    expect(previewMentions(email), "no email attempt in LOCAL_PACKAGE").toBe(false);
 
     await page.getByTestId("lead-finish").click();
     await expect(page.getByTestId("attract-screen")).toBeVisible();
     await expect(experience(page)).toHaveAttribute("data-session-phase", "attracting");
     await expect(page.locator("body")).not.toContainText(email.split("@")[0]!);
+
+    // The lead and its report are stored as "follow-up pending" and come out in the Convention Export
+    // Package (the admin of the second server reads the same database).
+    await page.goto(`http://localhost:${GALLERY_PORT}${E2E_ADMIN_PATH}`);
+    await page.getByTestId("admin-passphrase").fill(E2E_ADMIN_PASSPHRASE);
+    await page.getByTestId("admin-login-submit").click();
+    await page.getByRole("link", { name: new RegExp(lastName) }).click();
+    await expect(page.getByTestId("admin-lead-follow-up-mode")).toContainText("LOCAL_PACKAGE");
+    await expect(page.getByTestId("admin-lead-follow-up-status")).toContainText("Seguimiento pendiente");
+    await expect(page.getByTestId("admin-no-email")).toBeVisible();
+    await page.goto(`http://localhost:${GALLERY_PORT}${E2E_ADMIN_PATH}/exports`);
+    // Admin date filters are Puerto Rico dates (ADR-056), not UTC.
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Puerto_Rico" }).format(new Date());
+    const form = page.getByTestId("export-package-form");
+    await form.locator('input[name="from"]').fill(today);
+    await page.getByTestId("export-package-confirm").check();
+    const [download] = await Promise.all([
+      page.waitForEvent("download"),
+      page.getByTestId("export-package-submit").click(),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/^linde-sphere-follow-up-package-[\d-]+\.zip$/);
+    const files = readZip(readFileSync(await download.path()));
+    const csv = files.get("leads.csv")!.toString("utf8");
+    const row = csv.split("\r\n").find((line) => line.includes(email));
+    expect(row).toContain("LOCAL_PACKAGE,follow_up_pending");
+    const folder = /(reports\/[^,/]+\/)/.exec(row!)![1]!;
+    expect(files.get(`${folder}report.html`)!.toString("utf8")).toContain("<html");
+    expect(files.has(`${folder}report.json`)).toBe(true);
   });
 
   test("2. challenge → recommendation → continue exploring → updated result → lead", async ({ page }) => {
@@ -150,7 +181,7 @@ test.describe("critical journeys", () => {
 
     await openLeadForm(page);
     await completeLead(page, { email: uniqueEmail("journey2"), role: "procurement-supply" });
-    await expect(page.getByTestId("lead-result")).toHaveAttribute("data-delivery", "sent");
+    await expect(page.getByTestId("lead-result")).toHaveAttribute("data-delivery", "packaged");
   });
 
   test("3. explorer only → readiness prompt → recommendation → lead", async ({ page }) => {
@@ -175,7 +206,7 @@ test.describe("critical journeys", () => {
 
     await openLeadForm(page);
     await completeLead(page, { email: uniqueEmail("journey3"), role: "operations-facilities" });
-    await expect(page.getByTestId("lead-result")).toHaveAttribute("data-delivery", "sent");
+    await expect(page.getByTestId("lead-result")).toHaveAttribute("data-delivery", "packaged");
   });
 
   test("4. invalid form → correction → successful submission", async ({ page }) => {
@@ -200,7 +231,7 @@ test.describe("critical journeys", () => {
     await page.getByTestId("lead-continue").click();
     await expect(page.getByTestId("review-email")).toHaveText(valid);
     await page.getByTestId("lead-submit").click();
-    await expect(page.getByTestId("lead-result")).toHaveAttribute("data-delivery", "sent");
+    await expect(page.getByTestId("lead-result")).toHaveAttribute("data-delivery", "packaged");
   });
 
   test("5. email failure → lead stored → completion message → admin retry", async ({ page }) => {
@@ -267,7 +298,7 @@ test.describe("critical journeys", () => {
 
     await page.getByRole("button", { name: "English" }).click();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
-    await expect(page.getByTestId("send-summary")).toHaveText("Send me my personalized summary");
+    await expect(page.getByTestId("send-summary")).toHaveText("Request my personalized summary");
     await expect(page.getByTestId("recommendations-summary")).toContainText("Operations and facilities");
     const english = await page
       .getByRole("list", { name: "Main recommendations" })

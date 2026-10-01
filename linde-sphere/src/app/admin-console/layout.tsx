@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { secondaryButton } from "@/features/admin/admin-ui";
+import { usesEmailOutbox } from "@/domain/follow-up/follow-up-mode";
+import { FOLLOW_UP_MODE_LABELS, secondaryButton } from "@/features/admin/admin-ui";
 import { getAdminContext } from "@/server/admin";
 import { ADMIN_COOKIE } from "@/server/admin/admin-session";
 
@@ -44,6 +45,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </nav>
           )}
         </div>
+        {signedIn && (
+          <p
+            className="border-line text-body text-ink border-t px-6 py-2 text-center"
+            data-testid="admin-follow-up-mode"
+            data-mode={ctx.config.followUpMode}
+          >
+            Modo de seguimiento actual:{" "}
+            <strong>
+              {FOLLOW_UP_MODE_LABELS[ctx.config.followUpMode]} ({ctx.config.followUpMode})
+            </strong>
+            {usesEmailOutbox(ctx.config.followUpMode) && ctx.config.emailProvider === "preview" && (
+              <> · proveedor de vista previa: no se envía ningún correo fuera de este equipo</>
+            )}{" "}
+            · se configura con FOLLOW_UP_MODE
+          </p>
+        )}
         <p className="bg-notice-surface text-notice text-caption px-6 py-2 text-center">
           Herramienta local del MVP protegida con una frase de acceso. No es autenticación empresarial: un uso
           en producción requiere autenticación aprobada y una revisión de seguridad.

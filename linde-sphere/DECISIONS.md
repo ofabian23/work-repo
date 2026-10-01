@@ -1196,3 +1196,64 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
   - AC-16 and AC-34 are met.
   - Scoring business contacts needs privacy/legal and sales approval before anyone relies on it
     (PRIVACY_REVIEW A20).
+
+## ADR-062 — Configurable follow-up strategy; LOCAL_PACKAGE (no email) is the default
+
+- **Date:** 2026-10-01 · **Status:** Accepted (refines ADR-011, ADR-012, ADR-054; the email architecture is
+  kept, not replaced)
+- **Context:**
+  - Automatic report email needs an approved SMTP relay, sender identity and IT/security sign-off (release
+    gates 6 and 7). They may not be ready for the convention, and an email attempt without them is either
+    impossible or not allowed.
+  - The convention still needs a dependable follow-up: every visitor who asks for a summary should end up
+    with a stored, personalized report a Linde representative can act on.
+  - The email pipeline (providers, outbox, templates, delivery model, worker, admin retry, CLI) works and
+    must stay intact for when approval arrives.
+- **Decision:**
+  - **Strategy enum** `FollowUpMode` (`src/domain/follow-up/follow-up-mode.ts`, zod-free so the kiosk can
+    read it): `LOCAL_PACKAGE`, `SMTP_EMAIL`, `MICROSOFT_GRAPH`, `OUTLOOK_DRAFT`, `FUTURE_CRM`.
+  - **Configuration:** `FOLLOW_UP_MODE` environment variable, default `LOCAL_PACKAGE`. It selects the
+    strategy; `EMAIL_PROVIDER` stays the transport the email modes use (`smtp` sends, `preview` is a dry
+    run). Never hardcoded.
+  - **Recognized but refused at start-up:** `MICROSOFT_GRAPH` and `OUTLOOK_DRAFT` fail environment
+    validation with a message saying they are not implemented (instead of silently storing leads that are
+    never followed up). `FUTURE_CRM` is reserved and refused.
+  - **LOCAL_PACKAGE flow** (`lead-service.submitLead`): in one transaction, store the lead, interests,
+    session summary and the personalized report (HTML, text and the report payload as JSON,
+    `Report.payloadJson`), with `Lead.followUpMode = LOCAL_PACKAGE` and
+    `Lead.followUpStatus = follow_up_pending`. **No `EmailDelivery` row is created, so no email is ever
+    attempted**, and the email worker is not started. The response says `followUp: "package"`,
+    `emailQueued: false`; the status endpoint answers `report: "packaged"`. PDF is not produced (not
+    implemented before this change).
+  - **Email modes** keep the existing behaviour unchanged: an `EmailDelivery` row is queued in the same
+    transaction and the outbox delivers it (ADR-054). The lead records `SMTP_EMAIL`.
+  - **Convention Export Package** (`src/server/follow-up/convention-package.ts`): a ZIP built on request
+    with `leads.csv` (the admin lead CSV plus `report_folder`) and `reports/<leadId>/report.html|.txt|.json`
+    for active leads, plus `LEEME.txt`. Folder names are opaque ids. Downloaded from the admin export page
+    (confirmation required, optional "mark exported", which sets `followUpStatus = exported`) or written by
+    `npm run followup:package`. The ZIP writer uses `node:zlib` only (no new dependency).
+  - **Visitor copy** follows the mode (server page → `FollowUpProvider`; the submit response decides the
+    result screen). Package: "Su paquete personalizado de seguimiento está preparado" / "Un representante de
+    Linde podrá darle seguimiento con la información que compartió." It never says the report was sent.
+    Copy shared by both modes became neutral ("Solicitar mi resumen", "Preparando su resumen…").
+  - **Admin:** the header shows "Modo de seguimiento actual" from `FOLLOW_UP_MODE`; the KPI "Paquetes de
+    seguimiento generados" replaces "emails sent" in LOCAL_PACKAGE (email stats, the delivery filter and the
+    delivery column appear only in email modes); lead detail shows the mode and follow-up status.
+  - **Health:** `followUp: { mode, deliversExternally }`; `email.deliversExternally` is false whenever the
+    mode does not send email.
+  - **Outlook Draft:** interfaces only (`src/server/follow-up/outlook-draft.ts`), documented in
+    ARCHITECTURE §9.7.
+  - **Migration 5** (`20261001090000_follow_up_mode`) is hand-written `ADD COLUMN` with CHECK constraints (as
+    in ADR-061). Existing leads that have an email delivery are set to `SMTP_EMAIL`; exported leads to
+    `exported`.
+- **Consequences:**
+  - The default convention workflow has no dependency on email approval. Switching to automatic email is
+    configuration only: obtain approval → set the `SMTP_*`/`EMAIL_FROM` values → `EMAIL_PROVIDER=smtp` →
+    `FOLLOW_UP_MODE=SMTP_EMAIL` → restart.
+  - The follow-up package holds personal data and leaves the laptop by hand: storage, transfer channel and
+    retention need Linde privacy/IT approval (PRIVACY_REVIEW A21).
+  - The report-consent wording ("autorizo el envío … al correo indicado") still describes a report sent
+    to the visitor's address, now by a representative. Legal must confirm it covers manual sending
+    (PRIVACY_REVIEW A22).
+  - A lead stored in an email mode keeps its delivery. If the mode later changes to LOCAL_PACKAGE, the
+    worker stops and pending deliveries wait, but the admin manual retry still works.

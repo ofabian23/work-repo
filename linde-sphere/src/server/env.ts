@@ -1,6 +1,11 @@
 import "server-only";
 import { z } from "zod";
 import { ContentModeSchema } from "@/domain/content/primitives";
+import {
+  CONFIGURABLE_FOLLOW_UP_MODES,
+  DEFAULT_FOLLOW_UP_MODE,
+  FOLLOW_UP_MODES,
+} from "@/domain/follow-up/follow-up-mode";
 
 /**
  * Server environment, validated once at boot (instrumentation.ts) and on first use.
@@ -35,6 +40,15 @@ const ServerEnvSchema = z
       z.string().regex(/^file:.+/, { error: "Must be a SQLite file URL, e.g. file:./data/linde-sphere.db" }),
     ).transform((v) => v ?? "file:./data/linde-sphere.db"),
     /**
+     * Follow-up strategy after a lead is stored (ADR-062). LOCAL_PACKAGE (default): stored and packaged
+     * locally, no email. SMTP_EMAIL: automatic email through EMAIL_PROVIDER. MICROSOFT_GRAPH and
+     * OUTLOOK_DRAFT are recognized but not implemented yet; FUTURE_CRM is reserved.
+     */
+    FOLLOW_UP_MODE: optional(
+      z.enum(FOLLOW_UP_MODES, { error: `Use one of ${CONFIGURABLE_FOLLOW_UP_MODES.join(", ")}` }),
+    ).transform((v) => v ?? DEFAULT_FOLLOW_UP_MODE),
+    /**
+     * Email transport used by the email follow-up modes.
      * preview (default): DevelopmentPreviewProvider, writes local files, never sends · smtp: real delivery.
      * "file" is accepted as the former name of "preview". "graph" is reserved and rejected (ADR-054).
      */
@@ -130,6 +144,31 @@ const ServerEnvSchema = z
       if (env[key] === undefined)
         ctx.addIssue({ code: "custom", path: [key], message: `Required ${reason}` });
     };
+    if (env.FOLLOW_UP_MODE === "FUTURE_CRM") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["FOLLOW_UP_MODE"],
+        message: "FUTURE_CRM is reserved for a later CRM integration and cannot be selected yet",
+      });
+    }
+    if (env.FOLLOW_UP_MODE === "MICROSOFT_GRAPH") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["FOLLOW_UP_MODE"],
+        message:
+          "MICROSOFT_GRAPH is not implemented yet: it needs an organizational app registration (tenant, client id, " +
+          "Mail.Send permission). Use LOCAL_PACKAGE or SMTP_EMAIL",
+      });
+    }
+    if (env.FOLLOW_UP_MODE === "OUTLOOK_DRAFT") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["FOLLOW_UP_MODE"],
+        message:
+          "OUTLOOK_DRAFT is not implemented yet (architecture placeholder, see ARCHITECTURE.md). " +
+          "Use LOCAL_PACKAGE or SMTP_EMAIL",
+      });
+    }
     if (env.EMAIL_PROVIDER === "graph") {
       ctx.addIssue({
         code: "custom",

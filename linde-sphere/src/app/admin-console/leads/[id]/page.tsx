@@ -3,6 +3,8 @@ import {
   AdminPage,
   button,
   DELIVERY_LABELS,
+  FOLLOW_UP_MODE_LABELS,
+  FOLLOW_UP_STATUS_LABELS,
   formatDate,
   LEAD_STATUS_LABELS,
   Notice,
@@ -84,6 +86,16 @@ export default async function AdminLeadPage({
           {row("Estado", LEAD_STATUS_LABELS[lead.status] ?? lead.status)}
           {row("Recibido", formatDate(lead.createdAt))}
           {row("Exportado", lead.exportedAt ? formatDate(lead.exportedAt) : "No", "admin-lead-exported")}
+          {row(
+            "Modo de seguimiento al registrarse",
+            `${FOLLOW_UP_MODE_LABELS[lead.followUpMode] ?? lead.followUpMode} (${lead.followUpMode})`,
+            "admin-lead-follow-up-mode",
+          )}
+          {row(
+            "Estado de seguimiento",
+            FOLLOW_UP_STATUS_LABELS[lead.followUpStatus] ?? lead.followUpStatus,
+            "admin-lead-follow-up-status",
+          )}
         </dl>
         {!lead.exportedAt && (
           <form method="post" action={`${base}/api/mark-exported`}>
@@ -137,11 +149,17 @@ export default async function AdminLeadPage({
         className="rounded-card border-line bg-surface flex flex-col gap-3 border p-5"
         data-testid="admin-lead-delivery"
       >
-        <h2 className="text-lead font-bold">Envío del resumen</h2>
+        <h2 className="text-lead font-bold">Resumen y seguimiento</h2>
         {lead.report && (
-          <p className="text-body text-ink-muted">
+          <p className="text-body text-ink-muted" data-testid="admin-lead-report">
             Informe generado ({lead.report.language.toUpperCase()}) el {formatDate(lead.report.createdAt)}: “
-            {lead.report.subject}”
+            {lead.report.subject}”. Incluido en el paquete de seguimiento (HTML, texto
+            {lead.report.hasJson ? " y JSON" : ""}).
+          </p>
+        )}
+        {lead.deliveries.length === 0 && (
+          <p className="text-body text-ink-muted" data-testid="admin-no-email">
+            Sin envío de correo: el lead se registró en un modo de seguimiento sin correo automático.
           </p>
         )}
         {lead.deliveries.map((d) => (

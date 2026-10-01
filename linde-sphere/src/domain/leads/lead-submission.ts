@@ -86,12 +86,16 @@ export const StatusTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
  */
 export const LeadCreatedResponseSchema = z.strictObject({
   statusToken: StatusTokenSchema,
+  /** True only when an automatic email was queued (email follow-up modes, ADR-062). */
   emailQueued: z.boolean(),
+  /** "package": stored and packaged for a representative (LOCAL_PACKAGE); "email": automatic email. */
+  followUp: z.enum(["email", "package"]),
   replayed: z.boolean(),
 });
 export type LeadCreatedResponse = z.infer<typeof LeadCreatedResponseSchema>;
 
-export const ReportDeliveryStateSchema = z.enum(["pending", "sent", "failed", "retrying"]);
+/** "packaged": no email in this follow-up mode; the report is stored for the follow-up package (ADR-062). */
+export const ReportDeliveryStateSchema = z.enum(["pending", "sent", "failed", "retrying", "packaged"]);
 export type ReportDeliveryState = z.infer<typeof ReportDeliveryStateSchema>;
 
 /** Public shape of the submission-status lookup: states only, never contact data or error details. */

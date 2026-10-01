@@ -21,7 +21,9 @@ It is **not a product catalog**. It is a short digital consultation that:
 5. Generates deterministic, explainable recommendations.
 6. Demonstrates value.
 7. Captures a business lead — **only after value has been shown**.
-8. Emails a personalized report.
+8. Emails a personalized report. _Refined by ADR-062: the follow-up is configurable (`FOLLOW_UP_MODE`). The
+   default `LOCAL_PACKAGE` stores the report for a representative (Convention Export Package) and sends no
+   email; automatic email (`SMTP_EMAIL`) is optional and enabled by configuration once approved._
 9. Resets cleanly for the next visitor.
 
 Typical engagement is **2–5 minutes**. The primary business objective is **qualified lead generation**,

@@ -10,6 +10,7 @@ import type { Language } from "@/domain/content/primitives";
 import type { LeadCaptureContent } from "@/domain/content/visibility";
 import { cn } from "@/lib/cn";
 import { useLanguage } from "@/lib/i18n/language-provider";
+import { useVisitorFollowUp } from "../follow-up/follow-up-context";
 import type { FieldErrors, InterestOption, LeadFormField, LeadFormValues } from "./lead-form-model";
 
 /** Presentational steps of the lead form (ADR-053). State and submission live in LeadFormScreen. */
@@ -57,6 +58,7 @@ export function ContactStep({
   onSubmit,
 }: StepProps & { onSubmit: () => void }) {
   const { t } = useLanguage();
+  const followUp = useVisitorFollowUp();
   const errorText = useErrorText();
   const text = (field: "firstName" | "lastName" | "organization" | "email" | "phone") => ({
     value: values[field],
@@ -121,7 +123,7 @@ export function ContactStep({
         enterKeyHint="next"
         maxLength={254}
         label={t("leadForm.fields.email")}
-        hint={t("leadForm.fields.emailHint")}
+        hint={t(followUp === "package" ? "leadForm.fields.emailHintPackage" : "leadForm.fields.emailHint")}
       />
       <FormField
         {...text("phone")}

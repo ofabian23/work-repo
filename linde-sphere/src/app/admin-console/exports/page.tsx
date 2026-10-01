@@ -40,6 +40,51 @@ export default async function AdminExportsPage({ searchParams }: PageProps<"/adm
         <Notice tone="error">Confirme el manejo seguro del archivo antes de descargarlo.</Notice>
       )}
 
+      <form method="post" action={`${base}/api/export`} className={section} data-testid="export-package-form">
+        <h2 className="text-lead font-bold">Paquete de seguimiento de la convención (ZIP)</h2>
+        <p className="text-body text-ink-muted">
+          La entrega principal del modo de paquete local: <code>leads.csv</code> y la carpeta{" "}
+          <code>reports/</code> con el resumen personalizado de cada lead activo (HTML, texto y JSON). Los
+          nombres de las carpetas son identificadores opacos, sin datos personales.
+        </p>
+        <input type="hidden" name="kind" value="package" />
+        <div className="flex flex-wrap gap-4">
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
+            Desde
+            <input className={input} type="date" name="from" />
+          </label>
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
+            Hasta
+            <input className={input} type="date" name="to" />
+          </label>
+          <label className="text-label flex max-w-full min-w-0 flex-col gap-1 font-semibold">
+            Exportado
+            <select className={input} name="exported" defaultValue="">
+              <option value="">Todos</option>
+              <option value="no">Solo no exportados</option>
+              <option value="yes">Solo exportados</option>
+            </select>
+          </label>
+        </div>
+        <label className="text-body text-ink flex items-start gap-3">
+          <input
+            type="checkbox"
+            name="markExported"
+            value="yes"
+            className="mt-1 size-5"
+            data-testid="export-package-mark"
+          />
+          <span>Marcar los leads incluidos como exportados (estado de seguimiento: exportado)</span>
+        </label>
+        <Confirm testId="export-package-confirm">
+          Confirmo que manejaré este paquete con datos personales de forma segura y que solo daré seguimiento
+          comercial a quienes lo autorizaron.
+        </Confirm>
+        <button type="submit" className={`${button} self-start`} data-testid="export-package-submit">
+          Descargar paquete
+        </button>
+      </form>
+
       <form method="post" action={`${base}/api/export`} className={section} data-testid="export-leads-form">
         <h2 className="text-lead font-bold">Leads e intereses (CSV)</h2>
         <div className="flex flex-wrap gap-4">
