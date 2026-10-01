@@ -97,6 +97,7 @@ describe("lead submission guards and graceful failures", () => {
     const service = createLeadService({
       leads: createPrismaLeadRepository(createDatabase(`file:${path.join(dir, "empty.db")}`)),
       content: demoBundle,
+      followUpMode: "LOCAL_PACKAGE",
       emailProvider: "preview",
       logger: logs.logger,
       now: () => new Date("2026-10-20T14:05:00Z"),

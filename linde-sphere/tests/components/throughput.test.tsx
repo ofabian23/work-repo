@@ -9,7 +9,11 @@ import { renderKiosk, startSession } from "./kiosk-harness";
 const tailoring = () => act(async () => new Promise((resolve) => setTimeout(resolve, 30)));
 const screenName = () => screen.getByTestId("kiosk-experience").dataset.screen;
 const api = () => ({
-  submit: vi.fn(async () => ({ kind: "stored" as const, statusToken: "T".repeat(43) })),
+  submit: vi.fn(async () => ({
+    kind: "stored" as const,
+    statusToken: "T".repeat(43),
+    followUp: "email" as const,
+  })),
   status: vi.fn(async () => "sent" as const),
 });
 

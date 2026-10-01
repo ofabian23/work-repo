@@ -182,6 +182,14 @@ export function handleExport(request: Request, ctx: AdminHttpContext): Promise<R
       const { filename, csv } = ctx.service.contentValidationCsv();
       return attachment(filename, "text/csv; charset=utf-8", csv);
     }
+    if (kind === "package") {
+      const { from, to, exported } = parseAdminFilters(form);
+      const { filename, bytes } = await ctx.service.exportPackage(
+        { from, to, exported },
+        { markExported: form.get("markExported") === "yes" },
+      );
+      return attachment(filename, "application/zip", bytes);
+    }
     if (kind === "sales") {
       const { filename, csv } = ctx.service.salesValidationCsv();
       return attachment(filename, "text/csv; charset=utf-8", csv);

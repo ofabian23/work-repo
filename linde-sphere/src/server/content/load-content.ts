@@ -1,5 +1,8 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { scanPublicAssets } from "./asset-safety";
+import { readImageSize } from "./image-size";
+import { PERSONA_ART, PERSONA_ART_RATIO } from "../../domain/content/persona-art";
+import { SCENE_ART, SCENE_ART_RATIO, SCENE_ART_RATIO_TOLERANCE } from "../../domain/content/scene-art";
 import path from "node:path";
 import type { z } from "zod";
 import {
@@ -202,48 +205,114 @@ export function loadContentFromDirectory(
   }
   if (publicDir)
     issues.push(
-      ...checkLocalAssetFiles(
-        bundle,
-        publicDir,
+      ...checkLocalAssetFiles(bundle, publicDir, {
         sceneFileById,
-        rel(path.join(/*turbopackIgnore: true*/ contentDir, "digital-assets.json")),
-      ),
+        assets: rel(path.join(/*turbopackIgnore: true*/ contentDir, "digital-assets.json")),
+        personas: rel(path.join(/*turbopackIgnore: true*/ contentDir, "personas.json")),
+      }),
     );
 
   return { bundle, issues, filesRead };
 }
 
-/** Local files referenced by content must exist. Missing placeholder art is a warning, not an error. */
+const publicFile = (publicDir: string, publicPath: string) =>
+  path.join(/*turbopackIgnore: true*/ publicDir, ...publicPath.split("/").filter(Boolean));
+
+type ArtRule = { ratio: number; name: string; why: string };
+
+const SCENE_RULE: ArtRule = {
+  ratio: SCENE_ART_RATIO,
+  name: `the ${SCENE_ART.width} × ${SCENE_ART.height} scene art box`,
+  // Hotspots are percentages of the art box: art with other proportions would misplace them (ADR-063).
+  why: "or hotspots will not line up",
+};
+const PERSONA_RULE: ArtRule = {
+  ratio: PERSONA_ART_RATIO,
+  name: `the ${PERSONA_ART.width} × ${PERSONA_ART.height} persona portrait`,
+  why: "or the role card would crop or stretch it",
+};
+
+/**
+ * Checks every candidate of one image: the file exists, its real proportions match the rule (within 1 %),
+ * and its real width matches the declared `srcSet` width. Approved art fails with errors; placeholders warn.
+ */
+function checkImage(
+  image: { src: string; srcSet?: { src: string; width: number }[]; assetStatus: "approved" | "placeholder" },
+  at: string,
+  rule: ArtRule,
+  report: (issue: Omit<LoadIssue, "file">) => void,
+  publicDir: string,
+  label = "",
+) {
+  const severity = image.assetStatus === "approved" ? "error" : "warning";
+  const kind = image.assetStatus === "approved" ? "Approved" : "Placeholder";
+  const candidates: { src: string; width?: number }[] = image.srcSet ?? [{ src: image.src }];
+  candidates.forEach((candidate, i) => {
+    const where = image.srcSet ? `${at}.srcSet[${i}]` : `${at}.src`;
+    const file = publicFile(publicDir, candidate.src);
+    if (!existsSync(file)) {
+      report({ severity, path: where, message: `${label}${kind} image not found: public${candidate.src}` });
+      return;
+    }
+    const size = readImageSize(file);
+    if (!size) {
+      report({ severity, path: where, message: `${label}Cannot read the size of public${candidate.src}` });
+      return;
+    }
+    if (Math.abs(size.width / size.height / rule.ratio - 1) > SCENE_ART_RATIO_TOLERANCE) {
+      report({
+        severity,
+        path: where,
+        message: `${label}public${candidate.src} is ${size.width} × ${size.height}; it must have the proportions of ${rule.name}, ${rule.why}`,
+      });
+    }
+    if (candidate.width !== undefined && Math.round(size.width) !== candidate.width) {
+      report({
+        severity: "error",
+        path: `${where}.width`,
+        message: `${label}srcSet says ${candidate.width} px wide but public${candidate.src} is ${size.width} px wide`,
+      });
+    }
+  });
+}
+
+/**
+ * Local files referenced by content must exist; scene art and persona illustrations must also have their
+ * expected proportions (every responsive candidate, with its declared width). Problems with placeholder art
+ * are warnings; with approved art, errors.
+ */
 function checkLocalAssetFiles(
   bundle: ContentBundle,
   publicDir: string,
-  sceneFileById: Map<string, string>,
-  assetsFile: string,
+  files: { sceneFileById: Map<string, string>; assets: string; personas: string },
 ): LoadIssue[] {
   const issues: LoadIssue[] = [];
-  const exists = (publicPath: string) =>
-    existsSync(path.join(/*turbopackIgnore: true*/ publicDir, ...publicPath.split("/").filter(Boolean)));
+  const exists = (publicPath: string) => existsSync(publicFile(publicDir, publicPath));
   for (const scene of bundle.scenes) {
-    const layers = [
-      { layer: scene.background, at: "background.src" },
-      ...scene.foregroundLayers.map((layer, i) => ({ layer, at: `foregroundLayers[${i}].src` })),
-    ];
-    for (const { layer, at } of layers) {
-      if (!exists(layer.src)) {
-        issues.push({
-          severity: layer.assetStatus === "approved" ? "error" : "warning",
-          file: sceneFileById.get(scene.id) ?? "content/scenes",
-          path: at,
-          message: `${layer.assetStatus === "approved" ? "Approved" : "Placeholder"} image not found: public${layer.src}`,
-        });
-      }
-    }
+    const file = files.sceneFileById.get(scene.id) ?? "content/scenes";
+    const report = (issue: Omit<LoadIssue, "file">) => issues.push({ ...issue, file });
+    checkImage(scene.background, "background", SCENE_RULE, report, publicDir);
+    scene.foregroundLayers.forEach((layer, i) =>
+      checkImage(layer, `foregroundLayers[${i}]`, SCENE_RULE, report, publicDir),
+    );
   }
+  bundle.personas.forEach((persona, i) => {
+    if (!persona.illustration) return;
+    const report = (issue: Omit<LoadIssue, "file">) => issues.push({ ...issue, file: files.personas });
+    checkImage(
+      persona.illustration,
+      `[${i}].illustration`,
+      PERSONA_RULE,
+      report,
+      publicDir,
+      `${persona.id}: `,
+    );
+  });
   bundle.digitalAssets.forEach((asset, i) => {
     if (asset.access.kind === "local-file" && !exists(asset.access.path)) {
       issues.push({
         severity: "error",
-        file: assetsFile,
+        file: files.assets,
         path: `[${i}].access.path`,
         message: `File not found: public${asset.access.path}`,
       });

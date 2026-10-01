@@ -1,10 +1,10 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element -- local, pre-sized SVG scene layers; no optimization needed */
+/* eslint-disable @next/next/no-img-element -- local, pre-sized scene layers with their own srcset (ADR-063) */
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { HotspotButton } from "@/components/explorer/hotspot-button";
-import type { Hotspot, Scene } from "@/domain/content/scene";
-import { SCENE_ART, SCENE_ART_RATIO } from "@/domain/content/scene-art";
+import type { Hotspot, Scene, SceneLayer } from "@/domain/content/scene";
+import { SCENE_ART, SCENE_ART_RATIO, SCENE_ART_SIZES } from "@/domain/content/scene-art";
 import { cn } from "@/lib/cn";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { layoutHotspots, metricsFor, type LayoutMetrics } from "./hotspot-layout";
@@ -50,6 +50,12 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 /** Layer URLs already requested in this page load (the browser cache keeps them). */
 const prefetched = new Set<string>();
 
+/** `srcset`/`sizes` attributes for a layer with responsive candidates (ADR-063); nothing otherwise. */
+export function responsiveImage(layer: SceneLayer): { srcSet?: string; sizes?: string } {
+  if (!layer.srcSet) return {};
+  return { srcSet: layer.srcSet.map((c) => `${c.src} ${c.width}w`).join(", "), sizes: SCENE_ART_SIZES };
+}
+
 /**
  * After the current scene is shown, warm the cache with the scenes one touch away (navigation targets and
  * the parent) while the browser is idle, so the next zoom/pan starts with its art already decoded.
@@ -60,17 +66,23 @@ function usePrefetchNeighbors(scene: Scene, scenesById: ReadonlyMap<string, Scen
       ...scene.hotspots.flatMap((h) => (h.type === "navigation" ? [h.targetSceneId] : [])),
       ...(scene.parentSceneId ? [scene.parentSceneId] : []),
     ];
-    const urls = neighbors
+    const layers = neighbors
       .map((id) => scenesById.get(id))
-      .flatMap((s) => (s ? [s.background.src, ...s.foregroundLayers.map((l) => l.src)] : []))
-      .filter((url) => !prefetched.has(url));
-    if (urls.length === 0) return;
+      .flatMap((s) => (s ? [s.background, ...s.foregroundLayers] : []))
+      .filter((layer) => !prefetched.has(layer.src));
+    if (layers.length === 0) return;
+    // With srcset and sizes set first, the browser fetches the candidate it will use on screen, not `src`.
     const run = () =>
-      urls.forEach((url) => {
-        prefetched.add(url);
+      layers.forEach((layer) => {
+        prefetched.add(layer.src);
         const img = new Image();
         img.decoding = "async";
-        img.src = url;
+        const { srcSet, sizes } = responsiveImage(layer);
+        if (sizes && srcSet) {
+          img.sizes = sizes;
+          img.srcset = srcSet;
+        }
+        img.src = layer.src;
       });
     if (typeof window.requestIdleCallback === "function") {
       const id = window.requestIdleCallback(run, { timeout: 2_000 });
@@ -269,6 +281,7 @@ function SceneLayers({
       {/* Intrinsic size avoids layout work while loading; the current background is the page's key image. */}
       <img
         src={scene.background.src}
+        {...responsiveImage(scene.background)}
         alt={localize(scene.background.alt)}
         width={SCENE_ART.width}
         height={SCENE_ART.height}
@@ -281,6 +294,7 @@ function SceneLayers({
         <img
           key={layer.src}
           src={layer.src}
+          {...responsiveImage(layer)}
           alt=""
           aria-hidden
           width={SCENE_ART.width}

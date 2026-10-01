@@ -38,6 +38,7 @@ export function renderKiosk({
   leadApi,
   leadStatusPoll = { attempts: 1, intervalMs: 0 },
   confirmationResetMs,
+  followUp,
 }: {
   content?: PublicContentBundle;
   idle?: { warningAfterMs: number; countdownMs: number };
@@ -47,6 +48,7 @@ export function renderKiosk({
   leadApi?: ComponentProps<typeof KioskExperience>["leadApi"];
   leadStatusPoll?: { attempts: number; intervalMs: number };
   confirmationResetMs?: number;
+  followUp?: ComponentProps<typeof KioskExperience>["followUp"];
 } = {}) {
   const onHardReset = vi.fn();
   const utils = render(
@@ -65,6 +67,7 @@ export function renderKiosk({
             leadApi={leadApi}
             leadStatusPoll={leadStatusPoll}
             confirmationResetMs={confirmationResetMs}
+            followUp={followUp}
           />
         </AppShell>
         <SessionProbe />

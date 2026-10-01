@@ -10,31 +10,31 @@
     "en": "Explore the hospital's areas and discover where your priorities come to life."
   },
   "background": {
-    "src": "/assets/scenes/placeholder/campus-background.svg",
+    "src": "/assets/scenes/approved/campus-768.webp",
+    "srcSet": [
+      {
+        "src": "/assets/scenes/approved/campus-640.webp",
+        "width": 640
+      },
+      {
+        "src": "/assets/scenes/approved/campus-768.webp",
+        "width": 768
+      }
+    ],
     "alt": {
-      "es": "Ilustración isométrica de un campus hospitalario con sus edificios principales.",
-      "en": "Isometric illustration of a hospital campus and its main buildings."
+      "es": "Ilustración en corte de un edificio hospitalario: oficinas, cuidado crítico y sala de operaciones, imágenes diagnósticas, sala de emergencias con área de ambulancias y, en el nivel del suelo, la planta de gases medicinales con su tanque de oxígeno.",
+      "en": "Cutaway illustration of a hospital building: offices, critical care and an operating room, diagnostic imaging, the emergency department with its ambulance bay and, at ground level, the medical-gas plant room with its oxygen tank."
     },
     "depth": 0,
-    "assetStatus": "placeholder"
+    "assetStatus": "approved"
   },
-  "foregroundLayers": [
-    {
-      "src": "/assets/scenes/placeholder/campus-foreground.svg",
-      "alt": {
-        "es": "Árboles en primer plano.",
-        "en": "Trees in the foreground."
-      },
-      "depth": 0.4,
-      "assetStatus": "placeholder"
-    }
-  ],
+  "foregroundLayers": [],
   "hotspots": [
     {
       "id": "campus-to-emergency",
       "type": "navigation",
-      "x": 26.5,
-      "y": 29,
+      "x": 21,
+      "y": 65.5,
       "label": {
         "es": "Sala de emergencias",
         "en": "Emergency department"
@@ -54,8 +54,8 @@
     {
       "id": "campus-to-icu",
       "type": "navigation",
-      "x": 71,
-      "y": 15,
+      "x": 26,
+      "y": 34,
       "label": {
         "es": "Unidad de cuidado intensivo",
         "en": "Intensive care unit"
@@ -75,8 +75,8 @@
     {
       "id": "campus-to-operating-room",
       "type": "navigation",
-      "x": 51.5,
-      "y": 30.5,
+      "x": 74,
+      "y": 33.5,
       "label": {
         "es": "Sala de operaciones",
         "en": "Operating room"
@@ -96,8 +96,8 @@
     {
       "id": "campus-to-patient-care",
       "type": "navigation",
-      "x": 13,
-      "y": 39.5,
+      "x": 84,
+      "y": 49,
       "label": {
         "es": "Área de cuidado al paciente",
         "en": "Patient-care area"
@@ -117,8 +117,8 @@
     {
       "id": "campus-to-laboratory",
       "type": "navigation",
-      "x": 83.5,
-      "y": 45.5,
+      "x": 17,
+      "y": 49,
       "label": {
         "es": "Laboratorio",
         "en": "Laboratory"
@@ -138,8 +138,8 @@
     {
       "id": "campus-to-gas-plant",
       "type": "navigation",
-      "x": 11.5,
-      "y": 58.5,
+      "x": 79,
+      "y": 76,
       "label": {
         "es": "Planta de gases medicinales",
         "en": "Medical-gas plant"
@@ -159,8 +159,8 @@
     {
       "id": "campus-to-utilities",
       "type": "navigation",
-      "x": 63,
-      "y": 66.5,
+      "x": 20,
+      "y": 86,
       "label": {
         "es": "Área de utilidades e infraestructura",
         "en": "Utility and infrastructure area"
@@ -180,8 +180,8 @@
     {
       "id": "campus-expansion",
       "type": "information",
-      "x": 53,
-      "y": 63.5,
+      "x": 40,
+      "y": 12,
       "label": {
         "es": "Nuevas áreas",
         "en": "New areas"
@@ -220,8 +220,8 @@
     {
       "id": "campus-supply-network",
       "type": "solution",
-      "x": 26,
-      "y": 57,
+      "x": 51,
+      "y": 45,
       "label": {
         "es": "Red de suministro",
         "en": "Supply network"

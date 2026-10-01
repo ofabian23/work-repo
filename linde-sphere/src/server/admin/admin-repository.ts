@@ -15,7 +15,13 @@ export type AdminLeadRow = {
   roleLabel: string;
   status: string;
   followUpConsent: boolean;
+  /** Follow-up strategy when the lead was stored, and its follow-up status (ADR-062). */
+  followUpMode: string;
+  followUpStatus: string;
   exportedAt: Date | null;
+  /** Internal commercial score and tier (server-only; PROJECT_BRIEF M12). */
+  leadScore: number;
+  leadTier: string;
   delivery: { id: string; status: string; attempts: number; errorCode: string | null } | null;
 };
 
@@ -28,6 +34,8 @@ export type AdminLeadDetail = AdminLeadRow & {
   reportConsent: boolean;
   consentTextVersion: string;
   contentVersion: string;
+  leadScoreFactors: { code: string; points: number }[];
+  leadScoringVersion: string;
   interests: { category: string; value: string; relevance: string | null; sourceType: string }[];
   deliveries: {
     id: string;
@@ -39,7 +47,7 @@ export type AdminLeadDetail = AdminLeadRow & {
     nextAttemptAt: Date | null;
     events: { eventType: string; attempt: number; occurredAt: Date; errorCode: string | null }[];
   }[];
-  report: { subject: string; language: string; createdAt: Date } | null;
+  report: { subject: string; language: string; createdAt: Date; hasJson: boolean } | null;
 };
 
 export type AdminOverview = {
@@ -47,6 +55,12 @@ export type AdminOverview = {
   byStatus: Record<(typeof LEAD_STATUSES)[number], number>;
   byDelivery: Record<(typeof DELIVERY_STATUSES)[number], number>;
   exported: number;
+  /**
+   * "Follow-Up Packages Generated" (ADR-062): leads whose personalized report is stored and therefore
+   * included in the Convention Export Package. `followUpPending`: of those, not yet exported.
+   */
+  packages: number;
+  followUpPending: number;
 };
 
 export function leadWhere(filters: AdminFilters): Prisma.LeadWhereInput {
@@ -72,11 +86,14 @@ export function createAdminRepository(db: Database) {
   return {
     async overview(filters: AdminFilters): Promise<AdminOverview> {
       const where = leadWhere(filters);
-      const [total, statuses, deliveries, exported] = await Promise.all([
+      const withReport = { AND: [where, { report: { isNot: null } }] };
+      const [total, statuses, deliveries, exported, packages, followUpPending] = await Promise.all([
         db.lead.count({ where }),
         db.lead.groupBy({ by: ["status"], where, _count: { _all: true } }),
         db.emailDelivery.groupBy({ by: ["status"], where: { lead: where }, _count: { _all: true } }),
         db.lead.count({ where: { AND: [where, { exportedAt: { not: null } }] } }),
+        db.lead.count({ where: withReport }),
+        db.lead.count({ where: { AND: [withReport, { followUpStatus: "follow_up_pending" }] } }),
       ]);
       const byStatus = Object.fromEntries(LEAD_STATUSES.map((s) => [s, 0])) as AdminOverview["byStatus"];
       for (const g of statuses) byStatus[g.status] = g._count._all;
@@ -84,7 +101,7 @@ export function createAdminRepository(db: Database) {
         DELIVERY_STATUSES.map((s) => [s, 0]),
       ) as AdminOverview["byDelivery"];
       for (const g of deliveries) byDelivery[g.status] = g._count._all;
-      return { total, byStatus, byDelivery, exported };
+      return { total, byStatus, byDelivery, exported, packages, followUpPending };
     },
 
     async listLeads(filters: AdminFilters, pageSize = 50): Promise<{ rows: AdminLeadRow[]; total: number }> {
@@ -105,7 +122,11 @@ export function createAdminRepository(db: Database) {
             roleLabel: true,
             status: true,
             followUpConsent: true,
+            followUpMode: true,
+            followUpStatus: true,
             exportedAt: true,
+            leadScore: true,
+            leadTier: true,
             ...latestDelivery,
           },
         }),
@@ -129,7 +150,7 @@ export function createAdminRepository(db: Database) {
             orderBy: { createdAt: "desc" },
             include: { events: { orderBy: [{ occurredAt: "asc" }, { attempt: "asc" }] } },
           },
-          report: { select: { subject: true, language: true, createdAt: true } },
+          report: { select: { subject: true, language: true, createdAt: true, payloadJson: true } },
         },
       });
       if (!lead) return null;
@@ -148,9 +169,15 @@ export function createAdminRepository(db: Database) {
         status: lead.status,
         reportConsent: lead.reportConsent,
         followUpConsent: lead.followUpConsent,
+        followUpMode: lead.followUpMode,
+        followUpStatus: lead.followUpStatus,
         consentTextVersion: lead.consentTextVersion,
         contentVersion: lead.contentVersion,
         exportedAt: lead.exportedAt,
+        leadScore: lead.leadScore,
+        leadTier: lead.leadTier,
+        leadScoreFactors: parseFactors(lead.leadScoreFactors),
+        leadScoringVersion: lead.leadScoringVersion,
         interests: lead.interests.map(({ category, value, relevance, sourceType }) => ({
           category,
           value,
@@ -175,16 +202,26 @@ export function createAdminRepository(db: Database) {
             errorCode,
           })),
         })),
-        report: lead.report,
+        report: lead.report
+          ? {
+              subject: lead.report.subject,
+              language: lead.report.language,
+              createdAt: lead.report.createdAt,
+              hasJson: lead.report.payloadJson !== null,
+            }
+          : null,
       };
     },
 
-    /** Marks leads as exported (first export time is kept). Returns how many changed. */
+    /**
+     * Marks leads as exported (first export time is kept) and their follow-up status as exported
+     * (ADR-062). Returns how many changed.
+     */
     async markExported(ids: string[], at: Date): Promise<number> {
       if (ids.length === 0) return 0;
       const result = await db.lead.updateMany({
         where: { id: { in: ids }, exportedAt: null },
-        data: { exportedAt: at },
+        data: { exportedAt: at, followUpStatus: "exported" },
       });
       return result.count;
     },
@@ -205,7 +242,31 @@ export function createAdminRepository(db: Database) {
         },
       });
     },
+
+    /** The stored reports (HTML, text, JSON) of the given leads, for the Convention Export Package. */
+    async reportsFor(leadIds: string[]) {
+      if (leadIds.length === 0) return [];
+      return db.report.findMany({
+        where: { leadId: { in: leadIds } },
+        select: { leadId: true, language: true, subject: true, html: true, text: true, payloadJson: true },
+      });
+    },
   };
 }
 
 export type AdminRepository = ReturnType<typeof createAdminRepository>;
+
+/** Stored score factors (JSON written by the server itself); anything unexpected reads as none. */
+function parseFactors(json: string): { code: string; points: number }[] {
+  try {
+    const value: unknown = JSON.parse(json);
+    return Array.isArray(value)
+      ? value.filter(
+          (f): f is { code: string; points: number } =>
+            typeof f?.code === "string" && typeof f?.points === "number",
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}

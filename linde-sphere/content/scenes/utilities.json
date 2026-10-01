@@ -10,21 +10,39 @@
     "en": "The systems behind the walls that keep the hospital running."
   },
   "background": {
-    "src": "/assets/scenes/placeholder/utilities-background.svg",
+    "src": "/assets/scenes/approved/utilities-1536.webp",
+    "srcSet": [
+      {
+        "src": "/assets/scenes/approved/utilities-640.webp",
+        "width": 640
+      },
+      {
+        "src": "/assets/scenes/approved/utilities-960.webp",
+        "width": 960
+      },
+      {
+        "src": "/assets/scenes/approved/utilities-1280.webp",
+        "width": 1280
+      },
+      {
+        "src": "/assets/scenes/approved/utilities-1536.webp",
+        "width": 1536
+      }
+    ],
     "alt": {
-      "es": "Ilustración isométrica de un cuarto de utilidades con tuberías, válvulas y paneles.",
-      "en": "Isometric illustration of a utility room with pipes, valves and panels."
+      "es": "Ilustración de un cuarto de equipos con compresores y bombas de vacío, paneles eléctricos y de alarma, tuberías y marcas de seguridad en el piso.",
+      "en": "Illustration of an equipment room with compressors and vacuum pumps, electrical and alarm panels, piping and safety floor markings."
     },
     "depth": 0,
-    "assetStatus": "placeholder"
+    "assetStatus": "approved"
   },
   "foregroundLayers": [],
   "hotspots": [
     {
       "id": "utilities-manifold-room",
       "type": "information",
-      "x": 50,
-      "y": 29.5,
+      "x": 54,
+      "y": 70,
       "label": {
         "es": "Cuarto de manifolds",
         "en": "Manifold room"
@@ -63,8 +81,8 @@
     {
       "id": "utilities-alarm-panel",
       "type": "information",
-      "x": 87,
-      "y": 38.5,
+      "x": 74,
+      "y": 10.5,
       "label": {
         "es": "Panel de alarmas",
         "en": "Alarm panel"
@@ -145,8 +163,8 @@
     {
       "id": "utilities-to-gas-plant",
       "type": "navigation",
-      "x": 21.5,
-      "y": 40.5,
+      "x": 82,
+      "y": 90,
       "label": {
         "es": "Hacia la planta de gases",
         "en": "To the gas plant"

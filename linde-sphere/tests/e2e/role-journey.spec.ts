@@ -140,6 +140,26 @@ test.describe("role-based journey", () => {
         animations: "disabled",
       });
     await page.getByTestId("persona-operations-facilities").click();
+    // Persona portraits (ADR-064): 8 decoded illustrations from their srcset, 3 neutral tiles, none distorted.
+    const portraits = page.locator('[data-testid="persona-portrait"][data-illustrated="true"]');
+    await expect(portraits).toHaveCount(8);
+    await expect
+      .poll(() =>
+        portraits.evaluateAll((imgs) => imgs.every((i) => (i as HTMLImageElement).naturalWidth > 0)),
+      )
+      .toBe(true);
+    const shapes = await portraits.evaluateAll((imgs) =>
+      imgs.map((i) => {
+        const img = i as HTMLImageElement;
+        const r = img.getBoundingClientRect();
+        return { src: new URL(img.currentSrc).pathname, rendered: r.width / r.height };
+      }),
+    );
+    for (const shape of shapes) {
+      expect(shape.src).toMatch(/^\/assets\/personas\/[a-z-]+-(160|320)\.webp$/);
+      expect(shape.rendered).toBeCloseTo(2 / 3, 1);
+    }
+    await expect(page.locator('[data-testid="persona-portrait"][data-illustrated="false"]')).toHaveCount(3);
     await expectTouchTargets(page);
     await expectNoHorizontalOverflow(page);
     await shot("persona");
@@ -157,8 +177,14 @@ test.describe("role-based journey", () => {
       // The persona list fits the 1080 × 1920 screen without scrolling.
       await page.getByTestId("review-priorities").click();
       await page.getByTestId("refine-change-role").click();
-      const fits = await page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight);
-      expect(fits).toBe(true);
+      const fits = () => page.evaluate(() => document.documentElement.scrollHeight <= window.innerHeight);
+      expect(await fits()).toBe(true);
+      // English labels are longer; the list still fits.
+      await page.getByRole("button", { name: "English" }).click();
+      await expect(page.getByTestId("persona-screen").getByRole("heading", { level: 1 })).toHaveText(
+        "What area do you work in?",
+      );
+      expect(await fits()).toBe(true);
     }
   });
 });

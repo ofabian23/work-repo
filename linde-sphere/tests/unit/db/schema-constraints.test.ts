@@ -127,7 +127,7 @@ describe("database constraints (defence in depth behind Prisma's enums)", () => 
     expect(() =>
       raw
         .prepare(
-          "INSERT INTO Lead SELECT 'other-id', createdAt, updatedAt, firstName, lastName, organization, roleLabel, businessEmail, optionalPhone, preferredLanguage, sessionId, reportConsent, followUpConsent, consentTextVersion, source, status, idempotencyKey, requestFingerprint, 'other-hash', contentVersion, exportedAt FROM Lead",
+          "INSERT INTO Lead SELECT 'other-id', createdAt, updatedAt, firstName, lastName, organization, roleLabel, businessEmail, optionalPhone, preferredLanguage, sessionId, reportConsent, followUpConsent, consentTextVersion, source, status, idempotencyKey, requestFingerprint, 'other-hash', contentVersion, exportedAt, leadScore, leadTier, leadScoreFactors, leadScoringVersion, followUpMode, followUpStatus FROM Lead",
         )
         .run(),
     ).toThrow(/UNIQUE constraint failed: Lead.idempotencyKey/);
@@ -169,6 +169,45 @@ describe("migration 2 (report and delivery events) on an existing database", () 
         status: "pending",
       });
       expect(db.pragma("foreign_key_check")).toEqual([]);
+      db.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("migration 5 (follow-up mode, ADR-062) on an existing database", () => {
+  it("backfills SMTP_EMAIL for leads that already had an email, exported for exported leads, and checks values", () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), "linde-upgrade-"));
+    try {
+      const all = expectedMigrations(PROJECT_ROOT);
+      const last = all.at(-1)!;
+      expect(last).toMatch(/_follow_up_mode$/);
+      const sql = (name: string) =>
+        readFileSync(path.join(PROJECT_ROOT, "prisma", "migrations", name, "migration.sql"), "utf8");
+      const db = new Database(path.join(dir, "old.db"));
+      for (const name of all.slice(0, -1)) db.exec(sql(name));
+      db.exec(`INSERT INTO VisitorSessionSummary (id, sessionId, startedAt, contentVersion, updatedAt) VALUES ('s1', 'session-1', 0, '0.4.0', 0);
+        INSERT INTO Lead (id, updatedAt, firstName, lastName, organization, roleLabel, businessEmail, preferredLanguage, sessionId, reportConsent, followUpConsent, consentTextVersion, idempotencyKey, requestFingerprint, statusTokenHash, contentVersion, exportedAt)
+          VALUES ('emailed', 0, 'A', 'B', 'Org', 'Rol', 'a@b.co', 'es', 'session-1', 1, 0, '0.1.0', 'k1', 'f1', 'h1', '0.4.0', 1000),
+                 ('plain', 0, 'C', 'D', 'Org', 'Rol', 'c@d.co', 'es', 'session-1', 1, 0, '0.1.0', 'k2', 'f2', 'h2', '0.4.0', NULL);
+        INSERT INTO EmailDelivery (id, updatedAt, leadId, provider, status) VALUES ('d1', 0, 'emailed', 'smtp', 'sent');
+        INSERT INTO Report (id, leadId, language, subject, html, text, contentVersion, copyVersion) VALUES ('r1', 'plain', 'es', 'S', '<html></html>', 't', '0.4.0', '0.1.0');`);
+      db.exec(sql(last));
+      const rows = db.prepare("SELECT id, followUpMode, followUpStatus FROM Lead ORDER BY id").all();
+      expect(rows).toEqual([
+        { id: "emailed", followUpMode: "SMTP_EMAIL", followUpStatus: "exported" },
+        { id: "plain", followUpMode: "LOCAL_PACKAGE", followUpStatus: "follow_up_pending" },
+      ]);
+      expect(db.prepare("SELECT payloadJson FROM Report WHERE id = 'r1'").get()).toEqual({
+        payloadJson: null,
+      });
+      expect(() => db.prepare("UPDATE Lead SET followUpMode = 'EMAIL' WHERE id = 'plain'").run()).toThrow(
+        /CHECK constraint failed/,
+      );
+      expect(() => db.prepare("UPDATE Lead SET followUpStatus = 'sent' WHERE id = 'plain'").run()).toThrow(
+        /CHECK constraint failed/,
+      );
       db.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

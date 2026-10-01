@@ -28,7 +28,13 @@ const flush = () => act(async () => undefined);
 const warning = () => screen.queryByTestId("inactivity-warning");
 const warningOpen = () => (warning() as HTMLDialogElement | null)?.open === true;
 
-function api(submit: () => Promise<SubmitOutcome> = async () => ({ kind: "stored", statusToken: TOKEN })) {
+function api(
+  submit: () => Promise<SubmitOutcome> = async () => ({
+    kind: "stored",
+    statusToken: TOKEN,
+    followUp: "email",
+  }),
+) {
   return { submit: vi.fn(submit), status: vi.fn(async () => "sent" as const) };
 }
 
@@ -86,7 +92,7 @@ describe("session states", () => {
     expect(phase()).toBe("entering-contact");
     fireEvent.click(screen.getByTestId("lead-submit"));
     expect(phase()).toBe("submitting");
-    await act(async () => resolve({ kind: "stored", statusToken: TOKEN }));
+    await act(async () => resolve({ kind: "stored", statusToken: TOKEN, followUp: "email" }));
     await flush();
     expect(phase()).toBe("complete");
     fireEvent.click(screen.getByTestId("lead-finish"));
@@ -170,7 +176,7 @@ describe("submission in progress", () => {
     expect(onHardReset).not.toHaveBeenCalled();
     expect(screen.getByTestId("lead-sending")).toBeInTheDocument();
 
-    await act(async () => resolve({ kind: "stored", statusToken: TOKEN }));
+    await act(async () => resolve({ kind: "stored", statusToken: TOKEN, followUp: "email" }));
     await flush();
     expect(phase()).toBe("complete");
     expect(screen.getByTestId("lead-result")).toBeInTheDocument();

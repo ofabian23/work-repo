@@ -14,6 +14,14 @@ import { recommendationEvidence } from "@/domain/recommendations/recommendation-
 import type { SessionSignals } from "@/domain/session/visitor-session";
 import type { Logger } from "@/server/logging/logger";
 import { buildReportPayload } from "@/server/report/build-report-payload";
+import { RecommendationReadiness } from "@/domain/recommendations/recommendation-readiness";
+import { scoreLead } from "./lead-scoring";
+import {
+  FOLLOW_UP_PENDING,
+  usesEmailOutbox,
+  visitorFollowUp,
+  type FollowUpMode,
+} from "@/domain/follow-up/follow-up-mode";
 import { renderReport } from "@/server/report/render-report";
 import { sanitizeEmailError } from "./email-error";
 import {
@@ -41,6 +49,9 @@ export type SubmitLeadResult =
 export type LeadServiceDeps = {
   leads: LeadRepository;
   content: () => PublicContentBundle;
+  /** Follow-up strategy (FOLLOW_UP_MODE, ADR-062). Only email modes queue an email delivery. */
+  followUpMode: FollowUpMode;
+  /** Email transport for the email follow-up modes (EMAIL_PROVIDER). */
   emailProvider: EmailProviderName;
   /** Wakes the email outbox after commit. Failures are logged and never affect the stored lead. */
   onDeliveryQueued?: (deliveryId: string) => void | Promise<void>;
@@ -55,15 +66,22 @@ const MAX_CLOCK_SKEW_MS = 5 * 60_000;
 export function createLeadService({
   leads,
   content,
+  followUpMode,
   emailProvider,
   onDeliveryQueued,
   logger,
   now = () => new Date(),
   newId = randomUUID,
 }: LeadServiceDeps) {
-  const replay = (idempotencyKey: string, leadId: string): SubmitLeadResult => ({
+  // A replay answers with the follow-up kind of the original lead, whatever the mode is now.
+  const replay = (idempotencyKey: string, leadId: string, mode: FollowUpMode): SubmitLeadResult => ({
     outcome: "replayed",
-    response: { statusToken: deriveStatusToken(idempotencyKey, leadId), emailQueued: true, replayed: true },
+    response: {
+      statusToken: deriveStatusToken(idempotencyKey, leadId),
+      emailQueued: usesEmailOutbox(mode),
+      followUp: visitorFollowUp(mode),
+      replayed: true,
+    },
   });
 
   const resolveExisting = async (submission: LeadSubmission, fingerprint: string) => {
@@ -74,7 +92,7 @@ export function createLeadService({
       return { outcome: "conflict" } as const;
     }
     logger.info("lead.replayed", { leadId: existing.leadId });
-    return replay(submission.idempotencyKey, existing.leadId);
+    return replay(submission.idempotencyKey, existing.leadId, existing.followUpMode);
   };
 
   return {
@@ -108,11 +126,12 @@ export function createLeadService({
         leadId,
         fingerprint,
         receivedAt,
+        followUpMode,
         provider: emailProvider,
       });
       if (!record.report) logger.error("report.unavailable", { leadId });
 
-      let deliveryId: string;
+      let deliveryId: string | null;
       let reportStored: boolean;
       try {
         ({ deliveryId, reportStored } = await leads.createSubmission(record));
@@ -129,10 +148,12 @@ export function createLeadService({
         deliveryId,
         interests: record.interests.length,
         followUpConsent: record.lead.followUpConsent,
+        followUpMode,
       });
 
       try {
-        if (reportStored) await onDeliveryQueued?.(deliveryId);
+        // Email modes only: LOCAL_PACKAGE stores no delivery, so there is nothing to send (ADR-062).
+        if (deliveryId && reportStored) await onDeliveryQueued?.(deliveryId);
       } catch (error) {
         logger.warn("email.dispatch_failed", { leadId, deliveryId, error: sanitizeEmailError(error).code });
       }
@@ -141,7 +162,8 @@ export function createLeadService({
         outcome: "created",
         response: {
           statusToken: deriveStatusToken(submission.idempotencyKey, leadId),
-          emailQueued: true,
+          emailQueued: deliveryId !== null && reportStored,
+          followUp: visitorFollowUp(followUpMode),
           replayed: false,
         },
       };
@@ -152,7 +174,8 @@ export function createLeadService({
       if (!parsed.success) return null;
       const result = await leads.findDeliveryStatusByTokenHash(hashStatusToken(parsed.data));
       if (!result.found) return null;
-      return { submission: "stored", report: result.delivery ?? "pending" };
+      // No delivery row: the lead was stored in a follow-up mode without automatic email (ADR-062).
+      return { submission: "stored", report: result.delivery ?? "packaged" };
     },
   };
 }
@@ -211,7 +234,13 @@ function knownSignals(signals: SessionSignals, bundle: PublicContentBundle): Ses
 function buildSubmission(
   s: LeadSubmission,
   bundle: PublicContentBundle,
-  ctx: { leadId: string; fingerprint: string; receivedAt: Date; provider: EmailProviderName },
+  ctx: {
+    leadId: string;
+    fingerprint: string;
+    receivedAt: Date;
+    followUpMode: FollowUpMode;
+    provider: EmailProviderName;
+  },
 ): NewSubmission {
   const signals = knownSignals(s.signals, bundle);
   // Same evidence rule as the kiosk (ADR-051): only choices and content actually opened count.
@@ -250,6 +279,20 @@ function buildSubmission(
     }),
   );
 
+  // Internal commercial score (server-only): from the same known signals and the form answers.
+  const formChallenges = s.selectedInterestIds.filter((id) => challengeIds.has(id));
+  const formSolutions = s.selectedInterestIds.filter((id) => !challengeIds.has(id));
+  const score = scoreLead({
+    roleId: s.jobFunctionId,
+    challengeCount: new Set([...signals.challengeIds, ...formChallenges]).size,
+    explicitInterestCount: new Set([...signals.explicitInterestIds, ...formSolutions]).size,
+    meaningfulHotspots: RecommendationReadiness.meaningfulInteractions(signals, bundle.scenes).hotspotIds
+      .length,
+    facilityTypeKnown: signals.facilityTypeId !== null,
+    followUpConsent: s.consents.salesFollowUp,
+    email: s.email,
+  });
+
   const items = (kind: NewSessionItem["kind"], values: string[]) =>
     values.map((value, position) => ({ kind, value, position }));
 
@@ -272,6 +315,12 @@ function buildSubmission(
       requestFingerprint: ctx.fingerprint,
       statusTokenHash: hashStatusToken(deriveStatusToken(s.idempotencyKey, ctx.leadId)),
       contentVersion: bundle.manifest.contentVersion,
+      leadScore: score.score,
+      leadTier: score.tier,
+      leadScoreFactors: JSON.stringify(score.factors),
+      leadScoringVersion: score.version,
+      followUpMode: ctx.followUpMode,
+      followUpStatus: FOLLOW_UP_PENDING,
     },
     interests: [...interests.values()],
     session: {
@@ -297,7 +346,7 @@ function buildSubmission(
       exploredSceneIds: evidence.visitedSceneIds,
       result,
     }),
-    delivery: { provider: ctx.provider },
+    delivery: usesEmailOutbox(ctx.followUpMode) ? { provider: ctx.provider } : null,
   };
 }
 
@@ -322,6 +371,9 @@ function renderStoredReport(
     return {
       language: s.preferredLanguage,
       ...rendered,
+      // The report data as JSON, for the Convention Export Package (ADR-062). Same visitor-safe payload the
+      // HTML and text are rendered from: no score, internal notes or other visitors' data.
+      payloadJson: JSON.stringify(payload),
       contentVersion: payload.contentVersion,
       copyVersion: payload.copyVersion,
     };

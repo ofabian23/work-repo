@@ -93,6 +93,40 @@ describe("parseServerEnv", () => {
     expect(message).toContain(".env.example");
   });
 
+  it("defaults the follow-up strategy to LOCAL_PACKAGE (no email), configured only by FOLLOW_UP_MODE", () => {
+    const empty = parseServerEnv({});
+    expect(empty.ok && empty.env.FOLLOW_UP_MODE).toBe("LOCAL_PACKAGE");
+    const blank = parseServerEnv({ FOLLOW_UP_MODE: "" });
+    expect(blank.ok && blank.env.FOLLOW_UP_MODE).toBe("LOCAL_PACKAGE");
+    // A complete SMTP configuration does not turn email on by itself: the mode decides.
+    const smtpReady = parseServerEnv({
+      EMAIL_PROVIDER: "smtp",
+      SMTP_HOST: "smtp.example.test",
+      SMTP_PORT: "587",
+      EMAIL_FROM: "reports@example.test",
+    });
+    expect(smtpReady.ok && smtpReady.env.FOLLOW_UP_MODE).toBe("LOCAL_PACKAGE");
+    const email = parseServerEnv({ FOLLOW_UP_MODE: "SMTP_EMAIL" });
+    expect(email.ok && email.env.FOLLOW_UP_MODE).toBe("SMTP_EMAIL");
+  });
+
+  it("refuses follow-up modes that are recognized but not implemented, with the reason", () => {
+    for (const [mode, reason] of [
+      ["MICROSOFT_GRAPH", /not implemented/],
+      ["OUTLOOK_DRAFT", /not implemented/],
+      ["FUTURE_CRM", /reserved/],
+    ] as const) {
+      const result = parseServerEnv({ FOLLOW_UP_MODE: mode });
+      expect(result.ok, mode).toBe(false);
+      if (result.ok) continue;
+      const issue = result.issues.find((i) => i.variable === "FOLLOW_UP_MODE");
+      expect(issue?.message, mode).toMatch(reason);
+    }
+    const unknown = parseServerEnv({ FOLLOW_UP_MODE: "email" });
+    expect(unknown.ok).toBe(false);
+    if (!unknown.ok) expect(unknown.issues[0]!.message).toMatch(/LOCAL_PACKAGE, SMTP_EMAIL/);
+  });
+
   it("leaves lead retention undecided by default (placeholder, no invented policy)", () => {
     const result = parseServerEnv({});
     expect(result.ok && result.env.LEAD_RETENTION_DAYS).toBeUndefined();

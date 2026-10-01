@@ -37,7 +37,7 @@ describe("POST /api/leads", () => {
     expect(first.status).toBe(201);
     expect(first.headers.get("cache-control")).toBe("no-store");
     const body = await first.json();
-    expect(Object.keys(body).sort()).toEqual(["emailQueued", "replayed", "statusToken"]);
+    expect(Object.keys(body).sort()).toEqual(["emailQueued", "followUp", "replayed", "statusToken"]);
 
     const second = await create(post(validLead()));
     expect(second.status).toBe(200);

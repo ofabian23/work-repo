@@ -65,6 +65,7 @@ export default defineConfig({
   webServer: [
     {
       // Production build, bound to localhost only, gallery disabled (default production behavior).
+      // FOLLOW_UP_MODE is left unset: the default LOCAL_PACKAGE stores leads and reports, never emails.
       command: `npm run db:deploy && npm run build && npx next start -H localhost -p ${PORT}`,
       url: `http://localhost:${PORT}/api/health`,
       env: {
@@ -86,6 +87,8 @@ export default defineConfig({
         EMAIL_PROVIDER: "preview",
         EMAIL_PREVIEW_DIR: E2E_EMAIL_PREVIEW_DIR,
         LEAD_RATE_LIMIT_PER_MINUTE: "1000",
+        // Email follow-up through the preview provider (writes local files, never sends; ADR-062).
+        FOLLOW_UP_MODE: "SMTP_EMAIL",
         ENABLE_COMPONENT_GALLERY: "true",
         ENABLE_SCENE_CALIBRATION: "true",
         // Short kiosk timings so session-management E2E tests can watch a warning and a reset (ADR-055).
@@ -118,6 +121,7 @@ export default defineConfig({
       url: `http://localhost:${FAILING_EMAIL_PORT}/api/health`,
       env: {
         DATABASE_URL: "file:./data/e2e-failing-email.db",
+        FOLLOW_UP_MODE: "SMTP_EMAIL",
         EMAIL_PROVIDER: "smtp",
         // Nothing listens on the discard port locally: the connection is refused (a transient failure).
         SMTP_HOST: "127.0.0.1",

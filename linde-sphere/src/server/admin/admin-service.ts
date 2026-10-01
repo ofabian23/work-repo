@@ -12,50 +12,20 @@ import {
 import { toCsv } from "@/lib/csv";
 import { backupSqliteFile } from "@/server/db/sqlite-backup";
 import type { EmailOutbox } from "@/server/email/email-outbox";
+import { buildConventionPackage, type PackageFilters } from "@/server/follow-up/convention-package";
 import type { Logger } from "@/server/logging/logger";
 import type { AdminFilters } from "./admin-filters";
 import type { AdminRepository } from "./admin-repository";
+import { INTEREST_CSV_COLUMNS, LEAD_CSV_COLUMNS, leadCsvRow } from "./lead-csv";
+
+export { INTEREST_CSV_COLUMNS, LEAD_CSV_COLUMNS } from "./lead-csv";
 
 /**
  * Local administration use cases (ADR-056). Exports are built in memory and returned to the handler — never
  * written under public/ and never logged (logs carry counts and filters only). There is no delete.
  */
-export const LEAD_CSV_COLUMNS = [
-  "lead_id",
-  "created_at",
-  "first_name",
-  "last_name",
-  "organization",
-  "role",
-  "business_email",
-  "phone",
-  "preferred_language",
-  "report_consent",
-  "follow_up_consent",
-  "consent_text_version",
-  "lead_status",
-  "report_delivery",
-  "delivery_attempts",
-  "previously_exported_at",
-  "selected_challenges",
-  "explicit_interests",
-  "form_interests",
-  "recommended_solutions",
-] as const;
-
-export const INTEREST_CSV_COLUMNS = [
-  "lead_id",
-  "created_at",
-  "organization",
-  "business_email",
-  "follow_up_consent",
-  "category",
-  "value",
-  "relevance",
-  "source_type",
-] as const;
-
 export type ExportKind = "leads" | "interests";
+
 export type RetryOutcome = "sent" | "retrying" | "failed" | "skipped" | "not-retryable" | "not-found";
 
 const stamp = (d: Date) => d.toISOString().slice(0, 19).replace(/[:T]/g, "-");
@@ -106,38 +76,9 @@ export function createAdminService({
 
     async exportCsv(kind: ExportKind, filters: AdminFilters, { markExported = false } = {}) {
       const leads = await repo.exportLeads(filters);
-      const values = (lead: (typeof leads)[number], sources: string[], category?: string) =>
-        [
-          ...new Set(
-            lead.interests
-              .filter((i) => sources.includes(i.sourceType) && (!category || i.category === category))
-              .map((i) => i.value),
-          ),
-        ].join("; ");
       const rows =
         kind === "leads"
-          ? leads.map((lead) => [
-              lead.id,
-              lead.createdAt.toISOString(),
-              lead.firstName,
-              lead.lastName,
-              lead.organization,
-              lead.roleLabel,
-              lead.businessEmail,
-              lead.optionalPhone ?? "",
-              lead.preferredLanguage,
-              lead.reportConsent,
-              lead.followUpConsent,
-              lead.consentTextVersion,
-              lead.status,
-              lead.emailDeliveries[0]?.status ?? "",
-              lead.emailDeliveries[0]?.attempts ?? 0,
-              lead.exportedAt?.toISOString() ?? "",
-              values(lead, ["session_selection", "form_selection"], "challenge"),
-              values(lead, ["explicit_interest"]),
-              values(lead, ["form_selection"]),
-              values(lead, ["recommendation"]),
-            ])
+          ? leads.map(leadCsvRow)
           : leads.flatMap((lead) =>
               lead.interests.map((i) => [
                 lead.id,
@@ -168,6 +109,11 @@ export function createAdminService({
         ...auditFilters(filters),
       });
       return { filename: `linde-sphere-${kind}-${stamp(now())}.csv`, csv, leads: leads.length, marked };
+    },
+
+    /** Convention Export Package (reports + leads.csv), the LOCAL_PACKAGE deliverable (ADR-062). */
+    exportPackage(filters: PackageFilters, { markExported = false } = {}) {
+      return buildConventionPackage({ repo, filters, markExported, now, logger });
     },
 
     contentValidationCsv() {

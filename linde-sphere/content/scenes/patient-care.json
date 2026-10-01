@@ -10,21 +10,39 @@
     "en": "Inpatient floors where staff care for patients around the clock."
   },
   "background": {
-    "src": "/assets/scenes/placeholder/patient-care-background.svg",
+    "src": "/assets/scenes/approved/patient-care-1536.webp",
+    "srcSet": [
+      {
+        "src": "/assets/scenes/approved/patient-care-640.webp",
+        "width": 640
+      },
+      {
+        "src": "/assets/scenes/approved/patient-care-960.webp",
+        "width": 960
+      },
+      {
+        "src": "/assets/scenes/approved/patient-care-1280.webp",
+        "width": 1280
+      },
+      {
+        "src": "/assets/scenes/approved/patient-care-1536.webp",
+        "width": 1536
+      }
+    ],
     "alt": {
-      "es": "Ilustración isométrica de una sala de hospitalización con camas, almacenamiento de cilindros y un área de alta.",
-      "en": "Isometric illustration of a patient ward with beds, cylinder storage and a discharge area."
+      "es": "Ilustración de una habitación de paciente con cama, sillón y ventana, junto a concentradores de oxígeno portátiles y un carrito con cilindros.",
+      "en": "Illustration of a patient room with a bed, armchair and window, next to portable oxygen concentrators and a cylinder cart."
     },
     "depth": 0,
-    "assetStatus": "placeholder"
+    "assetStatus": "approved"
   },
   "foregroundLayers": [],
   "hotspots": [
     {
       "id": "patient-care-cylinders",
       "type": "information",
-      "x": 77.5,
-      "y": 42,
+      "x": 87,
+      "y": 55,
       "label": {
         "es": "Manejo de cilindros",
         "en": "Cylinder handling"
@@ -63,8 +81,8 @@
     {
       "id": "patient-care-inventory",
       "type": "solution",
-      "x": 89.5,
-      "y": 42.5,
+      "x": 78,
+      "y": 44,
       "label": {
         "es": "Inventario de cilindros",
         "en": "Cylinder inventory"
@@ -84,8 +102,8 @@
     {
       "id": "patient-care-discharge",
       "type": "solution",
-      "x": 48.5,
-      "y": 64,
+      "x": 70,
+      "y": 63,
       "label": {
         "es": "Del hospital al hogar",
         "en": "Hospital to home"
@@ -105,8 +123,8 @@
     {
       "id": "patient-care-to-emergency",
       "type": "navigation",
-      "x": 58,
-      "y": 31,
+      "x": 20,
+      "y": 75,
       "label": {
         "es": "Hacia emergencias",
         "en": "To the emergency department"

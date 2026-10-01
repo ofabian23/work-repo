@@ -1167,3 +1167,160 @@ resetting`. They are derived by a pure `sessionPhase()` from the store plus read
     are recorded (PRIVACY_REVIEW A1, A11, A13).
   - Answers are recorded by the project team in the content files. There is no in-browser editing or CSV
     import yet, so returned worksheets are applied by hand and checked by `content:check`.
+
+## ADR-061 — Lead scoring implemented to close an MVP acceptance gap; additive migration keeps constraints
+
+- **Date:** 2026-09-30 · **Status:** Accepted (implements ADR-009)
+- **Context:**
+  - The final audit found requirement M12 (internal lead scoring) and acceptance criterion AC-34 (internal
+    score in the CSV export) unmet: scoring had been deferred in Phase 7a.
+  - The rule for the audit is to add scope only to fix an acceptance failure, and this is one.
+- **Decision:**
+  - **Scoring:** a server-only `scoreLead()` (`src/server/leads/lead-scoring.ts`) computes a score from
+    signals the server already validates:
+    - role;
+    - distinct challenges and explicit interests, each capped;
+    - meaningful hotspots, capped;
+    - facility type known;
+    - follow-up consent;
+    - personal mailbox domain (negative).
+  - **Result:** a score 0–100, tier A ≥ 60, B ≥ 35, otherwise C, and a list of factor codes and points.
+    The weights are versioned (`0.1.0-assumed`) and are a project-team assumption pending sales validation.
+  - **Storage:** saved on `Lead` at submission, in the same transaction. Migration 4 is hand-written with
+    `ADD COLUMN`, because Prisma's generated table redefinition would have dropped the hand-added CHECK
+    constraints on `Lead`. It adds CHECKs for score range and tier; `prisma migrate diff` shows no drift.
+  - **Visibility:** shown in the admin lead list and detail and in the leads CSV (`internal_score`,
+    `internal_tier`, `score_factors`). Never in the kiosk API response or the report (tests), nor in the
+    client bundle (`security:bundle` marker).
+- **Consequences:**
+  - AC-16 and AC-34 are met.
+  - Scoring business contacts needs privacy/legal and sales approval before anyone relies on it
+    (PRIVACY_REVIEW A20).
+
+## ADR-062 — Configurable follow-up strategy; LOCAL_PACKAGE (no email) is the default
+
+- **Date:** 2026-10-01 · **Status:** Accepted (refines ADR-011, ADR-012, ADR-054; the email architecture is
+  kept, not replaced)
+- **Context:**
+  - Automatic report email needs an approved SMTP relay, sender identity and IT/security sign-off (release
+    gates 6 and 7). They may not be ready for the convention, and an email attempt without them is either
+    impossible or not allowed.
+  - The convention still needs a dependable follow-up: every visitor who asks for a summary should end up
+    with a stored, personalized report a Linde representative can act on.
+  - The email pipeline (providers, outbox, templates, delivery model, worker, admin retry, CLI) works and
+    must stay intact for when approval arrives.
+- **Decision:**
+  - **Strategy enum** `FollowUpMode` (`src/domain/follow-up/follow-up-mode.ts`, zod-free so the kiosk can
+    read it): `LOCAL_PACKAGE`, `SMTP_EMAIL`, `MICROSOFT_GRAPH`, `OUTLOOK_DRAFT`, `FUTURE_CRM`.
+  - **Configuration:** `FOLLOW_UP_MODE` environment variable, default `LOCAL_PACKAGE`. It selects the
+    strategy; `EMAIL_PROVIDER` stays the transport the email modes use (`smtp` sends, `preview` is a dry
+    run). Never hardcoded.
+  - **Recognized but refused at start-up:** `MICROSOFT_GRAPH` and `OUTLOOK_DRAFT` fail environment
+    validation with a message saying they are not implemented (instead of silently storing leads that are
+    never followed up). `FUTURE_CRM` is reserved and refused.
+  - **LOCAL_PACKAGE flow** (`lead-service.submitLead`): in one transaction, store the lead, interests,
+    session summary and the personalized report (HTML, text and the report payload as JSON,
+    `Report.payloadJson`), with `Lead.followUpMode = LOCAL_PACKAGE` and
+    `Lead.followUpStatus = follow_up_pending`. **No `EmailDelivery` row is created, so no email is ever
+    attempted**, and the email worker is not started. The response says `followUp: "package"`,
+    `emailQueued: false`; the status endpoint answers `report: "packaged"`. PDF is not produced (not
+    implemented before this change).
+  - **Email modes** keep the existing behaviour unchanged: an `EmailDelivery` row is queued in the same
+    transaction and the outbox delivers it (ADR-054). The lead records `SMTP_EMAIL`.
+  - **Convention Export Package** (`src/server/follow-up/convention-package.ts`): a ZIP built on request
+    with `leads.csv` (the admin lead CSV plus `report_folder`) and `reports/<leadId>/report.html|.txt|.json`
+    for active leads, plus `LEEME.txt`. Folder names are opaque ids. Downloaded from the admin export page
+    (confirmation required, optional "mark exported", which sets `followUpStatus = exported`) or written by
+    `npm run followup:package`. The ZIP writer uses `node:zlib` only (no new dependency).
+  - **Visitor copy** follows the mode (server page → `FollowUpProvider`; the submit response decides the
+    result screen). Package: "Su paquete personalizado de seguimiento está preparado" / "Un representante de
+    Linde podrá darle seguimiento con la información que compartió." It never says the report was sent.
+    Copy shared by both modes became neutral ("Solicitar mi resumen", "Preparando su resumen…").
+  - **Admin:** the header shows "Modo de seguimiento actual" from `FOLLOW_UP_MODE`; the KPI "Paquetes de
+    seguimiento generados" replaces "emails sent" in LOCAL_PACKAGE (email stats, the delivery filter and the
+    delivery column appear only in email modes); lead detail shows the mode and follow-up status.
+  - **Health:** `followUp: { mode, deliversExternally }`; `email.deliversExternally` is false whenever the
+    mode does not send email.
+  - **Outlook Draft:** interfaces only (`src/server/follow-up/outlook-draft.ts`), documented in
+    ARCHITECTURE §9.7.
+  - **Migration 5** (`20261001090000_follow_up_mode`) is hand-written `ADD COLUMN` with CHECK constraints (as
+    in ADR-061). Existing leads that have an email delivery are set to `SMTP_EMAIL`; exported leads to
+    `exported`.
+- **Consequences:**
+  - The default convention workflow has no dependency on email approval. Switching to automatic email is
+    configuration only: obtain approval → set the `SMTP_*`/`EMAIL_FROM` values → `EMAIL_PROVIDER=smtp` →
+    `FOLLOW_UP_MODE=SMTP_EMAIL` → restart.
+  - The follow-up package holds personal data and leaves the laptop by hand: storage, transfer channel and
+    retention need Linde privacy/IT approval (PRIVACY_REVIEW A21).
+  - The report-consent wording ("autorizo el envío … al correo indicado") still describes a report sent
+    to the visitor's address, now by a representative. Legal must confirm it covers manual sending
+    (PRIVACY_REVIEW A22).
+  - A lead stored in an email mode keeps its delivery. If the mode later changes to LOCAL_PACKAGE, the
+    worker stops and pending deliveries wait, but the admin manual retry still works.
+
+## ADR-063 — Approved scene art: art box follows the art, responsive WebP copies, originals kept unserved
+
+- **Date:** 2026-10-01 · **Status:** Accepted (amends ADR-049 art box; extends ADR-057/058 asset rules)
+- **Context:**
+  - The project owner delivered approved illustrations for all eight explorer scenes (plus three without a
+    scene) as 1536 × 2752 JPEGs (campus: 768 × 1376, same proportions), 0.7–3.3 MB each, in
+    `public/assets/scenes/prototype1/`.
+  - The viewer drew every scene on a fixed 4:5 art box (1200 × 1500), and hotspots are percentages of that
+    box. Fitting ≈ 9:16 art into it would mean cropping or stretching it.
+  - Files in `public/` are all downloadable and limited to 1 MB each (ADR-058); most originals exceed it.
+- **Decision:**
+  - **Art box = the art's proportions:** `SCENE_ART` becomes 1536 × 2752 (ratio ≈ 0.558). Aspect ratio is
+    preserved: no crop, no stretch. The box still fits its container with container units.
+  - **Guard:** `content:check` reads each scene image's real size from its header (`image-size.ts`, no image
+    library at run time) and rejects approved art whose proportions differ from the box by more than 1 %,
+    and `srcSet` widths that do not match the file. Placeholder art only warns.
+  - **Responsive images:** scene layers gain an optional `srcSet` (`{ src, width }[]`, smallest first;
+    `src` is the largest). The viewer renders `srcset` with `sizes="min(92vw, 42vh)"`, and the neighbor
+    prefetch sets `sizes` and `srcset` before `src`, so it fetches the candidate that will be shown.
+  - **Optimized copies:** `npm run art:scenes` (sharp, now an exact dev dependency) writes WebP (quality 80)
+    at 640/960/1280/1536 px, never above the original's width, without metadata, to
+    `public/assets/scenes/approved/`. 30 files, 41–224 KB each, 3.7 MB in total (originals: 25 MB).
+  - **Originals** move unchanged (SHA-256 verified) to `art-source/scenes/prototype1/` (not served), with
+    their provenance in `art-source/README.md`. The three images without a scene are not published.
+  - **Hotspots:** every hotspot was checked against the new art; those not on a matching feature were moved
+    onto one. Ids, types, labels, accessible labels and content are unchanged. The old foreground layers
+    (trees) are removed: the new art is one composed image. Alt texts describe the new images.
+  - **Marker density:** the compact-marker threshold drops from 36 to 26 rem. The narrower box on the
+    portrait kiosk (≈ 29 rem) keeps regular markers and always-visible wayfinding labels. Phones, laptops
+    and tablets stay compact.
+  - The placeholder SVGs and `art:placeholders` stay (historical, unused); `--sync-content` now skips
+    scenes with approved art.
+- **Consequences:**
+  - On short or landscape screens the art is narrower than before (same height, taller ratio). The page
+    still scrolls on short screens, as before.
+  - Brand marks and English or garbled text baked into the art need marketing review (CONTENT_VALIDATION
+    §9.6, A12). The campus art has no laboratory, so that route sits on the diagnostics floor.
+
+## ADR-064 — Persona illustrations on the role selection cards
+
+- **Date:** 2026-10-01 · **Status:** Accepted (extends ADR-044 touch cards and ADR-063 asset handling)
+- **Context:**
+  - The project owner delivered 10 persona illustrations (400 × 600 PNG, opaque white background,
+    150–190 KB each) and asked for them on the role selection screen. The kiosk offers 11 personas.
+  - The persona grid must still fit the 1080 × 1920 kiosk without scrolling (Phase 5 acceptance, E2E).
+- **Decision:**
+  - **Content:** personas gain an optional `illustration` (`src`, `srcSet`, `assetStatus`); the schema shares
+    the responsive-candidate rules with scene layers. `content:check` verifies every candidate exists, is 2:3
+    (`PERSONA_ART`) and has its declared width.
+  - **Mapping (8 of 10):** six are direct matches; for the two broad roles the project team chose Respiratory
+    Therapist (`clinical-respiratory`) and Biomedical Engineer (`technology-biomed`). Clinical Director and
+    Technology Leader stay unused. Academia, government and "several areas" have no illustration and get a
+    neutral 2:3 tile with a person glyph, so every card lines up. Changing the mapping is a content edit.
+  - **Assets:** originals move unchanged to `art-source/personas/`; `npm run art:personas` writes WebP copies at
+    160/320 px (3–9 KB) to `public/assets/personas/`, served with `srcset` and `sizes="90px"`.
+  - **Card:** `TouchCard` gains a `media` slot. The portrait (3.5 rem wide) uses `mix-blend-multiply`, so its
+    white background takes the card's color, also when selected. It is decorative (`alt=""`, `aria-hidden`):
+    the card's title names the role. On compact cards with media, the selection mark sits on the portrait's
+    bottom corner (over the feet, never the face), and the text gets the width the corner mark used.
+  - **Fit:** compact media cards use 0.375 rem vertical padding (still ≥ 80 px tall) and the grid gap is
+    0.75 rem. Measured slack between the list and the actions on 1080 × 1920: 34 px in Spanish and 19–26 px in
+    English, at least the slack before the change (22 px and 19 px). The E2E fit check now covers English too.
+- **Consequences:**
+  - Role cards are recognizable at a glance; the 11 options still fit one kiosk screen in both languages.
+  - The mapping for the two broad roles and the three missing illustrations are open for the project owner
+    and marketing (CONTENT_VALIDATION §9.5).

@@ -72,6 +72,8 @@ export function createTestLeadService(db: PrismaDatabase, overrides: Partial<Lea
   const service = createLeadService({
     leads: createPrismaLeadRepository(db),
     content: demoBundle,
+    // Most service tests exercise the email outbox; LOCAL_PACKAGE tests pass followUpMode explicitly.
+    followUpMode: "SMTP_EMAIL",
     emailProvider: "preview",
     logger: logs.logger,
     now: () => new Date("2026-10-20T14:05:00Z"),

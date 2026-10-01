@@ -198,7 +198,8 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
       email failure, reset, cancel, correct, keyboard), 12 unit (model, client, masking, reducer), 5 E2E at three
       viewports against the real server
 - [ ] ConsentRecord rows (exact text shown + language) — with Phase 8 report storage
-- [ ] Lead scoring (server-only) and RecommendationSnapshot — not part of the 7a data model (ADR-052)
+- [x] Lead scoring (server-only), added in the final audit (ADR-061); RecommendationSnapshot is covered by the stored
+      recommendation interests and report
 - [ ] Per-IP rate limit on `/api/leads`
 - [ ] `POST /api/sessions` for anonymous summaries (table exists: VisitorSessionSummary)
 - **Done when:** AC-21 … AC-24 and AC-16 pass.
@@ -357,6 +358,54 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 - [ ] Not automatable here: successful real SMTP delivery, physical kiosk, Windows PowerShell 5.1
       (TESTING.md §5)
 
+## Phase 11 — Final product audit ✅
+
+- [x] All software checks run (see RELEASE_READINESS.md); manual inspection harness at kiosk, tablet and laptop
+      sizes, ES/EN, reduced motion, failed email, missing database, production and demo modes
+- [x] Fixed (high): long email addresses overflowed the review step on kiosk and tablet widths (now wrap; E2E
+      test)
+- [x] Fixed (MVP acceptance): internal lead scoring (M12, AC-34) implemented, server-only (ADR-061)
+- [x] Fixed (docs): README status was out of date
+- [x] RELEASE_READINESS.md with go/no-go checklist
+
+## Phase 12 — Follow-up strategy refinement (ADR-062) ✅
+
+- [x] `FollowUpMode` enum (`LOCAL_PACKAGE`, `SMTP_EMAIL`, `MICROSOFT_GRAPH`, `OUTLOOK_DRAFT`, `FUTURE_CRM`);
+      `FOLLOW_UP_MODE` env, default `LOCAL_PACKAGE`; unimplemented modes refused at start-up with a reason
+- [x] LOCAL_PACKAGE: lead + report (HTML, text, JSON) stored as `follow_up_pending`, no email delivery, no
+      worker; migration 5 (hand-written, CHECK constraints, backfill)
+- [x] Email architecture kept intact (providers, outbox, templates, delivery model, worker, admin retry,
+      CLI, tests); used only in `SMTP_EMAIL`
+- [x] Convention Export Package (`leads.csv` + `reports/`): admin download (confirmed) and
+      `npm run followup:package`
+- [x] Kiosk copy adapts to the mode; confirmation never says "sent" in package mode
+- [x] Admin: current mode in the header, "Paquetes de seguimiento generados" KPI, follow-up status
+- [x] Outlook Draft and Microsoft Graph placeholders documented (ARCHITECTURE §9.7)
+- [ ] PDF report (not implemented before this phase; still backlog)
+- [ ] Legal confirmation of report-consent wording for representative delivery (PRIVACY_REVIEW A22)
+
+## Phase 13 — Approved scene art (ADR-063) ✅
+
+- [x] Inspect the 11 delivered originals (format, size, proportions); keep them unchanged and unserved in
+      `art-source/` with provenance and checksums
+- [x] Optimized responsive WebP copies (`npm run art:scenes`, no upscaling); `srcSet` + `sizes` in the viewer
+      and prefetch
+- [x] Art box changed to the art's proportions; `content:check` rejects mismatched art
+- [x] Hotspots checked on every scene and moved only where they missed their feature; labels unchanged
+- [x] Layouts checked on portrait kiosk, tablet (portrait and landscape), laptop and phone (E2E with
+      screenshots)
+- [ ] Marketing review: brand marks and English/garbled text baked into the art (CONTENT_VALIDATION §9.6)
+- [ ] Decide whether Scene 1, Homecare Ecosystem and Scene 11 get scenes (new content scope)
+
+## Phase 14 — Persona illustrations (ADR-064) ✅
+
+- [x] 8 delivered illustrations on the role cards (WebP 160/320 px, `npm run art:personas`); originals unchanged
+      in `art-source/personas/`
+- [x] Neutral tile for academia, government and "several areas"; decorative images, unchanged accessible names
+- [x] Persona grid still fits 1080 × 1920 without scrolling in Spanish and English (E2E)
+- [ ] Project owner/marketing: confirm the mapping for clinical-respiratory and technology-biomed; provide
+      illustrations for the three personas without one
+
 ## Phase 10 — Hardening, accessibility, deployment
 
 - [ ] E2E: full quick/discovery/explore journeys; post-reset storage/DOM/history assertions; no external requests
@@ -373,16 +422,17 @@ results, assumptions, remaining risks). Every phase must leave the app in a work
 
 ## Backlog (post-MVP)
 
-PDF report · Microsoft Graph email provider · CRM integration · sales notification email · QR hand-off
+PDF report · Microsoft Graph email provider · Outlook draft follow-up mode (ARCHITECTURE §9.7) · CRM
+integration (`FUTURE_CRM`) · sales notification email · QR hand-off
 to phone · badge scanning · multi-kiosk sync · content editor UI · analytics dashboard · approved
 illustration integration · additional languages.
 
 ## Blockers and external dependencies
 
-| Item                               | Needed for               | Status                                  |
-| ---------------------------------- | ------------------------ | --------------------------------------- |
-| SMTP account + sender address (Q2) | Real email delivery      | Open — `file` provider used meanwhile   |
-| Validated PR solution catalog (Q5) | Production mode          | Open — demo mode with `assumed` content |
-| Approved consent text (Q3)         | Production mode          | Open — placeholder text                 |
-| Sales contact details (Q4)         | Report CTA in production | Open                                    |
-| Scene illustrations (Q6)           | Final visual quality     | Open — local placeholder SVGs           |
+| Item                               | Needed for               | Status                                                                                  |
+| ---------------------------------- | ------------------------ | --------------------------------------------------------------------------------------- |
+| SMTP account + sender address (Q2) | `SMTP_EMAIL` follow-up   | Open — `LOCAL_PACKAGE` (no email) is the default meanwhile (ADR-062)                    |
+| Validated PR solution catalog (Q5) | Production mode          | Open — demo mode with `assumed` content                                                 |
+| Approved consent text (Q3)         | Production mode          | Open — placeholder text                                                                 |
+| Sales contact details (Q4)         | Report CTA in production | Open                                                                                    |
+| Scene illustrations (Q6)           | Final visual quality     | Done for the 8 scenes (ADR-063); marketing review of baked-in text and brand marks open |

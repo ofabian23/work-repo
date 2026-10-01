@@ -57,10 +57,10 @@ test.describe("lead storage API", () => {
     const status = await request.get(`/api/leads/status/${bodyA.statusToken}`);
     expect(status.status()).toBe(200);
     expect(status.headers()["cache-control"]).toBe("no-store");
-    // Delivery starts right after the response; the preview provider may already have "sent" it.
+    // Default follow-up mode (LOCAL_PACKAGE, ADR-062): stored and packaged, no email delivery.
+    expect(bodyA).toMatchObject({ followUp: "package", emailQueued: false });
     const body = await status.json();
-    expect(body.submission).toBe("stored");
-    expect(["pending", "sent"]).toContain(body.report);
+    expect(body).toEqual({ submission: "stored", report: "packaged" });
   });
 
   test("validates on the server and never echoes submitted values", async ({ request }) => {

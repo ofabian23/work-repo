@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PrimaryAction } from "@/components/actions/action-button";
-import { ClockIcon, MailIcon } from "@/components/icons";
+import { CheckIcon, ClockIcon, MailIcon } from "@/components/icons";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { useScreenHeading } from "../screens/use-screen-heading";
 import type { DeliveryOutcome } from "./lead-api";
@@ -14,7 +14,8 @@ export type Consultation = {
 };
 
 /**
- * Completion screen (ADR-055): report delivery status, the masked destination, an optional consultation
+ * Completion screen (ADR-055): report delivery status ("packaged" in LOCAL_PACKAGE: prepared for a
+ * representative, never "sent", ADR-062), the masked destination, an optional consultation
  * next step, a short countdown and "Finalizar ahora". When the countdown ends (or the visitor finishes),
  * the visit is reset and the kiosk returns to the attract screen with a fresh session.
  */
@@ -72,6 +73,8 @@ export function CompletionScreen({
     >
       {delivery === "delayed" ? (
         <ClockIcon size="size-16" className="text-notice" />
+      ) : delivery === "packaged" ? (
+        <CheckIcon size="size-16" className="text-success" />
       ) : (
         <MailIcon size="size-16" className="text-success" />
       )}
@@ -85,7 +88,7 @@ export function CompletionScreen({
       <p
         role="status"
         data-testid="delivery-status"
-        className="text-lead text-ink-muted max-w-2xl text-pretty"
+        className="text-lead text-ink-muted max-w-2xl text-pretty [overflow-wrap:anywhere]"
       >
         {t(`leadForm.result.${delivery}Body`, { email: maskedEmail })}
       </p>

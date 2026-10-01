@@ -201,8 +201,12 @@ export const MARKER_REM: Record<"regular" | "compact", Record<VisualImportance, 
   compact: { primary: 3.5, secondary: 3, tertiary: 3 },
 };
 
-/** Art boxes narrower than this (in rem) use compact markers so scenes do not get crowded. */
-export const COMPACT_BELOW_REM = 36;
+/**
+ * Art boxes narrower than this (in rem) use compact markers so scenes do not get crowded. Tuned for the tall
+ * approved art (ADR-063): on the portrait kiosk the box is about 29 rem wide and keeps regular markers with
+ * visible wayfinding labels; phones, laptops and tablets (narrower boxes) use compact markers.
+ */
+export const COMPACT_BELOW_REM = 26;
 
 export const isCompactBox = (width: number, rootFontPx: number) => width < COMPACT_BELOW_REM * rootFontPx;
 

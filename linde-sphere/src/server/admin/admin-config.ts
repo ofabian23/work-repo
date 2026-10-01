@@ -1,4 +1,5 @@
 import "server-only";
+import type { FollowUpMode } from "@/domain/follow-up/follow-up-mode";
 import type { ServerEnv } from "@/server/env";
 
 /** Internal App Router segment for the admin pages; only reachable through the configured ADMIN_PATH. */
@@ -10,6 +11,10 @@ export type AdminConfig = {
   basePath: string;
   passphraseHash: string | null;
   sessionMinutes: number;
+  /** Current follow-up strategy, read from FOLLOW_UP_MODE (ADR-062); shown in the admin header. */
+  followUpMode: FollowUpMode;
+  /** Email transport the email modes would use (EMAIL_PROVIDER). */
+  emailProvider: ServerEnv["EMAIL_PROVIDER"];
 };
 
 export function adminConfig(env: ServerEnv): AdminConfig {
@@ -18,6 +23,8 @@ export function adminConfig(env: ServerEnv): AdminConfig {
     basePath: env.ADMIN_PATH,
     passphraseHash: env.ADMIN_PASSPHRASE_HASH ?? null,
     sessionMinutes: env.ADMIN_SESSION_MINUTES,
+    followUpMode: env.FOLLOW_UP_MODE,
+    emailProvider: env.EMAIL_PROVIDER,
   };
 }
 

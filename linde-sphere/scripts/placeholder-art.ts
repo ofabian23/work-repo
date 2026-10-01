@@ -7,12 +7,17 @@
  * The art is intentionally simple: flat isometric boxes, cylinders and panels in the neutral placeholder
  * palette, drawn from code (no reference art is traced or imitated). Each scene registers an anchor for
  * every hotspot it depicts, so `--sync-content` keeps hotspot coordinates on top of the drawn features.
- * Replace these files with approved art at the same size (SCENE_ART) and re-calibrate with /dev/scenes.
+ *
+ * Since ADR-063 every scene uses approved art (a different, taller ratio: SCENE_ART). These 4:5 files are
+ * kept as historical placeholders and are no longer referenced; `--sync-content` refuses to touch a scene
+ * whose background is approved, so it can never overwrite hotspots calibrated on approved art.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SCENE_ART } from "../src/domain/content/scene-art";
+
+/** The placeholders' own canvas (4:5). Not the current art box: see SCENE_ART and ADR-063. */
+const SCENE_ART = { width: 1200, height: 1500 } as const;
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUT_DIR = path.join(projectRoot, "public/assets/scenes/placeholder");
@@ -584,8 +589,13 @@ let problems = 0;
 for (const o of outputs.filter((o): o is Output & { sceneId: string } => o.sceneId !== undefined)) {
   const file = path.join(CONTENT_DIR, `${o.sceneId}.json`);
   const json = JSON.parse(fs.readFileSync(file, "utf8")) as {
+    background: { assetStatus: string };
     hotspots: { id: string; x: number; y: number }[];
   };
+  if (json.background.assetStatus === "approved") {
+    console.log(`  ${o.sceneId.padEnd(15)} uses approved art: hotspots left as calibrated`);
+    continue;
+  }
   for (const h of json.hotspots) {
     const anchor = o.scene.anchors.get(h.id);
     if (!anchor) {

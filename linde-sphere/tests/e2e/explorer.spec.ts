@@ -2,11 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import { GALLERY_PORT } from "../../playwright.config";
+import { SCENE_ART_RATIO } from "../../src/domain/content/scene-art";
 import { expectNoHorizontalOverflow, expectTouchTargets, gotoHydrated, gotoKiosk } from "./helpers";
 
 type SceneJson = {
   id: string;
   parentSceneId: string | null;
+  background: { src: string; srcSet?: { src: string; width: number }[] };
   hotspots: { id: string; type: string; x: number; y: number; targetSceneId?: string }[];
 };
 const scenes: SceneJson[] = fs
@@ -64,8 +66,9 @@ async function measure(page: Page) {
 
 async function expectResponsiveHotspots(page: Page, scene: SceneJson) {
   const { box, markers } = await measure(page);
-  // The art box keeps the 4:5 ratio of the illustrations.
-  expect(box.width / box.height).toBeCloseTo(0.8, 2);
+  // The art box keeps the ratio of the approved illustrations (ADR-063).
+  expect(box.width / box.height).toBeCloseTo(SCENE_ART_RATIO, 2);
+  await expectSceneImage(page, scene);
   expect(markers.map((m) => m.id).sort()).toEqual(scene.hotspots.map((h) => h.id).sort());
   for (const m of markers) {
     const authored = scene.hotspots.find((h) => h.id === m.id)!;
@@ -94,6 +97,33 @@ async function expectResponsiveHotspots(page: Page, scene: SceneJson) {
       expect(distance, `${a.id} overlaps ${b.id}`).toBeGreaterThanOrEqual(a.radius + b.radius - 1);
     }
   }
+}
+
+/**
+ * The approved art is decoded, fills the art box without distortion, and comes from the scene's srcset: a
+ * candidate at least as wide as the box on screen (no blurry upscaling), and not needlessly the largest.
+ */
+async function expectSceneImage(page: Page, scene: SceneJson) {
+  const img = page.locator('[data-testid="scene-layers"] > img').first();
+  await expect
+    .poll(() => img.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0))
+    .toBe(true);
+  const info = await img.evaluate((el: HTMLImageElement) => ({
+    currentSrc: new URL(el.currentSrc).pathname,
+    naturalRatio: el.naturalWidth / el.naturalHeight,
+    renderedRatio: el.getBoundingClientRect().width / el.getBoundingClientRect().height,
+    boxWidthPx: el.getBoundingClientRect().width * window.devicePixelRatio,
+  }));
+  const candidates = scene.background.srcSet ?? [{ src: scene.background.src, width: Infinity }];
+  const chosen = candidates.find((c) => c.src === info.currentSrc);
+  expect(chosen, `${scene.id} uses a srcset candidate`).toBeDefined();
+  expect(info.naturalRatio).toBeCloseTo(SCENE_ART_RATIO, 2);
+  expect(info.renderedRatio).toBeCloseTo(SCENE_ART_RATIO, 2);
+  const largest = candidates.at(-1)!;
+  if (chosen !== largest)
+    expect(chosen!.width, `${scene.id} candidate covers the box`).toBeGreaterThanOrEqual(
+      info.boxWidthPx * 0.95,
+    );
 }
 
 test.describe("hospital explorer", () => {
@@ -126,6 +156,33 @@ test.describe("hospital explorer", () => {
       await waitForLayout(page, "campus");
     }
   });
+
+  for (const viewport of [
+    { name: "tablet-portrait", width: 800, height: 1280 },
+    { name: "tablet-landscape", width: 1280, height: 800 },
+  ]) {
+    test(`on a ${viewport.name} screen, every scene keeps its art and hotspots aligned`, async ({
+      page,
+    }, testInfo) => {
+      test.skip(testInfo.project.name !== "kiosk-portrait", "tablet sizes are checked once, with touch");
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await openExplorer(page);
+      await expectResponsiveHotspots(page, campus);
+      await expectNoHorizontalOverflow(page);
+      for (const nav of campus.hotspots.filter((h) => h.type === "navigation")) {
+        const target = scenes.find((s) => s.id === nav.targetSceneId)!;
+        await page.getByTestId(`hotspot-${nav.id}`).click();
+        await waitForLayout(page, target.id);
+        await expectResponsiveHotspots(page, target);
+        await page.screenshot({
+          path: testInfo.outputPath(`explorer-${target.id}-${viewport.name}.png`),
+          animations: "disabled",
+        });
+        await page.getByTestId("explorer-back").click();
+        await waitForLayout(page, "campus");
+      }
+    });
+  }
 
   test("navigates between scenes with breadcrumbs and back", async ({ page }) => {
     await openExplorer(page);

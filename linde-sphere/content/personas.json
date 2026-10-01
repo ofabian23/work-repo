@@ -10,6 +10,20 @@
       "en": "Strategy, growth and risk management."
     },
     "icon": "executive",
+    "illustration": {
+      "src": "/assets/personas/executive-320.webp",
+      "srcSet": [
+        {
+          "src": "/assets/personas/executive-160.webp",
+          "width": 160
+        },
+        {
+          "src": "/assets/personas/executive-320.webp",
+          "width": 320
+        }
+      ],
+      "assetStatus": "approved"
+    },
     "sortOrder": 10,
     "suggestedChallengeIds": [
       "supply-continuity",
@@ -42,6 +56,20 @@
       "en": "Infrastructure, reliability and maintenance."
     },
     "icon": "facilities",
+    "illustration": {
+      "src": "/assets/personas/operations-facilities-320.webp",
+      "srcSet": [
+        {
+          "src": "/assets/personas/operations-facilities-160.webp",
+          "width": 160
+        },
+        {
+          "src": "/assets/personas/operations-facilities-320.webp",
+          "width": 320
+        }
+      ],
+      "assetStatus": "approved"
+    },
     "sortOrder": 20,
     "suggestedChallengeIds": [
       "aging-infrastructure",
@@ -74,6 +102,20 @@
       "en": "Supply, inventory and vendors."
     },
     "icon": "supply-chain",
+    "illustration": {
+      "src": "/assets/personas/procurement-supply-320.webp",
+      "srcSet": [
+        {
+          "src": "/assets/personas/procurement-supply-160.webp",
+          "width": 160
+        },
+        {
+          "src": "/assets/personas/procurement-supply-320.webp",
+          "width": 320
+        }
+      ],
+      "assetStatus": "approved"
+    },
     "sortOrder": 30,
     "suggestedChallengeIds": [
       "supply-continuity",
@@ -106,6 +148,20 @@
       "en": "Patient safety and clinical workflow."
     },
     "icon": "clinical",
+    "illustration": {
+      "src": "/assets/personas/clinical-respiratory-320.webp",
+      "srcSet": [
+        {
+          "src": "/assets/personas/clinical-respiratory-160.webp",
+          "width": 160
+        },
+        {
+          "src": "/assets/personas/clinical-respiratory-320.webp",
+          "width": 320
+        }
+      ],
+      "assetStatus": "approved"
+    },
     "sortOrder": 40,
     "suggestedChallengeIds": [
       "patient-staff-safety",
@@ -138,6 +194,20 @@
       "en": "Accreditation, standards and documentation."
     },
     "icon": "compliance",
+    "illustration": {
+      "src": "/assets/personas/quality-compliance-320.webp",
+      "srcSet": [
+        {
+          "src": "/assets/personas/quality-compliance-160.webp",
+          "width": 160
+        },
+        {
+          "src": "/assets/personas/quality-compliance-320.webp",
+          "width": 320
+        }
+      ],
+      "assetStatus": "approved"
+    },
     "sortOrder": 50,
     "suggestedChallengeIds": ["compliance-readiness", "patient-staff-safety", "emergency-preparedness"],
     "validationStatus": "assumed",
@@ -165,6 +235,20 @@
       "en": "Costs, efficiency and financial sustainability."
     },
     "icon": "finance",
+    "illustration": {
+      "src": "/assets/personas/finance-320.webp",
+      "srcSet": [
+        {
+          "src": "/assets/personas/finance-160.webp",
+          "width": 160
+        },
+        {
+          "src": "/assets/personas/finance-320.webp",
+          "width": 320
+        }
+      ],
+      "assetStatus": "approved"
+    },
     "sortOrder": 60,
     "suggestedChallengeIds": ["lifecycle-costs", "operational-complexity", "supply-continuity"],
     "validationStatus": "assumed",
@@ -192,6 +276,20 @@
       "en": "Equipment, monitoring and digital modernization."
     },
     "icon": "technology",
+    "illustration": {
+      "src": "/assets/personas/technology-biomed-320.webp",
+      "srcSet": [
+        {
+          "src": "/assets/personas/technology-biomed-160.webp",
+          "width": 160
+        },
+        {
+          "src": "/assets/personas/technology-biomed-320.webp",
+          "width": 320
+        }
+      ],
+      "assetStatus": "approved"
+    },
     "sortOrder": 70,
     "suggestedChallengeIds": ["visibility-monitoring", "aging-infrastructure", "operational-complexity"],
     "validationStatus": "assumed",
@@ -219,6 +317,20 @@
       "en": "Care outside the hospital and its logistics."
     },
     "icon": "homecare",
+    "illustration": {
+      "src": "/assets/personas/ambulatory-homecare-320.webp",
+      "srcSet": [
+        {
+          "src": "/assets/personas/ambulatory-homecare-160.webp",
+          "width": 160
+        },
+        {
+          "src": "/assets/personas/ambulatory-homecare-320.webp",
+          "width": 320
+        }
+      ],
+      "assetStatus": "approved"
+    },
     "sortOrder": 80,
     "suggestedChallengeIds": ["care-outside-hospital", "cylinder-inventory", "supply-continuity"],
     "validationStatus": "assumed",

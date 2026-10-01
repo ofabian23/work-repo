@@ -28,6 +28,8 @@ async function main() {
   const service = createLeadService({
     leads: createPrismaLeadRepository(db),
     content: () => content,
+    // Same default as the kiosk (ADR-062). FOLLOW_UP_MODE=SMTP_EMAIL seeds preview email deliveries instead.
+    followUpMode: process.env.FOLLOW_UP_MODE?.trim() === "SMTP_EMAIL" ? "SMTP_EMAIL" : "LOCAL_PACKAGE",
     emailProvider: "preview",
     logger: createLogger({ minLevel: "warn" }),
   });

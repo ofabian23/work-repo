@@ -34,7 +34,7 @@ export const SESSION_EVENT_TYPES = [
   "conversion-prompt-shown",
   "conversion-prompt-accepted",
   "conversion-prompt-dismissed",
-  /** "Enviarme mi resumen personalizado" was chosen (explains the summary before the form). */
+  /** "Solicitar mi resumen personalizado" was chosen (explains the summary before the form). */
   "summary-requested",
   /** The contact form was opened, cancelled, or a submission was stored (no contact data, ever). */
   "lead-form-opened",

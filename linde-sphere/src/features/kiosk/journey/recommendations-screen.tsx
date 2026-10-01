@@ -29,7 +29,7 @@ export type RecommendationSummary = {
 /**
  * The value screen (ADR-051): what we found, why it is relevant and what to do next, before any form.
  * Calm and honest: no pressure language, no claim of a complete assessment or clinical advice, demo
- * content clearly marked, relevance in words (never scores). "Enviarme mi resumen personalizado" is the
+ * content clearly marked, relevance in words (never scores). "Solicitar mi resumen personalizado" is the
  * one primary action; exploring, reviewing priorities and starting over are always available.
  */
 export function RecommendationsScreen({

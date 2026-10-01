@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { KioskExperience } from "@/features/kiosk/kiosk-experience";
 import { getPublicContent } from "@/server/content/public-content";
+import { visitorFollowUp } from "@/domain/follow-up/follow-up-mode";
 import { getServerEnv } from "@/server/env";
 import { kioskTiming } from "@/server/kiosk-timing";
 
@@ -12,5 +13,12 @@ export default async function KioskPage() {
     previewPlaceholders: env.CONTENT_PREVIEW_PLACEHOLDERS,
   });
   const timing = kioskTiming(env);
-  return <KioskExperience content={content} idle={timing.idle} confirmationResetMs={timing.completionMs} />;
+  return (
+    <KioskExperience
+      content={content}
+      idle={timing.idle}
+      confirmationResetMs={timing.completionMs}
+      followUp={visitorFollowUp(env.FOLLOW_UP_MODE)}
+    />
+  );
 }

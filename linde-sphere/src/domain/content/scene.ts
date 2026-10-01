@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   IdSchema,
+  ImageCandidateSchema,
+  refineCandidates,
   LocalizedLabelSchema,
   LocalizedTextSchema,
   PublicPathSchema,
@@ -13,13 +15,24 @@ import {
 export const AssetStatusSchema = z.enum(["approved", "placeholder"]);
 export type AssetStatus = z.infer<typeof AssetStatusSchema>;
 
-export const SceneLayerSchema = z.strictObject({
-  src: PublicPathSchema,
-  alt: LocalizedTextSchema,
-  /** Parallax depth: 0 = background (static), 1 = nearest foreground (moves most). */
-  depth: z.number().min(0).max(1),
-  assetStatus: AssetStatusSchema,
-});
+/** One responsive candidate of a raster scene image: the file and its real pixel width (ADR-063). */
+export const SceneImageCandidateSchema = ImageCandidateSchema;
+
+export const SceneLayerSchema = z
+  .strictObject({
+    /** The image to use when `srcSet` is not supported; with `srcSet`, its largest candidate. */
+    src: PublicPathSchema,
+    /**
+     * Optional responsive candidates (smallest first). The browser picks one for the art box width and the
+     * screen's pixel density; every candidate has the art box's proportions (checked by content:check).
+     */
+    srcSet: z.array(SceneImageCandidateSchema).min(1).max(6).optional(),
+    alt: LocalizedTextSchema,
+    /** Parallax depth: 0 = background (static), 1 = nearest foreground (moves most). */
+    depth: z.number().min(0).max(1),
+    assetStatus: AssetStatusSchema,
+  })
+  .superRefine((layer, ctx) => refineCandidates(layer, ctx));
 export type SceneLayer = z.infer<typeof SceneLayerSchema>;
 
 export const VisualImportanceSchema = z.enum(["primary", "secondary", "tertiary"]);

@@ -30,7 +30,7 @@ async function expectValueScreen(page: Page) {
     await expect(cards.nth(i)).toContainText("Siguiente paso");
     await expect(cards.nth(i)).toContainText("Áreas relacionadas");
   }
-  await expect(page.getByTestId("send-summary")).toHaveText("Enviarme mi resumen personalizado");
+  await expect(page.getByTestId("send-summary")).toHaveText("Solicitar mi resumen personalizado");
   await expect(page.getByRole("textbox")).toHaveCount(0);
   await expectTouchTargets(page);
   await expectNoHorizontalOverflow(page);

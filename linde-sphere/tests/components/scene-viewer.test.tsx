@@ -1,6 +1,7 @@
 import { act, fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { visibleContent } from "@/domain/content/visibility";
+import { SCENE_ART, SCENE_ART_SIZES } from "@/domain/content/scene-art";
 import { SceneViewer, type SceneTransition } from "@/features/explorer/scene-viewer";
 import { loadSeedBundle } from "../helpers/schema";
 import { renderUi } from "./render";
@@ -13,13 +14,21 @@ const gasPlant = byId.get("gas-plant")!;
 afterEach(() => vi.useRealTimers());
 
 describe("SceneViewer", () => {
-  it("renders the background with its description, decorative foreground layers and every hotspot", () => {
+  it("renders the approved background with its description, responsive candidates and every hotspot", () => {
     renderUi(<SceneViewer scene={gasPlant} scenesById={byId} onHotspot={() => undefined} />);
     const layers = screen.getByTestId("scene-layers");
-    expect(within(layers).getByRole("img")).toHaveAttribute("src", gasPlant.background.src);
-    expect(within(layers).getByRole("img")).toHaveAccessibleName(gasPlant.background.alt.es);
-    expect(within(layers).getAllByTestId("scene-foreground")).toHaveLength(gasPlant.foregroundLayers.length);
-    expect(within(layers).getByTestId("scene-foreground")).toHaveAttribute("alt", "");
+    const img = within(layers).getByRole("img");
+    expect(img).toHaveAttribute("src", gasPlant.background.src);
+    expect(img).toHaveAccessibleName(gasPlant.background.alt.es);
+    // Responsive behavior (ADR-063): every candidate with its width, and the art box width as `sizes`.
+    expect(gasPlant.background.assetStatus).toBe("approved");
+    expect(img).toHaveAttribute(
+      "srcset",
+      gasPlant.background.srcSet!.map((c) => `${c.src} ${c.width}w`).join(", "),
+    );
+    expect(img).toHaveAttribute("sizes", SCENE_ART_SIZES);
+    expect(img).toHaveAttribute("width", String(SCENE_ART.width));
+    expect(img).toHaveAttribute("height", String(SCENE_ART.height));
     const hotspots = within(layers).getAllByRole("button");
     expect(hotspots).toHaveLength(gasPlant.hotspots.length);
     expect(new Set(hotspots.map((h) => h.dataset.hotspotType))).toEqual(
@@ -27,12 +36,31 @@ describe("SceneViewer", () => {
     );
   });
 
+  it("renders foreground layers as decorative images, and a single-file layer without srcset", () => {
+    const layered = {
+      ...gasPlant,
+      background: { ...gasPlant.background, srcSet: undefined },
+      foregroundLayers: [
+        {
+          src: "/assets/scenes/placeholder/gas-plant-foreground.svg",
+          alt: gasPlant.background.alt,
+          depth: 0.4,
+          assetStatus: "placeholder" as const,
+        },
+      ],
+    };
+    renderUi(<SceneViewer scene={layered} scenesById={byId} onHotspot={() => undefined} />);
+    const layers = screen.getByTestId("scene-layers");
+    expect(within(layers).getByRole("img")).not.toHaveAttribute("srcset");
+    expect(within(layers).getByTestId("scene-foreground")).toHaveAttribute("alt", "");
+  });
+
   it("positions hotspots by percentage of the art box", () => {
     renderUi(<SceneViewer scene={campus} scenesById={byId} onHotspot={() => undefined} />);
     for (const h of campus.hotspots) {
       expect(screen.getByTestId(`hotspot-${h.id}`)).toHaveStyle({ left: `${h.x}%`, top: `${h.y}%` });
     }
-    // The art box keeps the illustrations' 4:5 ratio inside any container.
+    // The art box keeps the approved illustrations' ratio inside any container.
     const box = screen.getByTestId("scene-art-box");
     expect(box.style.width).toContain("100cqw");
     expect(box.style.height).toContain("100cqh");

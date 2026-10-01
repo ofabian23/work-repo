@@ -18,8 +18,11 @@ export function getLeadService(): LeadService {
     leads: createPrismaLeadRepository(getDatabase()),
     content: () =>
       getPublicContent(env.CONTENT_MODE, { previewPlaceholders: env.CONTENT_PREVIEW_PLACEHOLDERS }),
+    // FOLLOW_UP_MODE picks the strategy (default LOCAL_PACKAGE: no email); EMAIL_PROVIDER is the transport
+    // the email modes use (ADR-062).
+    followUpMode: env.FOLLOW_UP_MODE,
     emailProvider: env.EMAIL_PROVIDER,
-    // Delivery is attempted right after the response; the periodic worker handles retries (ADR-054).
+    // Email modes only: delivery is attempted right after the response; the periodic worker handles retries (ADR-054).
     onDeliveryQueued: (deliveryId) => getEmailOutbox().schedule(deliveryId),
     logger,
   });

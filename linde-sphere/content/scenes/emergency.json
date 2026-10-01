@@ -10,21 +10,39 @@
     "en": "An area that must respond to the unexpected, at any hour."
   },
   "background": {
-    "src": "/assets/scenes/placeholder/emergency-background.svg",
+    "src": "/assets/scenes/approved/emergency-1536.webp",
+    "srcSet": [
+      {
+        "src": "/assets/scenes/approved/emergency-640.webp",
+        "width": 640
+      },
+      {
+        "src": "/assets/scenes/approved/emergency-960.webp",
+        "width": 960
+      },
+      {
+        "src": "/assets/scenes/approved/emergency-1280.webp",
+        "width": 1280
+      },
+      {
+        "src": "/assets/scenes/approved/emergency-1536.webp",
+        "width": 1536
+      }
+    ],
     "alt": {
-      "es": "Ilustración isométrica de una sala de emergencias con camillas y estaciones de trabajo.",
-      "en": "Isometric illustration of an emergency department with stretchers and workstations."
+      "es": "Ilustración de una sala de emergencias con camas en cubículos, tomas de gases en la pared, cilindros de oxígeno portátiles y un área de almacenamiento de cilindros.",
+      "en": "Illustration of an emergency department with beds in bays, wall gas outlets, portable oxygen cylinders and a cylinder storage area."
     },
     "depth": 0,
-    "assetStatus": "placeholder"
+    "assetStatus": "approved"
   },
   "foregroundLayers": [],
   "hotspots": [
     {
       "id": "emergency-surge-readiness",
       "type": "information",
-      "x": 65,
-      "y": 26.5,
+      "x": 72,
+      "y": 19,
       "label": {
         "es": "Aumentos repentinos",
         "en": "Patient surges"
@@ -86,8 +104,8 @@
     {
       "id": "emergency-to-icu",
       "type": "navigation",
-      "x": 17,
-      "y": 42.5,
+      "x": 9,
+      "y": 66,
       "label": {
         "es": "Hacia la UCI",
         "en": "To the ICU"

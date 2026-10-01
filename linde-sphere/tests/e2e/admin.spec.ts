@@ -200,6 +200,10 @@ test.describe("admin features", () => {
     expect(Number(await page.getByTestId("stat-total").locator("span").last().textContent())).toBeGreaterThan(
       0,
     );
+    // This server runs the email follow-up through the preview provider; the header says so (ADR-062).
+    await expect(page.getByTestId("admin-follow-up-mode")).toHaveAttribute("data-mode", "SMTP_EMAIL");
+    await expect(page.getByTestId("admin-follow-up-mode")).toContainText("no se envía ningún correo");
+    await expect(page.getByTestId("stat-packages")).toBeVisible();
     await page.getByTestId("filter-delivery").selectOption("failed");
     await page.getByTestId("filter-apply").click();
     await expect(page).toHaveURL(/delivery=failed/);

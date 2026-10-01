@@ -50,15 +50,17 @@ patient-like field is ever added to the database schema or the submission.
 
 ### 1.3 Technical and derived data
 
-| Data                                                     | Purpose                                              |
-| -------------------------------------------------------- | ---------------------------------------------------- |
-| Request token (idempotency key) and payload fingerprint  | Prevent duplicate leads from double taps and retries |
-| SHA-256 hash of the status token                         | Let the kiosk check delivery status without identity |
-| Server-recomputed recommendations with relevance words   | Report content and sales context (never a score)     |
-| Rendered report (subject, HTML, text)                    | Retries send exactly what was promised               |
-| Email delivery status, attempts, timestamps, error codes | Delivery and retry; codes only, never provider text  |
-| Export timestamp (`exportedAt`)                          | Track which leads were handed to sales               |
-| Consent text version, content version                    | Traceability of what the visitor saw                 |
+| Data                                                                      | Purpose                                                                                                                                                                           |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Request token (idempotency key) and payload fingerprint                   | Prevent duplicate leads from double taps and retries                                                                                                                              |
+| SHA-256 hash of the status token                                          | Let the kiosk check delivery status without identity                                                                                                                              |
+| Server-recomputed recommendations with relevance words                    | Report content and sales context (never a score)                                                                                                                                  |
+| Rendered report (subject, HTML, text) and its structured data (JSON)      | What the visitor requested; retries send exactly what was promised; the JSON goes into the follow-up package (ADR-062)                                                            |
+| Email delivery status, attempts, timestamps, error codes                  | Delivery and retry; codes only, never provider text                                                                                                                               |
+| Follow-up mode at submission and follow-up status (pending / exported)    | Which strategy applied (`LOCAL_PACKAGE` sends no email) and whether the lead was handed to sales                                                                                  |
+| Export timestamp (`exportedAt`)                                           | Track which leads were handed to sales                                                                                                                                            |
+| Consent text version, content version                                     | Traceability of what the visitor saw                                                                                                                                              |
+| Internal lead score (0–100), tier A/B/C, factor codes and weights version | Order sales follow-up; server and admin/CSV only, never shown to the visitor or in the report (AC-16). Weights are assumptions — **[Linde Privacy] [Linde Sales]** approval (A20) |
 
 **Not recorded:** IP addresses (not stored or logged by the application), device identifiers, cookies on
 visitor screens, analytics or tracking of any kind.
@@ -73,28 +75,35 @@ visitor screens, analytics or tracking of any kind.
 
 ## 2. Purpose
 
-| Purpose                                                  | Data used                                                          | Basis (to confirm)                    |
-| -------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------- |
-| Show relevant recommendations during the visit           | Anonymous visit data (browser memory)                              | Visitor's interaction                 |
-| Send the personalized report the visitor requested       | Contact data, visit summary, recommendations                       | Report consent — **[Linde Legal]**    |
-| Sales follow-up                                          | Contact data and interests, **only where follow-up consent = yes** | Follow-up consent — **[Linde Legal]** |
-| Operate delivery (retries, status)                       | Technical data                                                     | Needed to fulfil the request          |
-| Booth statistics (aggregate counts in the admin utility) | Stored leads                                                       | **[Linde Privacy]** to confirm        |
+| Purpose                                                  | Data used                                                          | Basis (to confirm)                       |
+| -------------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------- |
+| Show relevant recommendations during the visit           | Anonymous visit data (browser memory)                              | Visitor's interaction                    |
+| Send the personalized report the visitor requested       | Contact data, visit summary, recommendations                       | Report consent — **[Linde Legal]**       |
+| Prepare the follow-up package (default `LOCAL_PACKAGE`)  | Contact data, report, interests, internal score                    | Report consent — **[Linde Legal]** (A22) |
+| Sales follow-up                                          | Contact data and interests, **only where follow-up consent = yes** | Follow-up consent — **[Linde Legal]**    |
+| Operate delivery (retries, status)                       | Technical data                                                     | Needed to fulfil the request             |
+| Booth statistics (aggregate counts in the admin utility) | Stored leads                                                       | **[Linde Privacy]** to confirm           |
+
+**Follow-up mode (ADR-062).** `FOLLOW_UP_MODE=LOCAL_PACKAGE` (the default) sends no email: the lead and its
+report are stored on the laptop and handed to the sales team in the Convention Export Package, and a
+representative delivers the report. `SMTP_EMAIL` sends it automatically. The mode in force is stored with
+each lead.
 
 Exports include the follow-up consent column; the README and the export screen instruct staff to follow up
 only with visitors who consented. **[Linde Privacy]** should confirm this handling rule for the sales team.
 
 ## 3. Storage locations
 
-| Location                                         | Content                                              | Protection                                                                                  |
-| ------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Kiosk browser memory                             | Visit data; contact data only while the form is open | Cleared on every reset (hard reload); no localStorage, sessionStorage, IndexedDB or cookies |
-| Laptop: `data/linde-sphere.db` (+ `-wal`/`-shm`) | Leads, interests, summaries, reports, deliveries     | Git-ignored; not served by any route; **disk encryption required — [Linde IT]**             |
-| Laptop: `data/backups/`                          | Full database copies (`npm run db:backup`)           | Git-ignored; **encrypted storage required — [Linde IT]**                                    |
-| Laptop: `data/exports/` or browser downloads     | CSV exports (`db:export`, admin utility)             | Git-ignored; confirmation required; **handling rule — [Linde Privacy]**                     |
-| Laptop: `data/email-preview/`                    | Development email previews (contain contact data)    | Git-ignored; files mode 600; development only                                               |
-| Application log (console)                        | Events with ids, counts and masked values            | Personal fields masked; no exported data or message content                                 |
-| SMTP relay and recipient mailbox                 | The report email                                     | TLS to the relay; **relay and sender account — [Linde IT]**                                 |
+| Location                                         | Content                                                                                                                | Protection                                                                                                                                 |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Kiosk browser memory                             | Visit data; contact data only while the form is open                                                                   | Cleared on every reset (hard reload); no localStorage, sessionStorage, IndexedDB or cookies                                                |
+| Laptop: `data/linde-sphere.db` (+ `-wal`/`-shm`) | Leads, interests, summaries, reports, deliveries                                                                       | Git-ignored; not served by any route; **disk encryption required — [Linde IT]**                                                            |
+| Laptop: `data/backups/`                          | Full database copies (`npm run db:backup`)                                                                             | Git-ignored; **encrypted storage required — [Linde IT]**                                                                                   |
+| Laptop: `data/exports/` or browser downloads     | CSV exports (`db:export`, admin utility)                                                                               | Git-ignored; confirmation required; **handling rule — [Linde Privacy]**                                                                    |
+| Laptop: `data/exports/` or browser downloads     | Convention Export Package ZIP (`followup:package`, admin): `leads.csv` + every active lead's report (HTML, text, JSON) | Git-ignored; file mode 600 (CLI); confirmation required (admin); opaque folder names; **handling rule — [Linde Privacy] [Linde IT]** (A21) |
+| Laptop: `data/email-preview/`                    | Development email previews (contain contact data)                                                                      | Git-ignored; files mode 600; development only                                                                                              |
+| Application log (console)                        | Events with ids, counts and masked values                                                                              | Personal fields masked; no exported data or message content                                                                                |
+| SMTP relay and recipient mailbox                 | The report email                                                                                                       | TLS to the relay; **relay and sender account — [Linde IT]**                                                                                |
 
 ## 4. Transmission paths
 
@@ -103,24 +112,25 @@ only with visitors who consented. **[Linde Privacy]** should confirm this handli
    Mitigations: private hotspot with WPA2/WPA3 password, host allowlist (loopback, private IPv4, `.local`),
    same-origin checks, CSP, no third-party requests. **[Linde Security] [Linde IT]:** approve plain HTTP on
    an isolated hotspot, or provide a trusted local certificate for HTTPS.
-2. **Laptop → SMTP relay:** the rendered report. TLS 1.2+ with certificate verification, implicit TLS or
+2. **Laptop → SMTP relay (only `FOLLOW_UP_MODE=SMTP_EMAIL`):** the rendered report. In the default
+   `LOCAL_PACKAGE` mode the application sends nothing outside the local network. TLS 1.2+ with certificate verification, implicit TLS or
    required STARTTLS; plain SMTP is refused in production. **[Linde IT]:** relay, sender address, SPF/DKIM.
 3. **Relay → visitor's mailbox:** outside the application's control.
-4. **Laptop → sales team:** CSV exports or backups moved manually. **[Linde Privacy] [Linde IT]:** approved
+4. **Laptop → sales team:** the Convention Export Package, CSV exports or backups moved manually. **[Linde Privacy] [Linde IT]:** approved
    transfer channel and destination (e.g., CRM import), and deletion of local copies.
 5. **No other outbound traffic:** no analytics, fonts, CDNs or remote images (verified by an automated test
    that fails on any cross-origin request during a full visit).
 
 ## 5. Consent points
 
-| Point                         | What the visitor sees                                                                | Status                                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Welcome screen → "Privacidad" | Four plain-language statements (no contact data to explore; reset clears selections) | Draft wording — **[Linde Legal] [Linde Marketing]**                                      |
-| Form step 1                   | "Use sus datos de trabajo. No incluya información de pacientes."                     | Draft wording — **[Linde Marketing]**                                                    |
-| Form step 2 — consent 1       | Permission to send the requested report (required, unchecked by default)             | Placeholder text v0.1.0 marked [BORRADOR] — **[Linde Legal]**                            |
-| Form step 2 — consent 2       | Optional permission for sales follow-up (independent, unchecked by default)          | Placeholder text v0.1.0 marked [BORRADOR] — **[Linde Legal]**                            |
-| Form step 2 — privacy notice  | Purpose statement                                                                    | Placeholder — must name the controller and a contact — **[Linde Legal] [Linde Privacy]** |
-| Report email footer           | Why the visitor receives it; how to ask about their data                             | Placeholder [BORRADOR] — **[Linde Legal] [Linde Privacy]**                               |
+| Point                         | What the visitor sees                                                                | Status                                                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Welcome screen → "Privacidad" | Four plain-language statements (no contact data to explore; reset clears selections) | Draft wording — **[Linde Legal] [Linde Marketing]**                                                                             |
+| Form step 1                   | "Use sus datos de trabajo. No incluya información de pacientes."                     | Draft wording — **[Linde Marketing]**                                                                                           |
+| Form step 2 — consent 1       | Permission to send the requested report (required, unchecked by default)             | Placeholder text v0.1.0 marked [BORRADOR] — **[Linde Legal]**; must cover delivery by a representative in `LOCAL_PACKAGE` (A22) |
+| Form step 2 — consent 2       | Optional permission for sales follow-up (independent, unchecked by default)          | Placeholder text v0.1.0 marked [BORRADOR] — **[Linde Legal]**                                                                   |
+| Form step 2 — privacy notice  | Purpose statement                                                                    | Placeholder — must name the controller and a contact — **[Linde Legal] [Linde Privacy]**                                        |
+| Report email footer           | Why the visitor receives it; how to ask about their data                             | Placeholder [BORRADOR] — **[Linde Legal] [Linde Privacy]**                                                                      |
 
 Consent text lives in `content/consent.json` (versioned). The server rejects submissions made with an
 outdated consent version. Only the **version** is stored with each lead, not the exact text or the language
@@ -131,17 +141,18 @@ language per consent (a planned `ConsentRecord` table).
 
 Nothing is deleted automatically. `LEAD_RETENTION_DAYS` is an empty placeholder: no period has been invented.
 
-| Data                                    | Current behavior                                      | Decision needed                                                          |
-| --------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------ |
-| Leads, interests, rendered reports      | Kept until manually removed                           | Retention period and deletion method — **[Linde Privacy] [Linde Legal]** |
-| Visitors without follow-up consent      | Kept like other leads                                 | Delete after the report is sent? — **[Linde Privacy]**                   |
-| Anonymous session summaries             | Kept (not personal data)                              | Confirm classification and period — **[Linde Privacy]**                  |
-| Delivery status and event history       | Kept with the lead (deleted with it)                  | Period — **[Linde Privacy]**                                             |
-| Database backups                        | Manual; kept until deleted                            | Where, how long, who holds them — **[Linde IT] [Linde Privacy]**         |
-| CSV exports                             | Manual; kept until deleted                            | Destination and deletion after import — **[Linde Privacy]**              |
-| Email previews (development)            | Kept until deleted                                    | Must not exist on the event laptop — **[Linde IT]**                      |
-| Application logs                        | Console output (masked)                               | Whether logs are captured and for how long — **[Linde IT]**              |
-| Data-subject requests (access, erasure) | `Lead.status = erasure_requested` exists; no workflow | Process, owner and contact channel — **[Linde Privacy] [Linde Legal]**   |
+| Data                                    | Current behavior                                      | Decision needed                                                                |
+| --------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Leads, interests, rendered reports      | Kept until manually removed                           | Retention period and deletion method — **[Linde Privacy] [Linde Legal]**       |
+| Visitors without follow-up consent      | Kept like other leads                                 | Delete after the report is sent? — **[Linde Privacy]**                         |
+| Anonymous session summaries             | Kept (not personal data)                              | Confirm classification and period — **[Linde Privacy]**                        |
+| Delivery status and event history       | Kept with the lead (deleted with it)                  | Period — **[Linde Privacy]**                                                   |
+| Database backups                        | Manual; kept until deleted                            | Where, how long, who holds them — **[Linde IT] [Linde Privacy]**               |
+| CSV exports                             | Manual; kept until deleted                            | Destination and deletion after import — **[Linde Privacy]**                    |
+| Convention Export Packages              | Manual; kept until deleted                            | Who receives them, destination, deletion after follow-up — **[Linde Privacy]** |
+| Email previews (development)            | Kept until deleted                                    | Must not exist on the event laptop — **[Linde IT]**                            |
+| Application logs                        | Console output (masked)                               | Whether logs are captured and for how long — **[Linde IT]**                    |
+| Data-subject requests (access, erasure) | `Lead.status = erasure_requested` exists; no workflow | Process, owner and contact channel — **[Linde Privacy] [Linde Legal]**         |
 
 ## 7. Access-control assumptions
 
@@ -190,27 +201,30 @@ confirm:
 
 ## 9. Unresolved approvals
 
-| #   | Item                                                                                    | Owner                                 | Blocks                      |
-| --- | --------------------------------------------------------------------------------------- | ------------------------------------- | --------------------------- |
-| A1  | Final consent wording (ES/EN), privacy notice with controller and contact               | **[Linde Legal] [Linde Privacy]**     | Collecting real leads       |
-| A2  | Whether storing the consent version (not exact text) is sufficient                      | **[Linde Legal]**                     | Collecting real leads       |
-| A3  | Retention periods and deletion method for every row in §6; data-subject request process | **[Linde Privacy] [Linde Legal]**     | Post-event handling         |
-| A4  | Plain HTTP on an isolated hotspot vs. local HTTPS certificate                           | **[Linde Security] [Linde IT]**       | Event deployment            |
-| A5  | Laptop hardening: disk encryption, accounts, screen lock, custody                       | **[Linde IT]**                        | Event deployment            |
-| A6  | Kiosk browser lockdown configuration on the tablet                                      | **[Linde IT]**                        | Event deployment            |
-| A7  | SMTP relay, sender address, SPF/DKIM, dedicated account                                 | **[Linde IT]**                        | Real email delivery         |
-| A8  | MVP admin protection acceptable for the event; production authentication plan           | **[Linde Security]**                  | Enabling admin at the event |
-| A9  | Who may handle exports/backups; approved transfer channel to sales/CRM                  | **[Linde Privacy] [Linde IT]**        | Handing leads to sales      |
-| A10 | Follow-up only with consenting visitors (sales handling rule)                           | **[Linde Privacy] [Linde Legal]**     | Sales follow-up             |
-| A11 | Report copy, disclaimer and footer wording; sales contact details                       | **[Linde Marketing] [Linde Legal]**   | Production mode             |
-| A12 | "Linde Sphere" name and brand usage                                                     | **[Linde Marketing]**                 | Production mode             |
-| A13 | Validated Puerto Rico solution catalog and approved resources                           | **[Linde Marketing]** (with PR sales) | Production mode             |
-| A14 | Log capture and retention on the laptop                                                 | **[Linde IT] [Linde Privacy]**        | Event deployment            |
-| A15 | Security review of this MVP before any use beyond the convention                        | **[Linde Security]**                  | Any wider deployment        |
-| A16 | Network for the event: Windows Mobile Hotspot or venue network; which devices may join  | **[Linde IT] [Linde Security]**       | Event deployment            |
-| A17 | Inbound firewall rule for Node.js on the server port (profile, scope)                   | **[Linde IT] [Linde Security]**       | Kiosk reaching the laptop   |
-| A18 | Running the launch scripts: PowerShell execution policy or script signing               | **[Linde IT]**                        | Using the launch scripts    |
-| A19 | Laptop power, sleep and lid settings for event use; Node.js installation                | **[Linde IT]**                        | Event deployment            |
+| #   | Item                                                                                                                                                                  | Owner                                        | Blocks                                   |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ---------------------------------------- |
+| A1  | Final consent wording (ES/EN), privacy notice with controller and contact                                                                                             | **[Linde Legal] [Linde Privacy]**            | Collecting real leads                    |
+| A2  | Whether storing the consent version (not exact text) is sufficient                                                                                                    | **[Linde Legal]**                            | Collecting real leads                    |
+| A3  | Retention periods and deletion method for every row in §6; data-subject request process                                                                               | **[Linde Privacy] [Linde Legal]**            | Post-event handling                      |
+| A4  | Plain HTTP on an isolated hotspot vs. local HTTPS certificate                                                                                                         | **[Linde Security] [Linde IT]**              | Event deployment                         |
+| A5  | Laptop hardening: disk encryption, accounts, screen lock, custody                                                                                                     | **[Linde IT]**                               | Event deployment                         |
+| A6  | Kiosk browser lockdown configuration on the tablet                                                                                                                    | **[Linde IT]**                               | Event deployment                         |
+| A7  | SMTP relay, sender address, SPF/DKIM, dedicated account                                                                                                               | **[Linde IT]**                               | Real email delivery                      |
+| A8  | MVP admin protection acceptable for the event; production authentication plan                                                                                         | **[Linde Security]**                         | Enabling admin at the event              |
+| A9  | Who may handle exports/backups; approved transfer channel to sales/CRM                                                                                                | **[Linde Privacy] [Linde IT]**               | Handing leads to sales                   |
+| A10 | Follow-up only with consenting visitors (sales handling rule)                                                                                                         | **[Linde Privacy] [Linde Legal]**            | Sales follow-up                          |
+| A11 | Report copy, disclaimer and footer wording; sales contact details                                                                                                     | **[Linde Marketing] [Linde Legal]**          | Production mode                          |
+| A12 | "Linde Sphere" name and brand usage                                                                                                                                   | **[Linde Marketing]**                        | Production mode                          |
+| A13 | Validated Puerto Rico solution catalog and approved resources                                                                                                         | **[Linde Marketing]** (with PR sales)        | Production mode                          |
+| A14 | Log capture and retention on the laptop                                                                                                                               | **[Linde IT] [Linde Privacy]**               | Event deployment                         |
+| A15 | Security review of this MVP before any use beyond the convention                                                                                                      | **[Linde Security]**                         | Any wider deployment                     |
+| A16 | Network for the event: Windows Mobile Hotspot or venue network; which devices may join                                                                                | **[Linde IT] [Linde Security]**              | Event deployment                         |
+| A17 | Inbound firewall rule for Node.js on the server port (profile, scope)                                                                                                 | **[Linde IT] [Linde Security]**              | Kiosk reaching the laptop                |
+| A18 | Running the launch scripts: PowerShell execution policy or script signing                                                                                             | **[Linde IT]**                               | Using the launch scripts                 |
+| A19 | Laptop power, sleep and lid settings for event use; Node.js installation                                                                                              | **[Linde IT]**                               | Event deployment                         |
+| A20 | Internal lead scoring of business contacts: whether it is acceptable (profiling notice), and the weights (role, consent, engagement, personal mailbox)                | **[Linde Privacy] [Linde Legal]** + PR sales | Using scores for follow-up               |
+| A21 | Convention Export Package (`LOCAL_PACKAGE` default): who may generate and receive it, transfer channel, storage and deletion after follow-up                          | **[Linde Privacy] [Linde IT]**               | Handing packages to sales                |
+| A22 | Report-consent wording when no automatic email is sent: it must cover a representative delivering the report later; visitor copy says the package "has been prepared" | **[Linde Legal] [Linde Marketing]**          | Collecting real leads in `LOCAL_PACKAGE` |
 
 ## 10. Residual risks (accepted for the MVP, pending review)
 
@@ -218,5 +232,6 @@ confirm:
 - Rate limits key on client addresses that can be spoofed on a LAN; a global cap bounds the impact, and on a
   hostile network a flood could block submissions for up to a minute.
 - Admin sessions are held in memory and have no roles; anyone with the passphrase has full admin access.
-- The database, backups and exports are only as safe as the laptop and the people handling them (A5, A9).
+- The database, backups, exports and follow-up packages are only as safe as the laptop and the people handling
+  them (A5, A9, A21). A package bundles every selected lead's report in one file.
 - A browser refresh during the form discards what the visitor typed (privacy over convenience).

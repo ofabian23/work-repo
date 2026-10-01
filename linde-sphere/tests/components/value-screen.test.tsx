@@ -38,7 +38,7 @@ function expectValueScreen() {
     expect(card).toHaveTextContent("Siguiente paso");
     expect(card.textContent).not.toMatch(/%|puntaje|score|puntuación/i);
   }
-  expect(screen.getByTestId("send-summary")).toHaveTextContent("Enviarme mi resumen personalizado");
+  expect(screen.getByTestId("send-summary")).toHaveTextContent("Solicitar mi resumen personalizado");
   expect(screen.getByTestId("continue-exploring")).toBeInTheDocument();
   expect(screen.getByTestId("review-priorities")).toBeInTheDocument();
   expect(screen.getByTestId("recommendations-start-over")).toBeInTheDocument();

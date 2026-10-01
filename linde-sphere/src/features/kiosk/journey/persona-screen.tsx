@@ -59,7 +59,7 @@ export function PersonaScreen({
         <EmptyState title={t("ui.emptyTitle")} body={t("role.empty")} />
       ) : (
         <div className="flex flex-col gap-3">
-          <ul aria-label={t("role.listLabel")} className="grid gap-4 sm:grid-cols-2">
+          <ul aria-label={t("role.listLabel")} className="grid gap-3 sm:grid-cols-2">
             {single.map((persona) => (
               <li key={persona.id} className="flex">
                 <PersonaCard

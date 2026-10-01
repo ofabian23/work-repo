@@ -184,7 +184,11 @@ export function LeadFormScreen({
     if (outcome.kind === "stored") {
       onSubmitted();
       setSendingStage("preparing");
-      const delivery = await awaitDelivery(api, outcome.statusToken, statusPoll);
+      // Only an email follow-up has a delivery to wait for (ADR-062).
+      const delivery =
+        outcome.followUp === "package"
+          ? "packaged"
+          : await awaitDelivery(api, outcome.statusToken, statusPoll);
       if (!mounted.current) return;
       setResult({
         delivery,

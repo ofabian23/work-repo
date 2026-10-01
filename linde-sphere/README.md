@@ -3,9 +3,11 @@
 Interactive healthcare discovery experience for a portrait touchscreen kiosk at a healthcare convention
 in Puerto Rico (internal codename _Mockup Vision_).
 
-**Status:** foundation, content model, convention seed content, recommendation engine, touchscreen design
-system and the kiosk shell (attract → welcome, session store, inactivity reset) are implemented (Phases 1–4).
-The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md](./TASKS.md).
+**Status:** MVP feature-complete. The three journeys, hospital explorer, recommendations, lead capture,
+report email with retries, session reset, local admin, sales validation and the Windows launch scripts are
+built and tested. All content is still a demonstrative assumption pending Puerto Rico validation.
+
+Release status, run instructions and open approvals are in [RELEASE_READINESS.md](./RELEASE_READINESS.md).
 
 ## Documentation
 
@@ -19,6 +21,7 @@ The three entry paths open placeholder screens until Phases 5–6. See [TASKS.md
 | [PRIVACY_REVIEW.md](./PRIVACY_REVIEW.md)                             | Data, storage, transmission, consent, open approvals                 |
 | [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md)             | How the Puerto Rico sales team reviews and approves content          |
 | [CONVENTION_STARTUP_CHECKLIST.md](./CONVENTION_STARTUP_CHECKLIST.md) | Daily startup, test and shutdown checklist at the booth              |
+| [RELEASE_READINESS.md](./RELEASE_READINESS.md)                       | Final audit, run instructions, open approvals, go/no-go              |
 | [TESTING.md](./TESTING.md)                                           | How the app is tested; requirement-to-test map; what cannot run here |
 | [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md)                       | Physical-device test of the Android kiosk                            |
 
@@ -42,34 +45,35 @@ npm run dev                 # open http://localhost:3000
 
 ## Scripts
 
-| Command                                      | What it does                                                                                |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)                             |
-| `npm run dev:network`                        | Development server reachable from **other devices** on the network                          |
-| `npm run build`                              | Production build                                                                            |
-| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)                         |
-| `npm run start:network`                      | Serve the production build to the network (kiosk use)                                       |
-| `npm run lint`                               | ESLint (zero warnings allowed)                                                              |
-| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                                           |
-| `npm run test`                               | Unit tests (Vitest)                                                                         |
-| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes                              |
-| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                                   |
-| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                                  |
-| `npm run content:export`                     | Regenerate the content and sales-validation CSVs (`exports/`) and CONTENT_VALIDATION.md §11 |
-| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests                   |
-| `npm run format`                             | Format all files with Prettier                                                              |
-| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)                       |
-| `npm run db:migrate`                         | Development only: create a new migration after editing the schema                           |
-| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`)                   |
-| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                                        |
-| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)                             |
-| `npm run email:status`                       | Email deliveries by status, and those needing attention (ids and codes)                     |
-| `npm run email:retry -- --delivery <id>`     | One immediate attempt for a delivery (`--all-failed` for every failed one)                  |
-| `npm run security:bundle`                    | After `build`: fail if server secrets or server-only code reach the browser bundle          |
-| `npm run security:audit`                     | `npm audit` of the runtime dependency tree (high severity fails)                            |
-| `npm run email:preview`                      | Sample reports (ES and EN, synthetic data) in `data/email-preview/`                         |
-| `scripts\windows\start-kiosk-server.ps1`     | Windows: checks, then production server on the network, with kiosk URLs                     |
-| `scripts\windows\start-dev-network.ps1`      | Windows: checks, then development server on the network (not for the event)                 |
+| Command                                      | What it does                                                                                 |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `npm run dev`                                | Development server on **this computer only** (`localhost:3000`)                              |
+| `npm run dev:network`                        | Development server reachable from **other devices** on the network                           |
+| `npm run build`                              | Production build                                                                             |
+| `npm run start`                              | Serve the production build on this computer only (`localhost:3000`)                          |
+| `npm run start:network`                      | Serve the production build to the network (kiosk use)                                        |
+| `npm run lint`                               | ESLint (zero warnings allowed)                                                               |
+| `npm run typecheck`                          | Generate Next.js route types, then `tsc --noEmit`                                            |
+| `npm run test`                               | Unit tests (Vitest)                                                                          |
+| `npm run test:e2e`                           | End-to-end tests (Playwright) at kiosk, laptop and phone sizes                               |
+| `npm run content:check`                      | Validate every file in `content/` (exit code 1 on errors)                                    |
+| `npm run content:check -- --mode production` | Also require production readiness (validated content only)                                   |
+| `npm run content:export`                     | Regenerate the content and sales-validation CSVs (`exports/`) and CONTENT_VALIDATION.md §11  |
+| `npm run check`                              | content check + export freshness + lint + typecheck + format + unit tests                    |
+| `npm run format`                             | Format all files with Prettier                                                               |
+| `npm run db:deploy`                          | Apply database migrations (creates `data/linde-sphere.db` if missing)                        |
+| `npm run db:migrate`                         | Development only: create a new migration after editing the schema                            |
+| `npm run db:seed`                            | Development only: add two synthetic leads (refuses `NODE_ENV=production`)                    |
+| `npm run db:backup`                          | Consistent backup of the database to `data/backups/`                                         |
+| `npm run db:export`                          | Export leads to CSV in `data/exports/` (contains personal data)                              |
+| `npm run followup:package`                   | Convention Export Package (ZIP: `leads.csv` + `reports/`) in `data/exports/` (personal data) |
+| `npm run email:status`                       | Email deliveries by status, and those needing attention (ids and codes)                      |
+| `npm run email:retry -- --delivery <id>`     | One immediate attempt for a delivery (`--all-failed` for every failed one)                   |
+| `npm run security:bundle`                    | After `build`: fail if server secrets or server-only code reach the browser bundle           |
+| `npm run security:audit`                     | `npm audit` of the runtime dependency tree (high severity fails)                             |
+| `npm run email:preview`                      | Sample reports (ES and EN, synthetic data) in `data/email-preview/`                          |
+| `scripts\windows\start-kiosk-server.ps1`     | Windows: checks, then production server on the network, with kiosk URLs                      |
+| `scripts\windows\start-dev-network.ps1`      | Windows: checks, then development server on the network (not for the event)                  |
 
 Use another port with `-- -p <port>`, for example `npm run dev -- -p 4000`.
 
@@ -122,7 +126,8 @@ new hardware, [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md).
 
 Commands run in **PowerShell** from the `linde-sphere` folder.
 
-   Install dependencies. Install Node.js 22 LTS (Prisma 7.10+ requires Node 20.19+ or 22.12+), which includes npm, then:
+1. **Install dependencies.** Install Node.js 22 LTS (Prisma 7.10+ requires Node 20.19+ or 22.12+), which
+   includes npm, then:
 
    ```powershell
    npm install
@@ -137,9 +142,10 @@ Commands run in **PowerShell** from the `linde-sphere` folder.
    notepad .env
    ```
 
-   Set at least `CONTENT_MODE` (`demo` until content is validated), the email settings (see
-   [Personalized report email](#personalized-report-email)) and, only if needed, `PORT`. Keep secrets only
-   in `.env`, which is git-ignored.
+   Set at least `CONTENT_MODE` (`demo` until content is validated), `FOLLOW_UP_MODE` (leave the default
+   `LOCAL_PACKAGE` unless SMTP email is approved; see
+   [Follow-up strategy](#follow-up-strategy-follow_up_mode)) and, only if needed, `PORT`. The SMTP settings
+   are needed only for `FOLLOW_UP_MODE=SMTP_EMAIL`. Keep secrets only in `.env`, which is git-ignored.
 
 3. **Initialize SQLite.** This creates `data\linde-sphere.db` and applies migrations. Run it again after
    every update.
@@ -275,10 +281,20 @@ Production builds answer 404 at both URLs unless `ENABLE_COMPONENT_GALLERY=true`
 
 ## Scene art
 
-The placeholder illustrations in `public/assets/scenes/placeholder/` are original and generated by
-`npm run art:placeholders`. Add `-- --sync-content` to also write the hotspot anchors drawn in each scene into
-`content/scenes`. Approved art replaces these files at the same 1200 × 1500 size. Then re-check the hotspot
-positions with the calibration tool.
+All eight scenes use the **approved illustrations** (ADR-063). The originals are kept unchanged and unserved in
+`art-source/scenes/prototype1/`, with their source, approval status and checksums in
+[`art-source/README.md`](./art-source/README.md). `npm run art:scenes` writes optimized WebP copies
+(640–1536 px, never larger than the original) to `public/assets/scenes/approved/` and prints the `srcSet` for
+each scene file. The kiosk then downloads only the size it needs.
+
+To replace or add art: keep the art box proportions (1536 × 2752; `npm run content:check` refuses others), add
+the original to `art-source/`, map it in `scripts/scene-art.ts`, run `npm run art:scenes`, update the scene's
+`background`, and re-check hotspot positions with the calibration tool. The old generated placeholders
+(`npm run art:placeholders`, 4:5) are kept but no longer used.
+
+**Persona illustrations** on the role cards follow the same pattern (ADR-064): originals in `art-source/personas/`,
+`npm run art:personas` writes 160/320 px WebP copies to `public/assets/personas/`, and each persona's
+`illustration` in `content/personas.json` points to them. Personas without one show a neutral tile.
 
 ## Health check
 
@@ -309,12 +325,12 @@ leads to `POST /api/leads`; the only other lead route returns a delivery status 
 
 - `npm run db:backup` writes a consistent copy to `data/backups/linde-sphere-<timestamp>.db` using SQLite's
   online backup, so it is safe while the kiosk is running. Use `-- --out <path>` to choose the file.
-- Do not copy `linde-sphere.db` by hand while the server runs: recent writes may still be in the
-  `-wal` file. Stop the server first, or use `db:backup`.
+- Do not copy `linde-sphere.db` by hand while the server runs: a copy taken mid-write can be inconsistent.
+  Stop the server first, or use `db:backup`.
 - Suggested event routine: back up at the end of each event day and before any update, to an
   **encrypted** USB drive or approved company storage. Keep at least the last two backups.
 - Restore: stop the server, replace `data/linde-sphere.db` with the backup file (delete any
-  `linde-sphere.db-wal` / `-shm` files next to it), run `npm run db:deploy`, then start the server.
+  `linde-sphere.db-journal` file next to it), run `npm run db:deploy`, then start the server.
 
 ### Export
 
@@ -360,11 +376,53 @@ The intervals can be changed in `.env` without rebuilding (restart the server; v
 | `KIOSK_FORM_IDLE_COUNTDOWN_SECONDS` | 20      | Warning countdown on the contact form           |
 | `KIOSK_COMPLETION_SECONDS`          | 15      | Completion screen before returning to the start |
 
-## Personalized report email
+## Follow-up strategy (`FOLLOW_UP_MODE`)
 
-When a visitor sends the form, the server stores the lead, builds their personalized report (in their
-chosen language) and stores it with a pending email — all in one step — and then tries to send it. If
-sending fails, the lead is safe: the email is retried automatically with increasing waits, up to
+What happens after a visitor asks for their personalized summary is set by one variable in `.env`
+(ADR-062, ARCHITECTURE §9.7). Email is **optional and off by default**.
+
+| `FOLLOW_UP_MODE`          | What happens                                                                                                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `LOCAL_PACKAGE` (default) | The lead and its report (HTML, text, JSON) are saved on the laptop as "follow-up pending". **No email is attempted.** |
+| `SMTP_EMAIL`              | The same, and the report is emailed automatically through `EMAIL_PROVIDER` (see below). Needs IT/security approval.   |
+| `MICROSOFT_GRAPH`         | Not implemented yet: the server refuses to start and says so.                                                         |
+| `OUTLOOK_DRAFT`           | Not implemented yet (architecture placeholder): the server refuses to start and says so.                              |
+
+The kiosk wording follows the mode: in `LOCAL_PACKAGE` the visitor reads "Su paquete personalizado de
+seguimiento está preparado" and that a Linde representative can follow up. It never says the report was
+sent. The admin header shows the current mode, and `GET /api/health` reports
+`"followUp": { "mode": "LOCAL_PACKAGE", "deliversExternally": false }`.
+
+### Convention workflow: the follow-up package (default)
+
+1. Leave `FOLLOW_UP_MODE=LOCAL_PACKAGE` in `.env` (or leave it unset).
+2. During the event, visitors submit the form; nothing leaves the laptop.
+3. At the end of each day (or the event), create the **Convention Export Package**:
+   - Admin → Exportaciones → "Paquete de seguimiento de la convención": tick the confirmation and download.
+     Optionally tick "Marcar los leads incluidos como exportados" (status becomes "Exportado").
+   - Or on the laptop: `npm run followup:package` (all active leads), `npm run followup:package -- --only-new
+--mark-exported` (only leads not exported yet, then mark them), `--from 2026-10-20 --to 2026-10-22`,
+     `--out <file.zip>`. Files go to `data/exports/` (git-ignored, readable by your user only).
+4. The ZIP contains `leads.csv` (one lead per row with consents, interests, follow-up mode/status and the
+   folder of its report) and `reports/<id>/report.html`, `report.txt`, `report.json` for each active lead.
+   Folder names are opaque ids. Hand it to the sales team only through the channel Linde approves
+   (PRIVACY_REVIEW A21), follow up only with visitors whose `follow_up_consent` is `true`, and delete local
+   copies when done.
+
+### Switching to automatic email later (configuration only)
+
+1. Obtain Linde IT/security approval of the SMTP relay and sender (RELEASE_READINESS gates 6–7).
+2. Configure the SMTP settings as in "Event: real delivery through SMTP" below.
+3. Set `FOLLOW_UP_MODE=SMTP_EMAIL` and restart the server. No code change is needed.
+4. Send one test submission to an internal mailbox and check `npm run email:status`.
+
+Leads stored while the mode was `LOCAL_PACKAGE` are not emailed retroactively; they stay in the package.
+
+## Personalized report email (`FOLLOW_UP_MODE=SMTP_EMAIL`)
+
+In the email mode, when a visitor sends the form, the server stores the lead, builds their personalized
+report (in their chosen language) and stores it with a pending email — all in one step — and then tries to
+send it. If sending fails, the lead is safe: the email is retried automatically with increasing waits, up to
 `EMAIL_MAX_ATTEMPTS` times, and then marked failed for a manual retry. Nothing ever loops forever.
 
 The report contains the visitor's name, organization and role, their priorities, the areas they explored,
@@ -376,7 +434,7 @@ marketing, legal and sales approve them).
 
 ### Development: preview without sending (default)
 
-1. Leave `EMAIL_PROVIDER=preview` in `.env` (or leave it unset).
+1. Set `FOLLOW_UP_MODE=SMTP_EMAIL` and leave `EMAIL_PROVIDER=preview` in `.env` (or leave it unset).
 2. Submit the form in the kiosk (or run `npm run db:seed`).
 3. Open `data/email-preview/index.html` in a browser. Each email is saved as `.html` (open or print),
    `.txt` and `.eml` (open in any mail client). File names contain only a timestamp and an id.
@@ -392,6 +450,7 @@ user only. Delete them when you no longer need them.
 2. In `.env` (never commit it), set — dummy values shown:
 
    ```dotenv
+   FOLLOW_UP_MODE=SMTP_EMAIL
    EMAIL_PROVIDER=smtp
    EMAIL_FROM=Linde Sphere <reportes@example.com>
    EMAIL_REPLY_TO=ventas@example.com
@@ -406,7 +465,8 @@ user only. Delete them when you no longer need them.
    For implicit TLS use `SMTP_PORT=465` and `SMTP_SECURE=true`. The connection always uses TLS 1.2+ with
    certificate verification; with `SMTP_SECURE=false` the server must offer STARTTLS or nothing is sent.
 
-3. Restart the server. `GET /api/health` shows `"email": { "provider": "smtp", "deliversExternally": true }`.
+3. Restart the server. `GET /api/health` shows `"followUp": { "mode": "SMTP_EMAIL", "deliversExternally": true }`
+   and `"email": { "provider": "smtp", "deliversExternally": true }`.
    An invalid configuration stops the server with a message naming the variable (never its value).
 4. Send one test submission to your own address and check `npm run email:status`.
 
@@ -433,8 +493,8 @@ admin consent. The code is structured so a Graph provider can be added later.
 - `tests/e2e/kiosk-device.spec.ts` checks the kiosk-device behavior (zoom, gestures, selection, rotation)
   and the performance budgets: first-load JavaScript, no third-party requests.
 - Both run with the rest of the E2E suite (`npx playwright test`).
-- Asset size budgets are part of `npm run content:check`. Replacement scene art should be exported at
-  1200 × 1500 as WebP, AVIF or SVG, under 1 MB per file.
+- Asset size budgets are part of `npm run content:check` (under 1 MB per file). Scene art must have the
+  1536 × 2752 art box proportions; `npm run art:scenes` produces the optimized copies.
 - Before each event, go through [MANUAL_KIOSK_TEST.md](./MANUAL_KIOSK_TEST.md) on the real touchscreen:
   browser settings, touch and gestures, TalkBack, reset and privacy, network drop and recovery.
 
@@ -450,9 +510,10 @@ admin consent. The code is structured so a Graph provider can be added later.
 
 ## Local administration (optional)
 
-A small admin area on the laptop lets the event team see lead counts, filter leads, open a lead's
-business contact details, interests and email status, retry a failed email, mark leads as exported,
-download CSV exports (leads, interests, content validation) and a database backup, review content still
+A small admin area on the laptop shows the **current follow-up mode** (from `FOLLOW_UP_MODE`) and lets the
+event team see lead counts (including "Paquetes de seguimiento generados"), filter leads, open a lead's
+business contact details, interests and follow-up status, download the **Convention Export Package**,
+retry a failed email (email mode only), mark leads as exported, download CSV exports (leads, interests, content validation) and a database backup, review content still
 pending Puerto Rico validation, and run the **sales validation** of every role, challenge, solution and
 digital asset ("Validación de ventas", with a CSV worksheet; see
 [SALES_VALIDATION_GUIDE.md](./SALES_VALIDATION_GUIDE.md)). There is no delete function.

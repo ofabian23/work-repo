@@ -51,7 +51,7 @@ during Phase 1.
 
 | Concern                  | Choice                                                | Version target                                        | Notes                                                  |
 | ------------------------ | ----------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------ |
-| Runtime                  | Node.js LTS                                           | 22.x (≥ 20.9 required by Next.js 16)                  | Same major on dev and Windows laptop                   |
+| Runtime                  | Node.js LTS                                           | 22.x (≥ 22.12, or ≥ 20.19 on Node 20: Prisma 7.10)    | Same major on dev and Windows laptop                   |
 | Framework                | Next.js, App Router                                   | 16.3.x (latest stable)                                | `start:network` binds `0.0.0.0` for LAN (ADR-039)      |
 | UI                       | React                                                 | 19.x                                                  |                                                        |
 | Language                 | TypeScript                                            | 5.x, `strict: true`, `noUncheckedIndexedAccess: true` |                                                        |
@@ -113,7 +113,8 @@ linde-sphere/
 ├─ prisma/ · prisma.config.ts     (Phase 7)
 ├─ public/assets/
 │  ├─ brand/                      # approved brand files only (empty)                       ✅
-│  └─ scenes/placeholder/         # original placeholder SVG layers (scripts/placeholder-art.ts) ✅
+│  ├─ scenes/approved/            # optimized WebP copies of the approved scene art (npm run art:scenes, ADR-063) ✅
+│  └─ scenes/placeholder/         # original placeholder SVG layers, unused since ADR-063 ✅
 ├─ src/
 │  ├─ app/
 │  │  ├─ layout.tsx               # brand CSS vars, viewport, LanguageProvider, AppShell    ✅
@@ -313,7 +314,7 @@ A  ROLE (1/2) ─► ROLE-CHALLENGES (≤ 4 + "Algo más", 2/2) ─► TAILORING
 B  CHALLENGES (all, ≤ 3, 1/2) ─► CHALLENGE-ROLE (optional, 2/2) ─► TAILORING ─► RECOMMENDATIONS
 C  EXPLORE ─(ready)─► "Ver mis recomendaciones" / tray / conversion prompt ─► RECOMMENDATIONS
 
-RECOMMENDATIONS ─┬─ Enviarme mi resumen personalizado ─► SUMMARY-REQUEST ─► LEAD-FORM (§5.2.2)
+RECOMMENDATIONS ─┬─ Solicitar mi resumen personalizado ─► SUMMARY-REQUEST ─► LEAD-FORM (§5.2.2)
                  ├─ Seguir explorando ─► EXPLORE (same scene, progress kept)
                  ├─ Revisar mis prioridades ─► REFINE-CHALLENGES (role shown, "Cambiar mi área")
                  └─ Empezar de nuevo ─► confirmation ─► reset
@@ -348,7 +349,7 @@ It shows value before any form, in this order:
    - the next step and "Verlo en el hospital".
 7. Up to 3 secondary items.
 
-Its one primary action is **"Enviarme mi resumen personalizado"**, which opens a value-first
+Its one primary action is **"Solicitar mi resumen personalizado"**, which opens a value-first
 summary-request screen listing what the summary contains, then the lead form (§5.2.2). The secondary actions are
 "Seguir explorando", "Revisar mis prioridades" and "Empezar de nuevo" (with confirmation). A copy test bans
 pressure, guarantee, clinical and "comprehensive" wording from all UI strings.
@@ -375,6 +376,8 @@ reasons and "Nuevo" marks, plus "Ver todo" and "Seguir explorando". It is a dial
 stays away while it is open.
 
 - The persona grid uses a compact `TouchCard` density so all 11 options fit 1080 × 1920 without scrolling
+- Persona cards show the persona's approved illustration (2:3 WebP with `srcset`, decorative, blended into the
+  card) or a neutral tile; the selection mark sits on the portrait (ADR-064).
   (verified by E2E).
 
 The page (`src/app/page.tsx`) renders at request time and passes the visibility-filtered
@@ -811,13 +814,18 @@ Allowed placeholders: `{persona}`, `{challenges}`, `{facilityType}`, `{scenes}`,
 
 ---
 
-## 8. Lead scoring (internal, server-only)
+## 8. Lead scoring (internal, server-only) ✅
 
-- Module `src/server/lead-scoring.ts` begins with `import "server-only"`; config in
-  `config/lead-scoring.json` is imported only there, so it cannot be bundled into client code.
+Implemented in the final audit (ADR-061).
+
+- Module `src/server/leads/lead-scoring.ts` begins with `import "server-only"`. Its weights live in the
+  module (`LEAD_SCORING`, version `LEAD_SCORING_VERSION`, marked as assumptions pending sales
+  validation), so they cannot be bundled into client code. `security:bundle` also scans for them.
 - Inputs: persona (decision-influence weight), number of challenges, explicit interests, scenes/hotspots
   engaged, facility type, follow-up consent, free-mail domain flag.
-- Output: `{ score: 0–100, tier: "A" | "B" | "C", factors: [{ code, points }] }`, stored on `Lead`.
+- Output: `{ score: 0–100, tier: "A" | "B" | "C", factors: [{ code, points }], version }`, stored on
+  `Lead` (`leadScore`, `leadTier`, `leadScoreFactors`, `leadScoringVersion`, with database CHECKs on range
+  and tier).
 - **Never** returned by `/api/leads`, rendered in the kiosk, or included in the report. Visible only in
   admin views and CSV export. A test asserts the API response schema excludes these fields (AC-16).
 
@@ -886,12 +894,15 @@ route handler (src/app/api/leads/route.ts)
        build ReportPayload + render HTML/text in the visitor's language (ADR-054; null if impossible)
        lead-repository.createSubmission  ── ONE transaction ──
            upsert VisitorSessionSummary (+ replace its SessionSummaryItems)
-           create Lead · createMany LeadInterest · create Report
-           create EmailDelivery(status=pending) + EmailDeliveryEvent(queued)
-           (no report → EmailDelivery failed REPORT_UNAVAILABLE + gave_up; lead still stored)
+           create Lead (followUpMode = FOLLOW_UP_MODE, followUpStatus = follow_up_pending)
+           createMany LeadInterest · create Report (html, text, payloadJson)
+           email modes only (SMTP_EMAIL):
+             create EmailDelivery(status=pending) + EmailDeliveryEvent(queued)
+             (no report → EmailDelivery failed REPORT_UNAVAILABLE + gave_up; lead still stored)
+           LOCAL_PACKAGE (default): no EmailDelivery — no email is ever attempted (ADR-062)
        unique violation on idempotencyKey (two taps raced) → answer as replay
-       onDeliveryQueued(deliveryId) → outbox.schedule (setTimeout 0; never awaited by the request)
-  ─► 201 { statusToken, emailQueued: true, replayed: false }
+       email modes: onDeliveryQueued(deliveryId) → outbox.schedule (setTimeout 0; never awaited)
+  ─► 201 { statusToken, emailQueued, followUp: "package" | "email", replayed: false }
 ```
 
 The response is sent **after** the transaction commits and **before** any email attempt. Email failures
@@ -906,15 +917,15 @@ imports `src/server/db` or `src/server/leads`; `tests/unit/db/layer-boundaries.t
 
 ### 9.3 Data model (Prisma, SQLite) — `prisma/schema.prisma`
 
-| Model                   | Fields                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Lead`                  | `id`, `createdAt`, `updatedAt`, `firstName`, `lastName`, `organization`, `roleLabel` (Spanish persona label), `businessEmail` (normalized), `optionalPhone?`, `preferredLanguage`, `sessionId` → summary, `reportConsent` (always true), `followUpConsent`, `consentTextVersion`, `source`, `status` (`active`/`archived`/`erasure_requested`), `idempotencyKey` (unique), `requestFingerprint`, `statusTokenHash` (unique), `contentVersion` |
-| `LeadInterest`          | `id`, `leadId` (cascade), `category` (`role`/`challenge`/`solution`), `value` (content id), `relevance?` (`high`/`medium`/`possible`, recommendations only — never a score), `sourceType` (`session_selection`/`explicit_interest`/`form_selection`/`recommendation`); unique per lead+category+value+source                                                                                                                                  |
-| `VisitorSessionSummary` | `id`, `sessionId` (unique, anonymous UUID), `startedAt`, `completedAt?`, `selectedPersona?`, `contentVersion`, timestamps                                                                                                                                                                                                                                                                                                                     |
-| `SessionSummaryItem`    | `id`, `summaryId` (cascade), `kind` (`challenge`/`scene`/`hotspot`/`recommendation`), `value`, `position`; unique per summary+kind+value — de-duplicated sets, not an event stream                                                                                                                                                                                                                                                            |
-| `EmailDelivery`         | `id`, `leadId` (cascade), `provider` (`preview`/`smtp`/`graph`), `status` (`pending`/`sent`/`failed`/`retrying`), `attempts`, `lastAttemptAt?`, `nextAttemptAt?`, `providerMessageId?`, `errorCode?` (sanitized UPPER_SNAKE code), `claimedAt?` (atomic send claim), timestamps                                                                                                                                                               |
-| `EmailDeliveryEvent`    | `id`, `deliveryId` (cascade), `eventType` (`queued`/`attempt_started`/`sent`/`attempt_failed`/`retry_scheduled`/`gave_up`/`manual_retry`), `attempt`, `occurredAt`, `errorCode?`, `providerMessageId?` — append-only, codes only                                                                                                                                                                                                              |
-| `Report`                | `id`, `leadId` (unique, cascade), `language`, `subject`, `html`, `text`, `contentVersion`, `copyVersion`, `createdAt` — rendered once at lead time (ADR-013), so retries send exactly what was promised; contains the visitor's name and organization                                                                                                                                                                                         |
+| Model                   | Fields                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Lead`                  | `id`, `createdAt`, `updatedAt`, `firstName`, `lastName`, `organization`, `roleLabel` (Spanish persona label), `businessEmail` (normalized), `optionalPhone?`, `preferredLanguage`, `sessionId` → summary, `reportConsent` (always true), `followUpConsent`, `consentTextVersion`, `source`, `status` (`active`/`archived`/`erasure_requested`), `idempotencyKey` (unique), `requestFingerprint`, `statusTokenHash` (unique), `contentVersion`, `exportedAt?`, lead score fields (ADR-061), `followUpMode` (strategy in force when stored) and `followUpStatus` (`follow_up_pending`/`exported`) (ADR-062) |
+| `LeadInterest`          | `id`, `leadId` (cascade), `category` (`role`/`challenge`/`solution`), `value` (content id), `relevance?` (`high`/`medium`/`possible`, recommendations only — never a score), `sourceType` (`session_selection`/`explicit_interest`/`form_selection`/`recommendation`); unique per lead+category+value+source                                                                                                                                                                                                                                                                                              |
+| `VisitorSessionSummary` | `id`, `sessionId` (unique, anonymous UUID), `startedAt`, `completedAt?`, `selectedPersona?`, `contentVersion`, timestamps                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `SessionSummaryItem`    | `id`, `summaryId` (cascade), `kind` (`challenge`/`scene`/`hotspot`/`recommendation`), `value`, `position`; unique per summary+kind+value — de-duplicated sets, not an event stream                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `EmailDelivery`         | `id`, `leadId` (cascade), `provider` (`preview`/`smtp`/`graph`), `status` (`pending`/`sent`/`failed`/`retrying`), `attempts`, `lastAttemptAt?`, `nextAttemptAt?`, `providerMessageId?`, `errorCode?` (sanitized UPPER_SNAKE code), `claimedAt?` (atomic send claim), timestamps                                                                                                                                                                                                                                                                                                                           |
+| `EmailDeliveryEvent`    | `id`, `deliveryId` (cascade), `eventType` (`queued`/`attempt_started`/`sent`/`attempt_failed`/`retry_scheduled`/`gave_up`/`manual_retry`), `attempt`, `occurredAt`, `errorCode?`, `providerMessageId?` — append-only, codes only                                                                                                                                                                                                                                                                                                                                                                          |
+| `Report`                | `id`, `leadId` (unique, cascade), `language`, `subject`, `html`, `text`, `payloadJson?` (structured report for the follow-up package, ADR-062), `contentVersion`, `copyVersion`, `createdAt` — rendered once at lead time (ADR-013), so retries send exactly what was promised; contains the visitor's name and organization                                                                                                                                                                                                                                                                              |
 
 Indexes: `Lead(createdAt)`, `Lead(sessionId)`, `Lead(businessEmail)`, `LeadInterest(category, value)`,
 `EmailDelivery(status, nextAttemptAt)`, `EmailDelivery(leadId)`. Enums are `TEXT` in SQLite, so the initial
@@ -927,13 +938,17 @@ lead scores.
 cover it for now), `ConsentRecord` rows (exact text and language per consent) and `AdminAuditLog` (Phase 9).
 The consent wording is identified by `consentTextVersion` (texts are versioned in `content/consent.json`).
 Migration 2 redefines `EmailDelivery` (provider `file` → `preview`, `claimedAt`) and re-creates every
-`_check` constraint; an upgrade test covers existing databases.
+`_check` constraint; an upgrade test covers existing databases. Migrations 4 (lead score) and 5 (follow-up
+mode, ADR-062) are hand-written `ADD COLUMN` migrations with their own CHECK constraints.
 
 **Operations.** `npm run db:deploy` (apply migrations), `db:migrate` (create a migration in development),
 `db:seed` (synthetic data; refuses `NODE_ENV=production`), `db:backup` (online SQLite backup),
 `db:export` (CSV). See README → Database.
 
 ### 9.4 Email outbox and worker (ADR-011, ADR-054) — `src/server/email/email-outbox.ts`
+
+Used only by the email follow-up modes (§9.7). In the default `LOCAL_PACKAGE` mode no delivery rows are
+created and `instrumentation.ts` does not start the worker; the code, schema and tests stay in place.
 
 ```
 lead stored (transaction: Lead + Report + EmailDelivery pending + event queued)
@@ -998,6 +1013,68 @@ interface EmailProvider {
 - `npm run email:preview` renders ES/EN samples from fictitious data for design review.
 
 ---
+
+### 9.7 Follow-up strategies (ADR-062) — `src/domain/follow-up/`, `src/server/follow-up/`
+
+`FOLLOW_UP_MODE` (environment, default `LOCAL_PACKAGE`) decides what happens after a visitor asks for their
+summary. `EMAIL_PROVIDER` remains the transport used by the email modes. Nothing is hardcoded: the lead
+service, the kiosk page, the admin console, the worker start-up and `/api/health` all read the parsed value.
+
+| `FollowUpMode`    | Status                       | On lead submission                                                                                    | Visitor sees                                             |
+| ----------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `LOCAL_PACKAGE`   | **Default, implemented**     | Store lead + report (HTML, text, JSON) in SQLite, `followUpStatus = follow_up_pending`. **No email.** | "Su paquete personalizado de seguimiento está preparado" |
+| `SMTP_EMAIL`      | Implemented (ADR-054)        | Same, plus a pending `EmailDelivery`; the outbox sends through `EMAIL_PROVIDER`                       | "Enviamos su resumen" / retry message                    |
+| `MICROSOFT_GRAPH` | Placeholder, refused at boot | (would use the outbox with `GraphProvider`)                                                           | —                                                        |
+| `OUTLOOK_DRAFT`   | Placeholder, refused at boot | (would create a draft per lead for a representative; see below)                                       | —                                                        |
+| `FUTURE_CRM`      | Reserved, refused            | —                                                                                                     | —                                                        |
+
+**LOCAL_PACKAGE.** Steps 1–8 of the convention workflow map to: store the lead (1), build the report payload
+(2) and render HTML (3) and JSON (4) in the visitor's language, all saved in the same transaction (6), with
+`follow_up_pending` (7); the kiosk shows the package confirmation (8) without polling. A PDF (5) is not
+produced; the HTML report prints to PDF from any browser if needed.
+
+**Convention Export Package** (`convention-package.ts`, `zip.ts`): built on request, never stored by the
+server.
+
+```
+linde-sphere-follow-up-package-<timestamp>.zip
+├─ LEEME.txt                      contents and handling rules (Spanish)
+├─ leads.csv                      admin lead CSV + report_folder (formula-safe, UTF-8 BOM, CRLF)
+└─ reports/<leadId>/              opaque id: no personal data in file names
+   ├─ report.html                 the visitor's report as rendered at submission
+   ├─ report.txt                  plain-text version
+   └─ report.json                 { leadId, language, subject, report: ReportPayload }
+```
+
+Only `active` leads are included (filters: date range, exported or not). Sources: the admin page
+(Exportaciones → confirmation required, optional "mark exported" which sets `exportedAt` and
+`followUpStatus = exported`) and `npm run followup:package [-- --only-new --mark-exported --from --to --out]`
+(writes mode-600 files under `data/exports/`). The admin KPI "Paquetes de seguimiento generados" counts
+leads whose report is stored, so each one is in the package.
+
+**Switching to automatic email later (configuration only).** Obtain Linde IT/security approval of the relay
+and sender (RELEASE_READINESS gates 6–7) → set `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` and
+credentials in `.env` → `EMAIL_PROVIDER=smtp` → `FOLLOW_UP_MODE=SMTP_EMAIL` → restart → send a test lead to
+an internal mailbox (CONVENTION_STARTUP_CHECKLIST). Leads stored before the switch stay in the package
+workflow; they are not emailed retroactively.
+
+**Adding Outlook Draft support later** (`outlook-draft.ts` holds the interfaces `FollowUpDraft`,
+`FollowUpDraftProvider`, `DraftResult`):
+
+1. Choose the implementation with Linde IT: (a) `.eml` draft files written into the package
+   (`reports/<leadId>/draft.eml`, header `X-Unsent: 1`, which Outlook opens as an editable draft), needing no
+   Microsoft 365 integration; or (b) Graph drafts (`POST /users/{mailbox}/messages`), needing an Entra ID app
+   registration with `Mail.ReadWrite` and admin consent, and credentials from the environment only.
+2. Implement `FollowUpDraftProvider` and return it from `createOutlookDraftProvider()`.
+3. For (a), add the draft to `buildConventionPackage`. For (b), add a draft outbox modelled on
+   `EmailDelivery`, with a claim, codes-only errors and an admin retry.
+4. Remove the `OUTLOOK_DRAFT` refusal in `src/server/env.ts`. The visitor copy stays "package": a
+   representative sends the email.
+5. Add tests: unit tests for the draft content (visitor-safe payload only, no score), an integration test
+   for no-send behavior, and an E2E test on a server with the mode set.
+
+`MICROSOFT_GRAPH` follows the same pattern through the existing outbox: implement `GraphProvider.send`,
+allow `EMAIL_PROVIDER=graph`, then drop the refusal.
 
 ## 10. Privacy and security boundaries
 
@@ -1108,10 +1185,14 @@ readiness marker (the gallery uses `data-ready`); `<html data-hydrated>` covers 
 
 Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebGL or free camera.
 
-- **Art box:** every layer is drawn on `SCENE_ART` (1200 × 1500, 4:5, `domain/content/scene-art.ts`).
-  The viewer sizes the box with container units, `min(100cqw, 100cqh × 0.8)` by
-  `min(100cqh, 100cqw × 1.25)`, so it fits any container while keeping the ratio. Hotspot `x`/`y` are
-  percentages of this box and land on the same feature at every size.
+- **Art box:** every layer is drawn on `SCENE_ART` (1536 × 2752, the approved art's ≈ 9:16 portrait
+  proportions, `domain/content/scene-art.ts`, ADR-063). The viewer sizes the box with container units,
+  `min(100cqw, 100cqh × ratio)` by `min(100cqh, 100cqw ÷ ratio)`, so it fits any container while keeping the
+  ratio. Hotspot `x`/`y` are percentages of this box and land on the same feature at every size.
+  `content:check` rejects approved art whose real proportions differ by more than 1 %.
+- **Responsive art:** a layer may list `srcSet` candidates (WebP at 640–1536 px, never upscaled). The
+  `<img>` gets `srcset` and `sizes="min(92vw, 42vh)"`, and the neighbor prefetch sets both before `src`.
+  Originals live unserved in `art-source/` (provenance in `art-source/README.md`).
   - The box uses `overflow: clip`: a `hidden` box can be scrolled by focus, which would shift every marker.
 - **Layers:** the background `<img>` has the content's alt text. Foreground layers are decorative
   (`alt=""`) and settle in with a small depth-based offset (`--layer-depth`). Hotspots sit above all layers.
@@ -1152,8 +1233,8 @@ Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebG
 - **Calibration (`/dev/scenes`):** a developer tool (English only). Tapping the art shows normalized x/y (to
   0.1 %) over a 10 % grid with every authored hotspot center, and "Copy coordinates" copies `"x": …, "y": …`.
   Over plain HTTP, where the Clipboard API is unavailable, it falls back to select-and-copy.
-- **Placeholder art (`scripts/placeholder-art.ts`):** flat isometric shapes in the neutral placeholder
-  palette, drawn from code with no reference art. Each drawing registers the anchor of every hotspot it
+- **Placeholder art (`scripts/placeholder-art.ts`, unused since ADR-063):** flat isometric shapes in the
+  neutral placeholder palette on their own 4:5 canvas, drawn from code with no reference art. Each drawing registers the anchor of every hotspot it
   depicts. `npm run art:placeholders -- --sync-content` writes those anchors into `content/scenes`.
 
 ---
@@ -1162,6 +1243,7 @@ Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebG
 
 | Capability            | Primary (no network exposure)                              | Secondary (optional, guarded web UI)             |
 | --------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| Follow-up package     | `npm run followup:package` ✅ (ADR-062)                    | Admin → Exportaciones ✅ (confirmation required) |
 | CSV export            | `npm run db:export -- --out leads.csv` ✅                  | Admin → Exportaciones ✅ (confirmation required) |
 | Database backup       | `npm run db:backup` ✅ (SQLite online backup)              | Admin → Descargar respaldo ✅                    |
 | Outbox status / retry | `npm run email:status` / `email:retry` ✅                  | Admin → lead detail → Reintentar ✅              |
@@ -1182,6 +1264,11 @@ Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebG
   Five consecutive failures lock sign-in (1 min, doubling to 15 min). Every POST must be same-origin (Origin/
   Referer vs Host, or `Sec-Fetch-Site: same-origin` when the browser sends `Origin: null` under
   `Referrer-Policy: no-referrer`). **Production requires approved authentication and a security review.**
+- **Follow-up mode:** the header shows "Modo de seguimiento actual" from `FOLLOW_UP_MODE` (ADR-062). In
+  `LOCAL_PACKAGE` the overview shows "Paquetes de seguimiento generados", follow-up pending and exported;
+  email statistics, the delivery filter and the delivery column appear only in email modes. Lead detail
+  shows the mode the lead was stored under and its follow-up status. The Convention Export Package is the
+  first export.
 - **Features:** aggregate counts; filters (date range in Puerto Rico time, lead status, delivery state,
   exported) in the query string — dates and statuses only; lead detail (business contact, interests,
   delivery state and history); retry of a failed or retrying delivery (one manual outbox attempt); mark as
@@ -1199,26 +1286,27 @@ Implemented in `src/features/explorer/` (ADR-049). No Three.js, Babylon.js, WebG
 
 ## 15. Configuration (environment variables)
 
-| Variable                                                              | Default                       | Purpose                                                           |
-| --------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------- |
-| `DATABASE_URL`                                                        | `file:./data/linde-sphere.db` | SQLite location                                                   |
-| `CONTENT_MODE`                                                        | `demo`                        | `production` \| `demo`                                            |
-| `CONTENT_PREVIEW_PLACEHOLDERS`                                        | `false`                       | Dev-only placeholder preview                                      |
-| `EMAIL_PROVIDER`                                                      | `preview`                     | `preview` (local files, never sends) \| `smtp`; `graph` rejected  |
-| `EMAIL_FROM` / `EMAIL_REPLY_TO`                                       | —                             | Sender identity                                                   |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` | —                             | SMTP provider                                                     |
-| `EMAIL_MAX_ATTEMPTS`                                                  | `12`                          | Outbox retry ceiling                                              |
-| `SMTP_REQUIRE_TLS`                                                    | `true`                        | STARTTLS required when not `SMTP_SECURE`; `false` refused in prod |
-| `EMAIL_PREVIEW_DIR`                                                   | `data/email-preview`          | Development preview output                                        |
-| `EMAIL_WORKER_INTERVAL_MS`                                            | `15000`                       | Retry worker tick                                                 |
-| `LEAD_RETENTION_DAYS`                                                 | — (undecided)                 | Retention placeholder; nothing is deleted automatically (ADR-052) |
-| `ADMIN_ENABLED`                                                       | `false`                       | Enable the local administration utility                           |
-| `ADMIN_PATH`                                                          | `/admin-local`                | Public admin path (one segment)                                   |
-| `ADMIN_PASSPHRASE_HASH`                                               | —                             | scrypt hash (`npm run admin:passphrase`); required if enabled     |
-| `ADMIN_SESSION_MINUTES`                                               | `30`                          | Admin idle sign-out                                               |
-| `DEV_ALLOWED_ORIGINS`                                                 | —                             | Extra dev-server HMR hostnames (comma list)                       |
-| `ENABLE_COMPONENT_GALLERY`                                            | `false`                       | Allow `/dev/components` in production builds                      |
-| `ENABLE_SCENE_CALIBRATION`                                            | `false`                       | Allow `/dev/scenes` (coordinate calibration) in production builds |
+| Variable                                                              | Default                       | Purpose                                                                                                                 |
+| --------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                        | `file:./data/linde-sphere.db` | SQLite location                                                                                                         |
+| `CONTENT_MODE`                                                        | `demo`                        | `production` \| `demo`                                                                                                  |
+| `CONTENT_PREVIEW_PLACEHOLDERS`                                        | `false`                       | Dev-only placeholder preview                                                                                            |
+| `FOLLOW_UP_MODE`                                                      | `LOCAL_PACKAGE`               | Follow-up strategy (§9.7): `LOCAL_PACKAGE` \| `SMTP_EMAIL`; `MICROSOFT_GRAPH`/`OUTLOOK_DRAFT` refused (not implemented) |
+| `EMAIL_PROVIDER`                                                      | `preview`                     | Transport for `SMTP_EMAIL`: `preview` (local files, never sends) \| `smtp`; `graph` rejected                            |
+| `EMAIL_FROM` / `EMAIL_REPLY_TO`                                       | —                             | Sender identity                                                                                                         |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` | —                             | SMTP provider                                                                                                           |
+| `EMAIL_MAX_ATTEMPTS`                                                  | `12`                          | Outbox retry ceiling                                                                                                    |
+| `SMTP_REQUIRE_TLS`                                                    | `true`                        | STARTTLS required when not `SMTP_SECURE`; `false` refused in prod                                                       |
+| `EMAIL_PREVIEW_DIR`                                                   | `data/email-preview`          | Development preview output                                                                                              |
+| `EMAIL_WORKER_INTERVAL_MS`                                            | `15000`                       | Retry worker tick                                                                                                       |
+| `LEAD_RETENTION_DAYS`                                                 | — (undecided)                 | Retention placeholder; nothing is deleted automatically (ADR-052)                                                       |
+| `ADMIN_ENABLED`                                                       | `false`                       | Enable the local administration utility                                                                                 |
+| `ADMIN_PATH`                                                          | `/admin-local`                | Public admin path (one segment)                                                                                         |
+| `ADMIN_PASSPHRASE_HASH`                                               | —                             | scrypt hash (`npm run admin:passphrase`); required if enabled                                                           |
+| `ADMIN_SESSION_MINUTES`                                               | `30`                          | Admin idle sign-out                                                                                                     |
+| `DEV_ALLOWED_ORIGINS`                                                 | —                             | Extra dev-server HMR hostnames (comma list)                                                                             |
+| `ENABLE_COMPONENT_GALLERY`                                            | `false`                       | Allow `/dev/components` in production builds                                                                            |
+| `ENABLE_SCENE_CALIBRATION`                                            | `false`                       | Allow `/dev/scenes` (coordinate calibration) in production builds                                                       |
 
 All are parsed by `src/server/env.ts` (Zod) in `instrumentation.ts` at server boot. The server refuses
 to start on invalid configuration (e.g., `EMAIL_PROVIDER=smtp` without `SMTP_HOST`), and errors name
@@ -1266,10 +1354,10 @@ Scripts: `lint`, `typecheck`, `format:check`, `test`, `test:e2e`, `content:check
   - The lead form and its validation library load lazily and are prefetched while idle (ADR-058).
   - Measured: see TASKS Phase 10a.
 - **Third parties:** none. No request may leave the kiosk origin (E2E).
-- **Scene layer assets:** SVG or WebP/AVIF at 1200 × 1500.
+- **Scene layer assets:** WebP copies with the art box proportions (ADR-063).
   - Per-file budgets (images ≤ 1 MB, SVG ≤ 512 KB) are enforced by `content:check`.
-  - Target ≤ 300 KB per scene.
-  - The placeholder art totals ~90 KB (~16 KB gzipped).
+  - Target ≤ 300 KB per candidate: the approved copies are 41–224 KB; the kiosk loads one candidate per
+    scene (the 960 px file on the portrait 1080 × 1920 kiosk at 1× density).
 - **Scene images:** intrinsic `width`/`height`, `decoding="async"`, and `fetchpriority="high"` on the
   current background. Neighboring scenes are prefetched while idle.
 - **Transitions:** 60 fps with no layout thrash. Keyframes animate transform and opacity only. Reduced

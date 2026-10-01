@@ -2,12 +2,29 @@ import { z } from "zod";
 import {
   IconKeySchema,
   IdSchema,
+  ImageCandidateSchema,
+  PublicPathSchema,
+  refineCandidates,
   LocalizedLabelSchema,
   LocalizedTextSchema,
   SortOrderSchema,
   ValidationStatusSchema,
 } from "./primitives";
 import { SalesReviewSchema, refineSalesReviewAgainstStatus } from "./sales-review";
+
+/**
+ * Optional persona illustration for the role selection card (ADR-064). Decorative: the card's title already
+ * names the role, so the image is rendered with empty alt text. 2:3 portrait (PERSONA_ART), checked by
+ * content:check. Without one, the card shows a neutral fallback tile.
+ */
+export const PersonaIllustrationSchema = z
+  .strictObject({
+    src: PublicPathSchema,
+    srcSet: z.array(ImageCandidateSchema).min(1).max(4),
+    assetStatus: z.enum(["approved", "placeholder"]),
+  })
+  .superRefine((image, ctx) => refineCandidates(image, ctx));
+export type PersonaIllustration = z.infer<typeof PersonaIllustrationSchema>;
 
 /**
  * Taxonomy content: how visitors describe themselves and their problems. Makes no offering claim, but
@@ -20,6 +37,7 @@ export const PersonaSchema = z
     label: LocalizedLabelSchema,
     description: LocalizedTextSchema,
     icon: IconKeySchema,
+    illustration: PersonaIllustrationSchema.optional(),
     sortOrder: SortOrderSchema,
     /** Challenges shown first after this persona is selected (ordering hint only, not scoring). */
     suggestedChallengeIds: z.array(IdSchema).max(12),

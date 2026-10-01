@@ -48,6 +48,7 @@ export const en: Messages = {
   summary: {
     title: "Your personalized summary",
     intro: "We will send you a summary of what you saw today, to review at your own pace or share with your team.",
+    introPackage: "We will prepare a summary of what you saw today, so a Linde representative can follow up with you.",
     includesLabel: "The summary includes",
     items: {
       priorities: "Your area and priorities",
@@ -56,7 +57,7 @@ export const en: Messages = {
       resources: "The resources available for each topic",
       nextSteps: "Suggested next steps",
     },
-    privacy: "We will only ask for the details needed to send it and, separately, for your consent.",
+    privacy: "We will only ask for the details needed to prepare it and, separately, for your consent.",
     continue: "Complete my details",
     back: "Back to my recommendations",
   },
@@ -72,6 +73,7 @@ export const en: Messages = {
       organization: "Organization",
       email: "Work email",
       emailHint: "We will send your summary here.",
+      emailHintPackage: "We will use it to follow up with your summary.",
       phone: "Phone",
       phoneHint: "Only if you would prefer a call.",
       role: "Your area or role",
@@ -92,14 +94,14 @@ export const en: Messages = {
       phone: { required: "Enter your phone number.", invalid: "Check the phone number. It needs at least 7 digits." },
       roleId: { required: "Choose your area or role.", invalid: "Choose one of the listed areas." },
       reportConsent: {
-        required: "We need your permission to send you the summary.",
-        invalid: "We need your permission to send you the summary.",
+        required: "We need your permission to prepare your summary.",
+        invalid: "We need your permission to prepare your summary.",
       },
       summary: "Please check the highlighted fields.",
     },
     consent: {
       title: "Your permissions",
-      separate: "These are two separate permissions. The second is optional and does not affect sending your summary.",
+      separate: "These are two separate permissions. The second is optional and does not affect your summary.",
       version: "Consent text version: {version}",
       pendingReview: "Provisional text pending legal and privacy review.",
     },
@@ -118,7 +120,7 @@ export const en: Messages = {
       continue: "Continue",
       back: "Back",
       correct: "Correct my information",
-      submit: "Send my summary",
+      submit: "Request my summary",
       cancel: "Cancel",
       retry: "Try again",
       finish: "Finish now",
@@ -131,7 +133,7 @@ export const en: Messages = {
     },
     sending: {
       saving: "Saving your request…",
-      preparing: "Request saved. Preparing to send…",
+      preparing: "Request saved. Preparing your summary…",
     },
     failure: {
       title: "We could not save your request",
@@ -148,7 +150,9 @@ export const en: Messages = {
       delayedBody:
         "Sending to {email} has not completed yet. We will try again automatically; you do not need to fill in the form again.",
       followUp: "A representative may contact you, as you authorized.",
-      noFollowUp: "We will only send you the summary you requested.",
+      noFollowUp: "We will only use your details for the summary you requested.",
+      packagedTitle: "Your personalized follow-up package has been prepared",
+      packagedBody: "A Linde representative can follow up using the information provided ({email}).",
       resetNotice: "For your privacy, the screen will restart in a few seconds.",
       countdown: "Returning to the start in {seconds} s.",
       optionalNextStep: "Optional next step",
@@ -227,7 +231,7 @@ export const en: Messages = {
     viewScene: "See it in the hospital: {scene}",
     resources: "Resources",
     resourcePending: "pending validation",
-    sendSummary: "Send me my personalized summary",
+    sendSummary: "Request my personalized summary",
     continueExploring: "Continue exploring",
     reviewPriorities: "Review my priorities",
     relevance: {
