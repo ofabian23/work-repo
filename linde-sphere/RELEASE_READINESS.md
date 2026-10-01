@@ -5,7 +5,7 @@ the healthcare convention in Puerto Rico. It records what is built, how to run i
 approval, and whether it can go live.
 
 - **Audit date:** 2026-09-30; software checks re-run on 2026-10-01 after the follow-up strategy refinement
-  (ADR-062) the approved scene art (ADR-063) and the persona illustrations (ADR-064)
+  (ADR-062), the approved scene art (ADR-063) and the persona illustrations (ADR-064)
 - **Branch:** `claude/project-vision-planning-hfwe5m`
 
 **Bottom line:**
